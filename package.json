@@ -1,0 +1,24 @@
+{
+    "name": "@simonbackx/simple-encoding",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "version": "1.0.0",
+    "scripts": {
+        "build": "tsc -p . --declaration"
+    },
+    "files": [
+        "dist"
+    ],
+    "dependencies": {},
+    "devDependencies": {
+        "@types/jest": "^25.1.4",
+        "@typescript-eslint/eslint-plugin": "^2.28.0",
+        "@typescript-eslint/parser": "^2.28.0",
+        "eslint": "^6.8.0",
+        "eslint-plugin-jest": "^23.8.2",
+        "eslint-plugin-simple-import-sort": "^5.0.2",
+        "eslint-plugin-vue": "^6.2.2",
+        "jest": "^25.3.0",
+        "typescript": "^3.8.3"
+    }
+}

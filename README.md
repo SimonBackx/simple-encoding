@@ -20,7 +20,7 @@ Encoding and decoding can get customized, and that's the whole point of this lib
 ## Usage example
 
 ```ts
-import { Encodeable } from "@simonbackx/simple-encoding"
+import { Encodeable, Data, ObjectData } from "@simonbackx/simple-encoding"
 
 class MyClass implements Encodeable {
     id: number;
@@ -73,7 +73,8 @@ const json = JSON.stringify(test2.encode());
 
 // Decode from JSON
 const plainObject = JSON.parse(json);
-const instance = MyClass.decode(plainObject);
+const data = new ObjectData(plainObject);
+const instance = MyClass.decode(data);
 // Decode throws if fields are missing or types are not okay.
 // You can use the errors to provide good errors in you API's that help developers to 
 // point out the missing fields or types.

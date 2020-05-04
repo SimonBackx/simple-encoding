@@ -1,7 +1,7 @@
 {
     "compilerOptions": {
-        "target": "es2017",
-        "module": "esnext",
+        "target": "es2019",
+        "module": "commonjs",
         "jsx": "preserve",
         "importHelpers": true,
         "moduleResolution": "node",
@@ -11,23 +11,13 @@
         "sourceMap": true,
         "strictNullChecks": true,
         "outDir": "dist/",
-        "lib": [
-            "esnext",
-            "dom",
-            "dom.iterable",
-            "scripthost"
-        ],
-        "types": [
-            "node",
-            "jest"
-        ]
+        "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
+        "types": ["node", "jest"]
     },
     "include": [
         "index.ts",
         "src/**/*.ts",
         "*.d.ts" // Include vue type definition for webpack
     ],
-    "exclude": [
-        "node_modules"
-    ]
+    "exclude": ["node_modules"]
 }

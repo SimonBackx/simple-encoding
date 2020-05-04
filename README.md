@@ -14,7 +14,7 @@ Encoding and decoding can get customized, and that's the whole point of this lib
 
 ## Todo
 
-- [ ] Add context to Data: Allows for versioning (e.g. you can store a verion in the context and let the encoding/decoding differ between each version)
+- [ ] Add context to Data: Allows for versioning (e.g. you can store a verion in the context and let the encoding/decoding differ between each version). In fact you could add this yourself by implementing Data.
 - [ ] Add some more basic types
 
 ## Usage example

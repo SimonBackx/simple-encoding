@@ -1,6 +1,6 @@
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
-import { STError } from "../classes/STError";
+import { DecodingError } from "../classes/DecodingError";
 
 class IntegerDecoder implements Decoder<number> {
     decode(data: Data): number {
@@ -8,7 +8,7 @@ class IntegerDecoder implements Decoder<number> {
             return data.value;
         }
 
-        throw new STError({
+        throw new DecodingError({
             code: "invalid_field",
             message: `Expected an integer at ${data.currentField}`,
             field: data.currentField

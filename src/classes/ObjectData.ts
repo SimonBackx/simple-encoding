@@ -5,7 +5,7 @@ import NumberDecoder from "../structs/NumberDecoder";
 import StringDecoder from "../structs/StringDecoder";
 import { Data } from "./Data";
 import { Decoder } from "./Decoder";
-import { STError } from './STError';
+import { DecodingError } from './DecodingError';
 
 /// Implementation of Data that reads an already existing tree of data.
 export class ObjectData implements Data {
@@ -46,7 +46,7 @@ export class ObjectData implements Data {
 
     equals<T>(value: T): T {
         if (this.data !== value) {
-            throw new STError({
+            throw new DecodingError({
                 code: "invalid_field",
                 message: "Expected "+value,
                 field: this.currentField
@@ -62,14 +62,14 @@ export class ObjectData implements Data {
     index(number: number): Data {
         if (Array.isArray(this.value)) {
             if (!Number.isSafeInteger(number)) {
-                throw new STError({
+                throw new DecodingError({
                     code: "invalid_index",
                     message: `Invalid index`,
                     field: this.currentField,
                 });
             }
             if (this.data[number] !== undefined) {
-                throw new STError({
+                throw new DecodingError({
                     code: "invalid_field",
                     message: `Expected value at ${this.addToCurrentField(number)}`,
                     field: this.addToCurrentField(number),
@@ -77,7 +77,7 @@ export class ObjectData implements Data {
             }
             return new ObjectData(this.data[number], this.addToCurrentField(number));
         }
-        throw new STError({
+        throw new DecodingError({
             code: "invalid_field",
             message: `Expected an array at ${this.currentField}`,
             field: this.currentField,
@@ -100,7 +100,7 @@ export class ObjectData implements Data {
         if (this.data && this.data[field] !== undefined && this.data[field] !== null) {
             return new ObjectData(this.data[field], this.addToCurrentField(field));
         }
-        throw new STError({
+        throw new DecodingError({
             code: "missing_field",
             message: `Field ${field} is expected at ${this.currentField}`,
             field: this.currentField,

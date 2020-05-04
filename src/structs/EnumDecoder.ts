@@ -1,6 +1,6 @@
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
-import { STError } from "../classes/STError";
+import { DecodingError } from "../classes/DecodingError";
 
 export class EnumDecoder<E extends { [key: number]: string | number }> implements Decoder<E[keyof E]> {
     enum: E;
@@ -14,7 +14,7 @@ export class EnumDecoder<E extends { [key: number]: string | number }> implement
         if (Object.values(this.enum).includes(str)) {
             return str as E[keyof E];
         }
-        throw new STError({
+        throw new DecodingError({
             code: "invalid_field",
             message: "Unknown enum value " + str + " expected " + Object.values(this.enum).join(", "),
             field: data.currentField

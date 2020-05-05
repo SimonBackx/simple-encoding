@@ -1,11 +1,12 @@
-import ArrayDecoder from "../structs/ArrayDecoder";
+import { ArrayDecoder } from "../structs/ArrayDecoder";
 import Base64Decoder from "../structs/Base64Decoder";
 import KeyDecoder from "../structs/KeyDecoder";
 import NumberDecoder from "../structs/NumberDecoder";
 import StringDecoder from "../structs/StringDecoder";
 import { Data } from "./Data";
 import { Decoder } from "./Decoder";
-import { DecodingError } from './DecodingError';
+import { DecodingError } from "./DecodingError";
+import BooleanDecoder from "../structs/BooleanDecoder";
 
 /// Implementation of Data that reads an already existing tree of data.
 export class ObjectData implements Data {
@@ -44,15 +45,19 @@ export class ObjectData implements Data {
         return this.decode(NumberDecoder);
     }
 
+    get boolean(): boolean {
+        return this.decode(BooleanDecoder);
+    }
+
     equals<T>(value: T): T {
         if (this.data !== value) {
             throw new DecodingError({
                 code: "invalid_field",
-                message: "Expected "+value,
-                field: this.currentField
-            })
+                message: "Expected " + value,
+                field: this.currentField,
+            });
         }
-        return value
+        return value;
     }
 
     /**
@@ -108,8 +113,7 @@ export class ObjectData implements Data {
     }
 
     array<T>(decoder: Decoder<T>): T[] {
-        const array = ArrayDecoder.decode(this);
-        return array.map((v) => decoder.decode(v));
+        return new ArrayDecoder(decoder).decode(this);
     }
 
     decode<T>(decoder: Decoder<T>): T {

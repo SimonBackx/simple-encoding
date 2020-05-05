@@ -2,7 +2,7 @@
     "name": "@simonbackx/simple-encoding",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "scripts": {
         "build": "tsc -p . --declaration"
     },
@@ -22,7 +22,7 @@
         "eslint-plugin-simple-import-sort": "^5.0.2",
         "eslint-plugin-vue": "^6.2.2",
         "jest": "^25.3.0",
-        "typescript": "^3.8.3",
-        "ts-jest": "^25.4.0"
+        "ts-jest": "^25.4.0",
+        "typescript": "^3.8.3"
     }
 }

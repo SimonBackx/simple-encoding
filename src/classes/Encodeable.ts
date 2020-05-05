@@ -3,5 +3,5 @@ export interface Encodeable {
 }
 
 export function isEncodeable(object: any): object is Encodeable {
-    return object.encode
+    return !!object.encode;
 }

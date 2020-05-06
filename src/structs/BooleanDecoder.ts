@@ -8,6 +8,22 @@ class BooleanDecoder implements Decoder<boolean> {
             return data.value;
         }
 
+        if (data.value === "true") {
+            return true;
+        }
+
+        if (data.value === "false") {
+            return false;
+        }
+
+        if (data.value === 1) {
+            return true;
+        }
+
+        if (data.value === 0) {
+            return false;
+        }
+
         throw new DecodingError({
             code: "invalid_field",
             message: `Expected a boolean at ${data.currentField}`,

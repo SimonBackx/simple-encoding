@@ -1,4 +1,4 @@
-type PlainObject = string | number | { [key: string]: PlainObject & { encode?: never } } | boolean | PlainObject[];
+type PlainObject = string | number | { [key: string]: PlainObject } | boolean | PlainObject[];
 
 export interface Encodeable {
     encode(): PlainObject;

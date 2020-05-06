@@ -12,7 +12,7 @@ export class DecodingError extends Error {
     human: string | undefined;
 
     /**
-     * The field where the error occured during decoding. 
+     * The field where the error occured during decoding.
      * E.g.
      * animals.0.name
      */
@@ -32,5 +32,9 @@ export class DecodingError extends Error {
 
     toString(): string {
         return this.code + ": " + this.message + (this.field ? " at " + this.field : "");
+    }
+
+    addNamespace(field: string) {
+        this.field = this.field ? this.field + "." + field : field;
     }
 }

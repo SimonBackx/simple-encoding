@@ -5,7 +5,7 @@ export class DecodingErrors extends Error {
     errors: DecodingError[];
 
     constructor(...errors: DecodingError[]) {
-        super(errors.map(e => e.toString()).join("\n"));
+        super(errors.map((e) => e.toString()).join("\n"));
         this.errors = errors;
     }
 
@@ -14,20 +14,20 @@ export class DecodingErrors extends Error {
             this.errors.push(error);
             this.message += "\n" + error.toString();
         } else if (error instanceof DecodingErrors) {
-            this.errors.push(...error.errors)
+            this.errors.push(...error.errors);
             this.message += "\n" + error.toString();
         } else {
-            throw new Error("Unsupported addError")
+            throw new Error("Unsupported addError");
         }
     }
 
     removeErrorAt(index: number) {
-        this.errors.splice(index, 1)
+        this.errors.splice(index, 1);
     }
 
     addNamespace(field: string) {
-        this.errors.forEach(e => {
-            e.field = e.field ? e.field + "." + field : field;
+        this.errors.forEach((e) => {
+            e.addNamespace(field);
         });
     }
 

@@ -4,6 +4,7 @@ import { Decoder } from "./Decoder";
 export interface Data {
     readonly string: string;
     readonly number: number;
+    readonly integer: number;
     readonly boolean: boolean;
     readonly value: any;
     readonly base64: string;

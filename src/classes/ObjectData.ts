@@ -7,6 +7,7 @@ import { Data } from "./Data";
 import { Decoder } from "./Decoder";
 import { DecodingError } from "./DecodingError";
 import BooleanDecoder from "../structs/BooleanDecoder";
+import IntegerDecoder from "../structs/IntegerDecoder";
 
 /// Implementation of Data that reads an already existing tree of data.
 export class ObjectData implements Data {
@@ -43,6 +44,10 @@ export class ObjectData implements Data {
 
     get number(): number {
         return this.decode(NumberDecoder);
+    }
+
+    get integer(): number {
+        return this.decode(IntegerDecoder);
     }
 
     get boolean(): boolean {

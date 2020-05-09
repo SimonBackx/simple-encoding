@@ -20,4 +20,5 @@ export interface Data {
     decode<T>(decoder: Decoder<T>): T;
     equals<T>(value: T): T;
     array<T>(decoder: Decoder<T>): T[];
+    enum<E extends { [key: number]: string | number }>(e: E): E[keyof E];
 }

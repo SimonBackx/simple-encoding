@@ -8,6 +8,7 @@ import { Decoder } from "./Decoder";
 import { DecodingError } from "./DecodingError";
 import BooleanDecoder from "../structs/BooleanDecoder";
 import IntegerDecoder from "../structs/IntegerDecoder";
+import { EnumDecoder } from "../structs/EnumDecoder";
 
 /// Implementation of Data that reads an already existing tree of data.
 export class ObjectData implements Data {
@@ -123,5 +124,9 @@ export class ObjectData implements Data {
 
     decode<T>(decoder: Decoder<T>): T {
         return decoder.decode(this);
+    }
+
+    enum<E extends { [key: number]: string | number }>(e: E): E[keyof E] {
+        return new EnumDecoder(e).decode(this);
     }
 }

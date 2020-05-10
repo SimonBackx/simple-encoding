@@ -35,6 +35,6 @@ export class DecodingError extends Error {
     }
 
     addNamespace(field: string) {
-        this.field = this.field ? this.field + "." + field : field;
+        this.field = this.field ? field + "." + this.field : field;
     }
 }

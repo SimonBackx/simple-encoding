@@ -8,10 +8,17 @@ class IntegerDecoder implements Decoder<number> {
             return data.value;
         }
 
+        if (typeof data.value == "string") {
+            const parsed = Number.parseInt(data.value);
+            if (!isNaN(parsed)) {
+                return parsed;
+            }
+        }
+
         throw new DecodingError({
             code: "invalid_field",
             message: `Expected an integer at ${data.currentField}`,
-            field: data.currentField
+            field: data.currentField,
         });
     }
 }

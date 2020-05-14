@@ -48,6 +48,11 @@ export class ObjectData implements Data {
     }
 
     get integer(): number {
+        return this.asInteger();
+    }
+
+    /// For an unknown reason the .integer getter stopped working randomly and sometimes returns undefined without any notice
+    asInteger(): number {
         return this.decode(IntegerDecoder);
     }
 

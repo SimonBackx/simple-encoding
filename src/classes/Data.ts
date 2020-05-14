@@ -14,8 +14,6 @@ export interface Data {
     readonly currentField: string;
     addToCurrentField(field: string | number): string;
 
-    asInteger(): number;
-
     field(field: string): Data;
     optionalField(field: string): Data | undefined;
     index(number: number): Data;

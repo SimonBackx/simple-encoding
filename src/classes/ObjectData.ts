@@ -88,7 +88,7 @@ export class ObjectData implements Data {
                     field: this.addToCurrentField(number),
                 });
             }
-            return new ObjectData(this.data[number], this.addToCurrentField(number));
+            return new ObjectData(this.data[number], this.addToCurrentField(number), this.version);
         }
         throw new DecodingError({
             code: "invalid_field",
@@ -102,7 +102,7 @@ export class ObjectData implements Data {
      */
     optionalField(field: string): Data | undefined {
         if (this.data && this.data[field] !== undefined && this.data[field] !== null) {
-            return new ObjectData(this.data[field], this.addToCurrentField(field));
+            return new ObjectData(this.data[field], this.addToCurrentField(field), this.version);
         }
     }
 
@@ -111,7 +111,7 @@ export class ObjectData implements Data {
      */
     field(field: string): Data {
         if (this.data && this.data[field] !== undefined && this.data[field] !== null) {
-            return new ObjectData(this.data[field], this.addToCurrentField(field));
+            return new ObjectData(this.data[field], this.addToCurrentField(field), this.version);
         }
         throw new DecodingError({
             code: "missing_field",

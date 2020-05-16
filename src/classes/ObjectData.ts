@@ -14,10 +14,12 @@ import { EnumDecoder } from "../structs/EnumDecoder";
 export class ObjectData implements Data {
     data: any;
     currentField: string;
+    version?: number;
 
-    constructor(data: any, currentField = "") {
+    constructor(data: any, currentField = "", version?: number) {
         this.data = data;
         this.currentField = currentField;
+        this.version = version;
     }
 
     addToCurrentField(field: string | number): string {

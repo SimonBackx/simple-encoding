@@ -10,6 +10,8 @@ export interface Data {
     readonly base64: string;
     readonly key: string;
 
+    version?: number;
+
     /// Contains the path where we are reading
     readonly currentField: string;
     addToCurrentField(field: string | number): string;

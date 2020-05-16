@@ -1,7 +1,8 @@
 type PlainObject = string | number | { [key: string]: PlainObject } | boolean | PlainObject[] | undefined | null;
 
 export interface Encodeable {
-    encode(): PlainObject;
+    latestVersion?: number;
+    encode(version?: number): PlainObject;
 }
 
 export function isEncodeable(object: any): object is Encodeable {

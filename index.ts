@@ -13,3 +13,4 @@ export { default as KeyDecoder } from "./src/structs/KeyDecoder";
 export { default as NumberDecoder } from "./src/structs/NumberDecoder";
 export { default as StringDecoder } from "./src/structs/StringDecoder";
 export { default as BooleanDecoder } from "./src/structs/BooleanDecoder";
+export * from "./src/structs/PatchableArray";

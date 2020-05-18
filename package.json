@@ -4,7 +4,8 @@
     "types": "./dist/index.d.ts",
     "version": "1.5.4",
     "scripts": {
-        "build": "tsc -p . --declaration"
+        "build": "tsc -p . --declaration",
+        "test": "jest"
     },
     "files": [
         "dist"

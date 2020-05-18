@@ -5,7 +5,7 @@ import StringDecoder from "./StringDecoder";
 import { Data } from "../classes/Data";
 import { ObjectData } from "../classes/ObjectData";
 
-class Patch implements Patchable<Patch, Patch>, Identifiable<string> {
+class Patch implements Patchable<Patch, Patch> {
     id: string;
     name?: string;
     description?: string;
@@ -14,10 +14,6 @@ class Patch implements Patchable<Patch, Patch>, Identifiable<string> {
         this.id = data.id;
         this.name = data.name;
         this.description = data.description;
-    }
-
-    getIdentifier() {
-        return this.id;
     }
 
     patch(patch: Patch): Patch {
@@ -45,7 +41,7 @@ class Patch implements Patchable<Patch, Patch>, Identifiable<string> {
     }
 }
 
-class Put implements Patchable<Patch, Put>, Identifiable<string> {
+class Put implements Patchable<Patch, Put> {
     id: string;
     name: string;
     description: string;
@@ -54,10 +50,6 @@ class Put implements Patchable<Patch, Put>, Identifiable<string> {
         this.id = data.id;
         this.name = data.name;
         this.description = data.description;
-    }
-
-    getIdentifier() {
-        return this.id;
     }
 
     patch(patch: Patch): Put {

@@ -1,7 +1,6 @@
 import { Encodeable, isEncodeable, PlainObject } from "../classes/Encodeable";
 import { Decoder } from "../classes/Decoder";
 import { Data } from "../classes/Data";
-import { ArrayDecoder } from "./ArrayDecoder";
 import { DecodingError } from "../classes/DecodingError";
 import { Patchable, isPatchable } from "../classes/Patchable";
 import { Identifiable, getId } from "../classes/Identifiable";
@@ -36,30 +35,101 @@ export class PatchableArray<
     Id extends string | number,
     Put extends (Identifiable & Encodeable & Patchable<Patch, Put>) | Id,
     Patch extends (Identifiable & Encodeable & Patchable<Patch, Patch>) | Put
-> implements Encodeable {
+> implements Encodeable, Patchable<PatchableArray<Id, Put, Patch>, PatchableArray<Id, Put, Patch>> {
     changes: Change<Id, Put, Patch>[];
 
     constructor(changes?: Change<Id, Put, Patch>[]) {
         this.changes = changes ?? [];
     }
 
-    put(value: Put, after: Id | null) {
+    patch(patch: PatchableArray<Id, Put, Patch>): PatchableArray<Id, Put, Patch> {
+        // Deep clone self
+        const cloned = Object.assign({}, this);
+        cloned.changes = [];
+
+        for (const change of this.changes) {
+            cloned.changes.push(Object.assign({}, change));
+        }
+
+        for (const change of patch.changes) {
+            // Apply this change
+            if (isMove(change)) {
+                cloned.addMove(change.move, change.afterId);
+            } else if (isPut(change)) {
+                cloned.addPut(change.put, change.afterId);
+            } else if (isDelete(change)) {
+                cloned.addDelete(change.delete);
+            } else if (isPatch(change)) {
+                cloned.addPatch(change.patch);
+            } else {
+                throw new Error("Invalid change: " + JSON.stringify(change));
+            }
+        }
+
+        return cloned;
+    }
+
+    addPut(value: Put, after: Id | null) {
         this.changes.push({ afterId: after, put: value });
     }
 
-    move(item: Id, after: Id | null) {
+    addMove(item: Id, after: Id | null) {
         this.changes.push({ afterId: after, move: item });
     }
 
-    patch(value: Patch) {
-        // todo: check if we have other patches and merge them
-        // todo: check if we have puts, and merge them
+    addPatch(value: Patch) {
+        const id = getId(value);
+        const otherPut = this.changes.findIndex((e) => isPut(e) && getId(e.put) == id);
+        if (otherPut !== -1) {
+            const other: PutAfter<Id, Put> = this.changes[otherPut] as any;
+
+            if (isPatchable(other.put)) {
+                this.changes.splice(otherPut, 1, {
+                    put: other.put.patch(value),
+                    afterId: other.afterId,
+                });
+            } else {
+                this.changes.splice(otherPut, 1, {
+                    put: value as Put,
+                    afterId: other.afterId,
+                });
+            }
+            return;
+        }
+
+        const otherPatch = this.changes.findIndex((e) => isPatch(e) && getId(e.patch) == id);
+        if (otherPatch !== -1) {
+            const other: PatchItem<Patch> = this.changes[otherPatch] as any;
+
+            if (isPatchable(other.patch)) {
+                this.changes.splice(otherPatch, 1, {
+                    patch: other.patch.patch(value),
+                });
+            } else {
+                this.changes.splice(otherPatch, 1, {
+                    patch: value,
+                });
+            }
+            return;
+        }
+
         this.changes.push({ patch: value });
     }
 
-    delete(id: Id) {
-        // todo: remove all puts and patches
-        // if it had a put, remove the put but don't add a delete
+    addDelete(id: Id) {
+        // Remove all puts and patches
+        const otherPut = this.changes.findIndex((e) => isPut(e) && getId(e.put) == id);
+        if (otherPut !== -1) {
+            // if it had a put, remove the put but don't add a delete
+            this.changes.splice(otherPut, 1);
+            return;
+        } else {
+            const otherPatch = this.changes.findIndex((e) => isPatch(e) && getId(e.patch) == id);
+            if (otherPatch !== -1) {
+                this.changes.splice(otherPatch, 1);
+            }
+        }
+
         this.changes.push({ delete: id });
     }
 

@@ -82,27 +82,27 @@ describe("PatchableArray", () => {
         const currentValue = [8, 5, 3, 1];
 
         const patchableArray = new PatchableArray<number, number, number>();
-        patchableArray.put(9, 3);
+        patchableArray.addPut(9, 3);
 
         expect(patchableArray.applyTo(currentValue)).toEqual([8, 5, 3, 9, 1]);
 
-        patchableArray.put(10, 9);
-        patchableArray.put(11, 9);
+        patchableArray.addPut(10, 9);
+        patchableArray.addPut(11, 9);
 
         expect(patchableArray.applyTo(currentValue)).toEqual([8, 5, 3, 9, 11, 10, 1]);
 
-        patchableArray.delete(3);
+        patchableArray.addDelete(3);
 
         expect(patchableArray.applyTo(currentValue)).toEqual([8, 5, 9, 11, 10, 1]);
 
-        patchableArray.move(8, 1);
+        patchableArray.addMove(8, 1);
 
         expect(patchableArray.applyTo(currentValue)).toEqual([5, 9, 11, 10, 1, 8]);
 
-        patchableArray.move(1, null);
+        patchableArray.addMove(1, null);
 
         expect(patchableArray.applyTo(currentValue)).toEqual([1, 5, 9, 11, 10, 8]);
-        patchableArray.put(12, null);
+        patchableArray.addPut(12, null);
         expect(patchableArray.applyTo(currentValue)).toEqual([12, 1, 5, 9, 11, 10, 8]);
     });
 
@@ -114,22 +114,33 @@ describe("PatchableArray", () => {
         const A = new Put({ id: "A", name: "Letter A", description: "This is a letter" });
         const B = new Put({ id: "B", name: "Letter B", description: "This is a letter" });
         const BResult = new Put({ id: "B", name: "Letter B", description: "This is the best letter" });
+        const BResultLast = new Put({ id: "B", name: "The letter B", description: "This is the best letter" });
 
-        patchableArray.put(A, null);
+        patchableArray.addPut(A, null);
         expect(patchableArray.applyTo(currentValue)).toEqual([A]);
+        expect(patchableArray.changes.length).toEqual(1);
 
-        patchableArray.put(B, A.id);
+        patchableArray.addPut(B, A.id);
         expect(patchableArray.applyTo(currentValue)).toEqual([A, B]);
+        expect(patchableArray.changes.length).toEqual(2);
 
         const betterDescription = new Patch({ id: "B", description: "This is the best letter" });
-        patchableArray.patch(betterDescription);
+        patchableArray.addPatch(betterDescription);
         expect(patchableArray.applyTo(currentValue)).toEqual([A, BResult]);
+        expect(patchableArray.changes.length).toEqual(2);
 
-        patchableArray.move(A.id, B.id);
+        patchableArray.addMove(A.id, B.id);
         expect(patchableArray.applyTo(currentValue)).toEqual([BResult, A]);
+        expect(patchableArray.changes.length).toEqual(3);
 
-        patchableArray.delete(B.id);
+        const betterName = new Patch({ id: "B", name: "The letter B" });
+        patchableArray.addPatch(betterName);
+        expect(patchableArray.applyTo(currentValue)).toEqual([BResultLast, A]);
+        expect(patchableArray.changes.length).toEqual(3);
+
+        patchableArray.addDelete(B.id);
         expect(patchableArray.applyTo(currentValue)).toEqual([A]);
+        expect(patchableArray.changes.length).toEqual(2);
 
         // Test the decoding and encoding
         const encoded = patchableArray.encode();

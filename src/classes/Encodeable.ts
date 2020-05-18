@@ -1,4 +1,4 @@
-type PlainObject = string | number | { [key: string]: PlainObject } | boolean | PlainObject[] | undefined | null;
+export type PlainObject = string | number | { [key: string]: PlainObject } | boolean | PlainObject[] | undefined | null;
 
 export interface Encodeable {
     latestVersion?: number;

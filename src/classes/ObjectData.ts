@@ -9,6 +9,7 @@ import { DecodingError } from "./DecodingError";
 import BooleanDecoder from "../structs/BooleanDecoder";
 import IntegerDecoder from "../structs/IntegerDecoder";
 import { EnumDecoder } from "../structs/EnumDecoder";
+import { NullableDecoder } from "../structs/NullableDecoder";
 
 /// Implementation of Data that reads an already existing tree of data.
 export class ObjectData implements Data {
@@ -110,7 +111,7 @@ export class ObjectData implements Data {
      * Expects an existing field that is defined and not null
      */
     field(field: string): Data {
-        if (this.data && this.data[field] !== undefined && this.data[field] !== null) {
+        if (this.data && this.data[field] !== undefined) {
             return new ObjectData(this.data[field], this.addToCurrentField(field), this.version);
         }
         throw new DecodingError({
@@ -126,6 +127,10 @@ export class ObjectData implements Data {
 
     decode<T>(decoder: Decoder<T>): T {
         return decoder.decode(this);
+    }
+
+    nullable<T>(decoder: Decoder<T>): T | null {
+        return new NullableDecoder(decoder).decode(this);
     }
 
     enum<E extends { [key: number]: string | number }>(e: E): E[keyof E] {

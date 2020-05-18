@@ -8,6 +8,7 @@ export * from "./src/classes/Patchable";
 export * from "./src/classes/Identifiable";
 
 export * from "./src/structs/ArrayDecoder";
+export * from "./src/structs/NullableDecoder";
 export { default as Base64Decoder } from "./src/structs/Base64Decoder";
 export * from "./src/structs/EmailDecoder";
 export * from "./src/structs/EnumDecoder";

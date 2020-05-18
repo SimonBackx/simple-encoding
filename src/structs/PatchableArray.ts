@@ -153,7 +153,7 @@ export class PatchableArray<
                     // First do a delete of this value
                     return {
                         afterId: change.afterId as string | number,
-                        insert: isEncodeable(change.put) ? change.put.encode() : (change.put as string | number),
+                        put: isEncodeable(change.put) ? change.put.encode() : (change.put as string | number),
                     };
                 } else if (isDelete(change)) {
                     return {
@@ -185,39 +185,40 @@ export class PatchableArrayItemDecoder<
         this.idDecoder = idDecoder;
     }
     decode(data: Data): Change<Id, Put, Patch> {
-        try {
-            const put = {
-                put: data.field("put").decode(this.putDecoder),
-                afterId: data.field("afterId").decode(this.idDecoder),
+        const put = data.optionalField("put");
+        if (put !== undefined) {
+            // throw decoding errors from putDecoder and idDecoder
+            return {
+                put: put.decode(this.putDecoder),
+                afterId: data.field("afterId").nullable(this.idDecoder),
             };
-            return put;
-        } catch (e) {}
+        }
 
-        try {
-            const move = {
-                move: data.field("move").decode(this.idDecoder),
-                afterId: data.field("afterId").decode(this.idDecoder),
+        const move = data.optionalField("move");
+        if (move !== undefined) {
+            return {
+                move: move.decode(this.idDecoder),
+                afterId: data.field("afterId").nullable(this.idDecoder),
             };
-            return move;
-        } catch (e) {}
+        }
 
-        try {
-            const d = {
-                delete: data.field("delete").decode(this.idDecoder),
+        const d = data.optionalField("delete");
+        if (d !== undefined) {
+            return {
+                delete: d.decode(this.idDecoder),
             };
-            return d;
-        } catch (e) {}
+        }
 
-        try {
-            const p = {
-                patch: data.field("patch").decode(this.patchDecoder),
+        const patch = data.optionalField("patch");
+        if (patch !== undefined) {
+            return {
+                patch: patch.decode(this.patchDecoder),
             };
-            return p;
-        } catch (e) {}
+        }
 
         throw new DecodingError({
             code: "invalid_field",
-            message: "Expected an insert, move, patch or delete",
+            message: "Expected put, move, patch or delete",
             field: data.currentField,
         });
     }

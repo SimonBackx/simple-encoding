@@ -1,6 +1,9 @@
-import { PatchableArray } from "./PatchableArray";
+import { PatchableArray, PatchableArrayDecoder } from "./PatchableArray";
 import { Patchable } from "../classes/Patchable";
 import { Identifiable } from "../classes/Identifiable";
+import StringDecoder from "./StringDecoder";
+import { Data } from "../classes/Data";
+import { ObjectData } from "../classes/ObjectData";
 
 class Patch implements Patchable<Patch, Patch>, Identifiable<string> {
     id: string;
@@ -31,6 +34,14 @@ class Patch implements Patchable<Patch, Patch>, Identifiable<string> {
             name: this.name,
             description: this.description,
         };
+    }
+
+    static decode(data: Data): Patch {
+        return new Patch({
+            id: data.field("id").string,
+            name: data.optionalField("name")?.string,
+            description: data.optionalField("description")?.string,
+        });
     }
 }
 
@@ -63,6 +74,14 @@ class Put implements Patchable<Patch, Put>, Identifiable<string> {
             name: this.name,
             description: this.description,
         };
+    }
+
+    static decode(data: Data): Put {
+        return new Put({
+            id: data.field("id").string,
+            name: data.field("name").string,
+            description: data.field("description").string,
+        });
     }
 }
 
@@ -119,5 +138,14 @@ describe("PatchableArray", () => {
 
         patchableArray.delete(B.id);
         expect(patchableArray.applyTo(currentValue)).toEqual([A]);
+
+        // Test the decoding and encoding
+        const encoded = patchableArray.encode();
+        const decoder = new PatchableArrayDecoder(Put, Patch, StringDecoder);
+        const decoded = decoder.decode(new ObjectData(encoded));
+        expect(decoded).toEqual(patchableArray);
+
+        // Check if still results in the same result
+        expect(decoded.applyTo(currentValue)).toEqual([A]);
     });
 });

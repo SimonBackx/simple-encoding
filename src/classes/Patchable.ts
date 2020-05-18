@@ -1,7 +1,7 @@
-export interface Patchable<T> {
-    patch(patch: T): this;
+export interface Patchable<T, P> {
+    patch(patch: T): P;
 }
 
-export function isPatchable(object: any): object is Patchable<any> {
-    return !!object.patch;
+export function isPatchable<T>(object: T): object is T & Patchable<any, T> {
+    return !!(object as any).patch;
 }

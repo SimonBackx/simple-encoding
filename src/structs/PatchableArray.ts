@@ -227,6 +227,22 @@ export class PatchableArray<
             }
         );
     }
+
+    getPuts(): PutAfter<Id, Put>[] {
+        return this.changes.filter((change) => isPut(change)) as PutAfter<Id, Put>[];
+    }
+
+    getPatches(): Patch[] {
+        return this.changes.filter((change) => isPatch(change)).map((p: PatchItem<Patch>) => p.patch);
+    }
+
+    getDeletes(): Id[] {
+        return this.changes.filter((change) => isDelete(change)).map((p: DeleteItem<Id>) => p.delete);
+    }
+
+    getMoves(): MoveAfter<Id>[] {
+        return this.changes.filter((change) => isMove(change)) as MoveAfter<Id>[];
+    }
 }
 
 export class PatchableArrayItemDecoder<

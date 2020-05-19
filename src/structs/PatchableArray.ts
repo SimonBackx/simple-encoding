@@ -152,7 +152,7 @@ export class PatchableArray<
                     // not found = inserting at the end
                     let afterIndex = -1;
                     if (change.afterId !== null) {
-                        newArray.findIndex((e) => getId(e) == change.afterId);
+                        afterIndex = newArray.findIndex((e) => getId(e) == change.afterId);
                         if (afterIndex == -1) {
                             afterIndex = newArray.length - 1;
                         }

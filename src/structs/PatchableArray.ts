@@ -42,14 +42,19 @@ export class PatchableArray<
         this.changes = changes ?? [];
     }
 
-    patch(patch: PatchableArray<Id, Put, Patch>): PatchableArray<Id, Put, Patch> {
+    clone(): PatchableArray<Id, Put, Patch> {
         // Deep clone self
-        const cloned = Object.assign({}, this);
-        cloned.changes = [];
+        const cloned = new PatchableArray<Id, Put, Patch>();
 
         for (const change of this.changes) {
             cloned.changes.push(Object.assign({}, change));
         }
+        return cloned;
+    }
+
+    patch(patch: PatchableArray<Id, Put, Patch>): PatchableArray<Id, Put, Patch> {
+        // Deep clone self
+        const cloned = this.clone();
 
         for (const change of patch.changes) {
             // Apply this change

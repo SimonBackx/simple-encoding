@@ -160,6 +160,7 @@ export class PatchableArray<
                     newArray.splice(afterIndex + 1, 0, value);
                 } else {
                     // maybe throw here?
+                    console.warn("Could not find element with id " + change.move);
                 }
             } else if (isPut(change)) {
                 // null = inserting at the beginning
@@ -177,6 +178,8 @@ export class PatchableArray<
                 const index = newArray.findIndex((e) => getId(e) == change.delete);
                 if (index != -1) {
                     newArray.splice(index, 1);
+                } else {
+                    console.warn("Could not find element with id " + change.delete);
                 }
             } else if (isPatch(change)) {
                 // First do a delete of this value

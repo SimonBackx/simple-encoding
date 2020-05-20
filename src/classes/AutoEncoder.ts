@@ -2,6 +2,7 @@ import { Decoder } from "./Decoder";
 import { Encodeable, PlainObject, isEncodeable } from "./Encodeable";
 import { Data } from "./Data";
 import { field } from "../decorators/Field";
+import { Patchable, isPatchable } from "./Patchable";
 
 export class Field {
     optional: boolean;
@@ -32,25 +33,57 @@ export class Field {
 type NonFunctionPropertyNames<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T];
 type NonFunctionProperties<T> = Pick<T, NonFunctionPropertyNames<T>>;
 
-class Dog {
-    name: string;
+type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
+type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
 
-    doSomething() {}
+function createPatchableAutoEncoder<T extends typeof AutoEncoder>(
+    constructor: T
+): InstanceType<T> extends { id: number | string }
+    ? typeof AutoEncoder & { new (): Omit<Partial<InstanceType<T>>, "id"> & { id: number | string } & Encodeable }
+    : never {
+    return constructor as any;
+}
+/*
+class Dog extends AutoEncoder {
+    id: string;
+    name: string;
 }
 
-const test: NonFunctionProperties<Dog> = { name: "test" };
+const DogPatch = createPatchableAutoEncoder(Dog);
+
+const p = DogPatch.create({id: "test"})
+
+*/
 
 export class AutoEncoder implements Encodeable {
     /// Fields should get sorted by version. Low to high
     static fields: Field[];
     latestVersion?: number;
     static latestVersion?: number;
+    static patch<T extends typeof AutoEncoder>(this: T) {
+        return createPatchableAutoEncoder(this);
+    }
 
     constructor() {
         if (!this.static.fields) {
             this.static.fields = [];
         }
         this.latestVersion = this.static.latestVersion;
+    }
+
+    patch<T extends typeof AutoEncoder>(this: InstanceType<T>, patch: Partial<InstanceType<T>>): InstanceType<T> {
+        const instance = new this.static() as InstanceType<T>;
+        for (const field of this.static.fields) {
+            const prop = field.property;
+            if (isPatchable(this[prop])) {
+                if (patch[prop]) {
+                    instance[prop] = this[prop].patch(patch[prop]);
+                }
+            } else {
+                instance[prop] = patch[prop] ?? this[prop];
+            }
+        }
+        return instance;
     }
 
     static sortFields() {

@@ -7,6 +7,9 @@ import { ArrayDecoder } from "../structs/ArrayDecoder";
 describe("AutoEncoder", () => {
     class Dog extends AutoEncoder {
         @field({ decoder: StringDecoder })
+        id: string;
+
+        @field({ decoder: StringDecoder })
         @field({ decoder: StringDecoder, version: 2, field: "breed" })
         name: string;
 
@@ -18,33 +21,46 @@ describe("AutoEncoder", () => {
     }
 
     test("encoding works and version support", () => {
-        const aFriend = Dog.create({ name: "friend", friendIds: [], friends: [] });
-        const dog = Dog.create({ name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [aFriend] });
+        const aFriend = Dog.create({ id: "b", name: "friend", friendIds: [], friends: [] });
+        const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [aFriend] });
         expect(dog.encode()).toEqual({
+            id: "a",
             breed: "dog",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ breed: "friend", friendIds: [], friends: [] }],
+            friends: [{ id: "b", breed: "friend", friendIds: [], friends: [] }],
         });
         expect(dog.encode(1)).toEqual({
+            id: "a",
             name: "dog",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ name: "friend", friendIds: [], friends: [] }],
+            friends: [{ id: "b", name: "friend", friendIds: [], friends: [] }],
         });
         expect(dog.encode(2)).toEqual({
+            id: "a",
             breed: "dog",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ breed: "friend", friendIds: [], friends: [] }],
+            friends: [{ id: "b", breed: "friend", friendIds: [], friends: [] }],
         });
     });
 
     test("decoding and version support", () => {
         const data1 = new ObjectData(
-            { name: "version test", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [{ name: "friend", friendIds: [], friends: [] }] },
+            {
+                id: "a",
+                name: "version test",
+                friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
+                friends: [{ id: "b", name: "friend", friendIds: [], friends: [] }],
+            },
             "",
             1
         );
         const data2 = new ObjectData(
-            { breed: "version test", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [{ breed: "friend", friendIds: [], friends: [] }] },
+            {
+                id: "a",
+                breed: "version test",
+                friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
+                friends: [{ id: "b", breed: "friend", friendIds: [], friends: [] }],
+            },
             "",
             2
         );
@@ -54,10 +70,22 @@ describe("AutoEncoder", () => {
 
         expect(dog1).toEqual(dog2);
         expect(dog1).toEqual({
+            id: "a",
             name: "version test",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ name: "friend", friendIds: [], friends: [], latestVersion: 2 }],
+            friends: [{ id: "b", name: "friend", friendIds: [], friends: [], latestVersion: 2 }],
             latestVersion: 2,
         });
+    });
+
+    test("Patching", () => {
+        const DogPatch = Dog.patch();
+        const patchDog = DogPatch.create({ id: "a" });
+        patchDog.name = "Change name";
+
+        const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const patched = dog.patch(patchDog);
+
+        expect(patched).toEqual(Dog.create({ id: "a", name: "Change name", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] }));
     });
 });

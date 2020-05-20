@@ -3,23 +3,27 @@ import { field } from "../decorators/Field";
 import StringDecoder from "../structs/StringDecoder";
 import { ObjectData } from "./ObjectData";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
+import { PatchableArray } from "../structs/PatchableArray";
+import { Encodeable } from "./Encodeable";
+import { Patchable, PatchType } from "./Patchable";
+import { Identifiable, IdentifiableType } from "./Identifiable";
+
+class Dog extends AutoEncoder {
+    @field({ decoder: StringDecoder })
+    id: string;
+
+    @field({ decoder: StringDecoder })
+    @field({ decoder: StringDecoder, version: 2, field: "breed" })
+    name: string;
+
+    @field({ decoder: new ArrayDecoder(StringDecoder) })
+    friendIds: string[];
+
+    @field({ decoder: new ArrayDecoder(Dog) })
+    friends: Dog[];
+}
 
 describe("AutoEncoder", () => {
-    class Dog extends AutoEncoder {
-        @field({ decoder: StringDecoder })
-        id: string;
-
-        @field({ decoder: StringDecoder })
-        @field({ decoder: StringDecoder, version: 2, field: "breed" })
-        name: string;
-
-        @field({ decoder: new ArrayDecoder(StringDecoder) })
-        friendIds: string[];
-
-        @field({ decoder: new ArrayDecoder(Dog) })
-        friends: Dog[];
-    }
-
     test("encoding works and version support", () => {
         const aFriend = Dog.create({ id: "b", name: "friend", friendIds: [], friends: [] });
         const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [aFriend] });
@@ -79,9 +83,7 @@ describe("AutoEncoder", () => {
     });
 
     test("Patching", () => {
-        const DogPatch = Dog.patch();
-        const patchDog = DogPatch.create({ id: "a" });
-        patchDog.name = "Change name";
+        const patchDog = Dog.createPatch({ name: "test" });
 
         const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
         const patched = dog.patch(patchDog);
@@ -89,3 +91,5 @@ describe("AutoEncoder", () => {
         expect(patched).toEqual(Dog.create({ id: "a", name: "Change name", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] }));
     });
 });
+
+type TT = PatchType<Dog>;

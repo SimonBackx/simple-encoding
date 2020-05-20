@@ -4,6 +4,18 @@ export interface BaseIdentifiable<Id> {
 
 export type Identifiable = BaseIdentifiable<string | number> | { id: string | number } | string | number;
 
+export type IdentifiableType<T extends Identifiable> = T extends string | number
+    ? T
+    : T extends { id: infer P }
+    ? P extends string | number
+        ? P
+        : never
+    : T extends BaseIdentifiable<infer P>
+    ? P extends string | number
+        ? P
+        : never
+    : never;
+
 export function isBaseIdentifiable(val: any): val is BaseIdentifiable<any> {
     return (val as any).getIdentifier !== undefined;
 }

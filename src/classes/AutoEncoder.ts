@@ -2,7 +2,8 @@ import { Decoder } from "./Decoder";
 import { Encodeable, PlainObject, isEncodeable } from "./Encodeable";
 import { Data } from "./Data";
 import { field } from "../decorators/Field";
-import { Patchable, isPatchable } from "./Patchable";
+import { Patchable, isPatchable, PatchType } from "./Patchable";
+import { Identifiable } from "./Identifiable";
 
 export class Field {
     optional: boolean;
@@ -33,14 +34,11 @@ export class Field {
 type NonFunctionPropertyNames<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T];
 type NonFunctionProperties<T> = Pick<T, NonFunctionPropertyNames<T>>;
 
-type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
-type WithOptional<T, K extends keyof T> = Omit<T, K> & Partial<Pick<T, K>>;
-
-function createPatchableAutoEncoder<T extends typeof AutoEncoder>(
-    constructor: T
-): InstanceType<T> extends { id: number | string }
-    ? typeof AutoEncoder & { new (): Omit<Partial<InstanceType<T>>, "id"> & { id: number | string } & Encodeable }
-    : never {
+/**
+ * Create patchable auto encoder.
+ * We are not able to add types here, gets too complex. But we'll add a convenience method with typings
+ */
+export function createPatchableAutoEncoder(constructor: typeof AutoEncoder): typeof AutoEncoder {
     return constructor as any;
 }
 /*
@@ -64,6 +62,12 @@ export class AutoEncoder implements Encodeable {
         return createPatchableAutoEncoder(this);
     }
 
+    /// Create a patch for this instance
+    static createPatch<T extends typeof AutoEncoder>(this: T, data: PatchType<InstanceType<T>>): PatchType<InstanceType<T>> & AutoEncoder {
+        // todo!
+        return this as any;
+    }
+
     constructor() {
         if (!this.static.fields) {
             this.static.fields = [];
@@ -71,8 +75,8 @@ export class AutoEncoder implements Encodeable {
         this.latestVersion = this.static.latestVersion;
     }
 
-    patch<T extends typeof AutoEncoder>(this: InstanceType<T>, patch: Partial<InstanceType<T>>): InstanceType<T> {
-        const instance = new this.static() as InstanceType<T>;
+    patch<T extends AutoEncoder>(this: T, patch: PatchType<T>): T {
+        const instance = new this.static() as T;
         for (const field of this.static.fields) {
             const prop = field.property;
             if (isPatchable(this[prop])) {

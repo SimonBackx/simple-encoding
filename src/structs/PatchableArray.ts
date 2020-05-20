@@ -2,7 +2,7 @@ import { Encodeable, isEncodeable, PlainObject } from "../classes/Encodeable";
 import { Decoder } from "../classes/Decoder";
 import { Data } from "../classes/Data";
 import { DecodingError } from "../classes/DecodingError";
-import { Patchable, isPatchable } from "../classes/Patchable";
+import { PatchType, Patchable, isPatchable } from "../classes/Patchable";
 import { Identifiable, getId } from "../classes/Identifiable";
 
 type PutAfter<Id, Put> = { afterId: Id | null; put: Put };
@@ -33,9 +33,9 @@ function isPatch(val: Change<any, any, any>): val is PatchItem<any> {
  */
 export class PatchableArray<
     Id extends string | number,
-    Put extends (Identifiable & Encodeable & Patchable<Patch, Put>) | Id,
-    Patch extends (Identifiable & Encodeable & Patchable<Patch, Patch>) | Put
-> implements Encodeable, Patchable<PatchableArray<Id, Put, Patch>, PatchableArray<Id, Put, Patch>> {
+    Put extends (Identifiable & Encodeable & Patchable<Put>) | Id,
+    Patch extends (Identifiable & Encodeable & Patchable<Patch> & PatchType<Put>) | Put
+> implements Encodeable, Patchable<PatchableArray<Id, Put, Patch>> {
     changes: Change<Id, Put, Patch>[];
 
     constructor(changes?: Change<Id, Put, Patch>[]) {
@@ -255,8 +255,8 @@ export class PatchableArray<
 
 export class PatchableArrayItemDecoder<
     Id extends string | number,
-    Put extends (Identifiable & Encodeable & Patchable<Patch, Put>) | Id,
-    Patch extends (Identifiable & Encodeable & Patchable<Patch, Patch>) | Put
+    Put extends (Identifiable & Encodeable & Patchable<Put>) | Id,
+    Patch extends (Identifiable & Encodeable & Patchable<Patch> & Partial<Put>) | Put
 > implements Decoder<Change<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;
@@ -309,8 +309,8 @@ export class PatchableArrayItemDecoder<
 
 export class PatchableArrayDecoder<
     Id extends string | number,
-    Put extends (Identifiable & Encodeable & Patchable<Patch, Put>) | Id,
-    Patch extends (Identifiable & Encodeable & Patchable<Patch, Patch>) | Put
+    Put extends (Identifiable & Encodeable & Patchable<Put>) | Id,
+    Patch extends (Identifiable & Encodeable & Patchable<Patch> & Partial<Put>) | Put
 > implements Decoder<PatchableArray<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;

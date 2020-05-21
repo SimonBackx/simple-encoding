@@ -46,8 +46,9 @@ export class Field {
         if (this.decoder instanceof ArrayDecoder) {
             const elementDecoder = this.decoder.decoder;
             if ((elementDecoder as any).patchType) {
-                const patchType = (elementDecoder as any).patchType as typeof AutoEncoder;
+                const patchType = (elementDecoder as any).patchType();
                 const idFieldType = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")!.decoder;
+
                 field.decoder = new PatchableArrayDecoder(elementDecoder, patchType, idFieldType);
                 field.defaultValue = () => new PatchableArray<any, any, any>();
             } else {
@@ -92,11 +93,16 @@ export class AutoEncoder implements Encodeable {
     /// Create a patch for this instance (of reuse if already created)
     static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new (...args: any[]) => PatchType<InstanceType<T>>) {
         if (this.cachedPatchType) {
-            //return this.cachedPatchType as any;
+            return this.cachedPatchType as any;
         }
         // create a new class
         class CreatedPatch extends AutoEncoder {}
         CreatedPatch.fields = [];
+
+        // A patchtype of a patchtype is always the same
+        // -> avoids infinite loop and allows recursive encoding
+        CreatedPatch.cachedPatchType = CreatedPatch;
+        this.cachedPatchType = CreatedPatch;
 
         // Move over all fields
         for (const field of this.fields) {
@@ -104,7 +110,6 @@ export class AutoEncoder implements Encodeable {
         }
 
         CreatedPatch.latestVersion = this.latestVersion;
-        this.cachedPatchType = CreatedPatch;
 
         return CreatedPatch as any;
     }

@@ -85,10 +85,12 @@ describe("AutoEncoder", () => {
     });
 
     test("Automatic patch instances", () => {
+        const existingFriend = Dog.create({ id: "c", name: "existing friend", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
         const friendDog = Dog.create({ id: "b", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
         const friendDogChanged = Dog.create({ id: "b", name: "My best friend", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const existingFriendChanged = Dog.create({ id: "c", name: "My not good friend", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
 
-        const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [existingFriend] });
 
         const shouldCompile = DogPatch.create({ id: "a" });
         const patchDog = DogPatch.create({ id: "a", name: "Change name" });
@@ -101,9 +103,15 @@ describe("AutoEncoder", () => {
         const friendPatch = DogPatch.create({ id: "b", name: "My best friend" });
         patchDog.friends.addPatch(friendPatch);
 
+        const friendPatchExist = DogPatch.create({ id: "c", name: "My not good friend" });
+
+        patchDog.friends.addPatch(friendPatchExist);
+
         const patched = dog.patch(patchDog);
 
-        expect(patched).toEqual(Dog.create({ id: "a", name: "Change name", friendIds: ["sdgsdg", "test", "sdg95sdg26s"], friends: [friendDogChanged] }));
+        expect(patched).toEqual(
+            Dog.create({ id: "a", name: "Change name", friendIds: ["sdgsdg", "test", "sdg95sdg26s"], friends: [friendDogChanged, existingFriendChanged] })
+        );
 
         expect(patchDog.latestVersion).toEqual(Dog.latestVersion);
 
@@ -125,6 +133,9 @@ describe("AutoEncoder", () => {
                     put: friendDogChanged.encode(),
                     afterId: null,
                 },
+                {
+                    patch: friendPatchExist.encode(),
+                },
             ],
         });
 
@@ -145,6 +156,9 @@ describe("AutoEncoder", () => {
                 {
                     put: friendDogChanged.encode(1),
                     afterId: null,
+                },
+                {
+                    patch: friendPatchExist.encode(1),
                 },
             ],
         });

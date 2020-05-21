@@ -235,13 +235,11 @@ export class AutoEncoder implements Encodeable {
             const field = this.fields[i];
 
             if (field.version <= version && !appliedProperties[field.property]) {
-                let context;
                 if (field.optional) {
-                    context = data.optionalField(field.field);
+                    model[field.property] = data.optionalField(field.field)?.decode(field.decoder);
                 } else {
-                    context = data.field(field.field);
+                    model[field.property] = data.field(field.field)?.decode(field.decoder);
                 }
-                model[field.property] = context.decode(field.decoder);
 
                 appliedProperties[field.property] = true;
             }

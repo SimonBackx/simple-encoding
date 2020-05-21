@@ -161,7 +161,7 @@ export class AutoEncoder implements Encodeable {
     static create<T extends typeof AutoEncoder>(this: T, object: PartialWithoutMethods<InstanceType<T>>): InstanceType<T> {
         const model = new this() as InstanceType<T>;
         for (const key in object) {
-            if (object.hasOwnProperty(key) && object[key] !== undefined) {
+            if (object.hasOwnProperty(key) && object[key] !== undefined && typeof object[key] !== "function") {
                 model[key] = object[key] as any;
             }
         }
@@ -173,7 +173,7 @@ export class AutoEncoder implements Encodeable {
      */
     set<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T>) {
         for (const key in object) {
-            if (object.hasOwnProperty(key)) {
+            if (object.hasOwnProperty(key) && typeof object[key] !== "function") {
                 this[key] = object[key] as any;
             }
         }

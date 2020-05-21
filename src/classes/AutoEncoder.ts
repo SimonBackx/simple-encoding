@@ -4,6 +4,9 @@ import { Data } from "./Data";
 import { field } from "../decorators/Field";
 import { Patchable, isPatchable, PatchType } from "./Patchable";
 import { Identifiable } from "./Identifiable";
+import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
+import { ArrayDecoder } from "../structs/ArrayDecoder";
+import StringDecoder from "../structs/StringDecoder";
 
 export class Field {
     optional: boolean;
@@ -29,10 +32,36 @@ export class Field {
      * Internal value for unsupported versions
      */
     defaultValue: any;
+
+    getOptionalClone() {
+        const field = new Field();
+        field.optional = true;
+        field.nullable = this.optional;
+        field.decoder = this.decoder;
+        field.version = this.version;
+        field.property = this.property;
+        field.field = this.field;
+        field.defaultValue = this.defaultValue;
+
+        if (this.decoder instanceof ArrayDecoder) {
+            const elementDecoder = this.decoder.decoder;
+            if ((elementDecoder as any).patchType) {
+                const patchType = (elementDecoder as any).patchType as typeof AutoEncoder;
+                const idFieldType = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")!.decoder;
+                field.decoder = new PatchableArrayDecoder(elementDecoder, patchType, idFieldType);
+                field.defaultValue = new PatchableArray<any, any, any>();
+            } else {
+                field.decoder = new PatchableArrayDecoder(elementDecoder, elementDecoder, elementDecoder);
+                field.defaultValue = new PatchableArray<any, any, any>();
+            }
+        }
+
+        return field;
+    }
 }
 
-type NonFunctionPropertyNames<T> = { [K in keyof T]: T[K] extends Function ? never : K }[keyof T];
-type NonFunctionProperties<T> = Pick<T, NonFunctionPropertyNames<T>>;
+type AutoEncoderConstructorNames<T> = { [K in keyof T]: T[K] extends Function | PatchableArray<any, any, any> ? never : K }[Exclude<keyof T, "latestVersion">];
+type AutoEncoderConstructor<T> = Pick<T, AutoEncoderConstructorNames<T>>;
 
 /**
  * Create patchable auto encoder.
@@ -58,14 +87,26 @@ export class AutoEncoder implements Encodeable {
     static fields: Field[];
     latestVersion?: number;
     static latestVersion?: number;
-    static patch<T extends typeof AutoEncoder>(this: T) {
-        return createPatchableAutoEncoder(this);
-    }
+    private static cachedPatchType?: typeof AutoEncoder;
 
-    /// Create a patch for this instance
-    static createPatch<T extends typeof AutoEncoder>(this: T, data: PatchType<InstanceType<T>>): PatchType<InstanceType<T>> & AutoEncoder {
-        // todo!
-        return this as any;
+    /// Create a patch for this instance (of reuse if already created)
+    static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new (...args: any[]) => PatchType<InstanceType<T>>) {
+        if (this.cachedPatchType) {
+            return this.cachedPatchType as any;
+        }
+        // create a new class
+        class CreatedPatch extends AutoEncoder {}
+        CreatedPatch.fields = [];
+
+        // Move over all fields
+        for (const field of this.fields) {
+            CreatedPatch.fields.push(field.getOptionalClone());
+        }
+
+        CreatedPatch.latestVersion = this.latestVersion;
+        this.cachedPatchType = CreatedPatch;
+
+        return CreatedPatch as any;
     }
 
     constructor() {
@@ -73,6 +114,12 @@ export class AutoEncoder implements Encodeable {
             this.static.fields = [];
         }
         this.latestVersion = this.static.latestVersion;
+
+        for (const field of this.static.fields) {
+            if (field.defaultValue) {
+                this[field.property] = field.defaultValue;
+            }
+        }
     }
 
     patch<T extends AutoEncoder>(this: T, patch: PatchType<T>): T {
@@ -84,7 +131,11 @@ export class AutoEncoder implements Encodeable {
                     instance[prop] = this[prop].patch(patch[prop]);
                 }
             } else {
-                instance[prop] = patch[prop] ?? this[prop];
+                if (Array.isArray(this[prop])) {
+                    instance[prop] = patch[prop].applyTo(this[prop]);
+                } else {
+                    instance[prop] = patch[prop] ?? this[prop];
+                }
             }
         }
         return instance;
@@ -107,7 +158,7 @@ export class AutoEncoder implements Encodeable {
     /**
      * Create a new one by providing the properties of the object
      */
-    static create<T extends typeof AutoEncoder>(this: T, object: NonFunctionProperties<InstanceType<T>>): InstanceType<T> {
+    static create<T extends typeof AutoEncoder>(this: T, object: AutoEncoderConstructor<InstanceType<T>>): InstanceType<T> {
         const model = new this() as InstanceType<T>;
         for (const key in object) {
             if (object.hasOwnProperty(key)) {

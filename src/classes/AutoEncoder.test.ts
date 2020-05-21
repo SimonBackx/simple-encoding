@@ -14,7 +14,7 @@ class Dog extends AutoEncoder {
 
     @field({ decoder: StringDecoder })
     @field({ decoder: StringDecoder, version: 2, field: "breed" })
-    name: string;
+    name: string | undefined;
 
     @field({ decoder: new ArrayDecoder(StringDecoder) })
     friendIds: string[];
@@ -22,6 +22,7 @@ class Dog extends AutoEncoder {
     @field({ decoder: new ArrayDecoder(Dog) })
     friends: Dog[];
 }
+const DogPatch = Dog.patchType();
 
 describe("AutoEncoder", () => {
     test("encoding works and version support", () => {
@@ -82,14 +83,45 @@ describe("AutoEncoder", () => {
         });
     });
 
-    test("Patching", () => {
-        const patchDog = Dog.createPatch({ name: "test" });
+    test("Automatic patch instances", () => {
+        const friendDog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+
+        const patchDog = DogPatch.create({ id: "a", name: "Change name" });
+        patchDog.friendIds.addDelete("84sdg95");
+        patchDog.friendIds.addPut("test", "sdgsdg");
+        patchDog.friends.addPut(friendDog, null);
 
         const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
         const patched = dog.patch(patchDog);
 
-        expect(patched).toEqual(Dog.create({ id: "a", name: "Change name", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] }));
+        expect(patched).toEqual(Dog.create({ id: "a", name: "Change name", friendIds: ["sdgsdg", "test", "sdg95sdg26s"], friends: [friendDog] }));
+
+        expect(patchDog.latestVersion).toEqual(Dog.latestVersion);
+
+        // Test if patchable items are encodeable
+        expect(patchDog.encode()).toEqual({
+            id: "a",
+            breed: "Change name",
+            friendIds: [
+                {
+                    delete: "84sdg95",
+                },
+                {
+                    put: "test",
+                    afterId: "sdgsdg",
+                },
+            ],
+            friends: [
+                {
+                    put: friendDog.encode(),
+                    afterId: null,
+                },
+            ],
+        });
+
+        // Test if patchable items are decodeable
+        expect(DogPatch.decode(new ObjectData(patchDog.encode()))).toEqual(patchDog);
     });
 });
 
-type TT = PatchType<Dog>;
+type T = PatchType<Dog>;

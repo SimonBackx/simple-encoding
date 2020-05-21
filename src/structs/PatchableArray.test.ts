@@ -1,14 +1,14 @@
 import { PatchableArray, PatchableArrayDecoder } from "./PatchableArray";
-import { Patchable } from "../classes/Patchable";
+import { Patchable, PatchType } from "../classes/Patchable";
 import { Identifiable } from "../classes/Identifiable";
 import StringDecoder from "./StringDecoder";
 import { Data } from "../classes/Data";
 import { ObjectData } from "../classes/ObjectData";
 
-class Patch implements Patchable<Patch, Patch> {
+class Patch implements Patchable<Patch> {
     id: string;
-    name?: string;
-    description?: string;
+    name: string | undefined;
+    description: string | undefined;
 
     constructor(data: { id: string; name?: string; description?: string }) {
         this.id = data.id;
@@ -16,7 +16,7 @@ class Patch implements Patchable<Patch, Patch> {
         this.description = data.description;
     }
 
-    patch(patch: Patch): Patch {
+    patch(patch: PatchType<Patch>): Patch {
         return new Patch({
             id: this.id,
             name: patch.name ?? this.name,
@@ -41,7 +41,7 @@ class Patch implements Patchable<Patch, Patch> {
     }
 }
 
-class Put implements Patchable<Patch, Put> {
+class Put implements Patchable<Put> {
     id: string;
     name: string;
     description: string;
@@ -52,7 +52,7 @@ class Put implements Patchable<Patch, Put> {
         this.description = data.description;
     }
 
-    patch(patch: Patch): Put {
+    patch(patch: PatchType<Put>): Put {
         return new Put({
             id: this.id,
             name: patch.name ?? this.name,
@@ -108,7 +108,6 @@ describe("PatchableArray", () => {
 
     test("Object based array", () => {
         const currentValue = [];
-
         const patchableArray = new PatchableArray<string, Put, Patch>();
 
         const A = new Put({ id: "A", name: "Letter A", description: "This is a letter" });

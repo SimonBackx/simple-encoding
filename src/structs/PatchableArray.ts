@@ -3,7 +3,7 @@ import { Decoder } from "../classes/Decoder";
 import { Data } from "../classes/Data";
 import { DecodingError } from "../classes/DecodingError";
 import { PatchType, Patchable, isPatchable } from "../classes/Patchable";
-import { Identifiable, getId } from "../classes/Identifiable";
+import { Identifiable, getId, NonScalarIdentifiable } from "../classes/Identifiable";
 
 type PutAfter<Id, Put> = { afterId: Id | null; put: Put };
 type MoveAfter<Id> = { afterId: Id | null; move: Id };
@@ -90,7 +90,7 @@ export class PatchableArray<
 
             if (isPatchable(other.put)) {
                 this.changes.splice(otherPut, 1, {
-                    put: other.put.patch(value),
+                    put: other.put.patch(value as any),
                     afterId: other.afterId,
                 });
             } else {
@@ -108,7 +108,7 @@ export class PatchableArray<
 
             if (isPatchable(other.patch)) {
                 this.changes.splice(otherPatch, 1, {
-                    patch: other.patch.patch(value),
+                    patch: other.patch.patch(value as any),
                 });
             } else {
                 this.changes.splice(otherPatch, 1, {
@@ -194,7 +194,7 @@ export class PatchableArray<
                     // Patch!
                     const value = newArray[index];
                     if (isPatchable(value)) {
-                        newArray.splice(index, 1, value.patch(change.patch));
+                        newArray.splice(index, 1, value.patch(change.patch as any));
                     } else {
                         newArray.splice(index, 1, change.patch as Put);
                     }
@@ -256,7 +256,7 @@ export class PatchableArray<
 export class PatchableArrayItemDecoder<
     Id extends string | number,
     Put extends (Identifiable & Encodeable & Patchable<Put>) | Id,
-    Patch extends (Identifiable & Encodeable & Patchable<Patch> & Partial<Put>) | Put
+    Patch extends (Identifiable & Encodeable & Patchable<Patch> & PatchType<Put>) | Put
 > implements Decoder<Change<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;
@@ -310,7 +310,7 @@ export class PatchableArrayItemDecoder<
 export class PatchableArrayDecoder<
     Id extends string | number,
     Put extends (Identifiable & Encodeable & Patchable<Put>) | Id,
-    Patch extends (Identifiable & Encodeable & Patchable<Patch> & Partial<Put>) | Put
+    Patch extends (Identifiable & Encodeable & Patchable<Patch> & PatchType<Put>) | Put
 > implements Decoder<PatchableArray<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;

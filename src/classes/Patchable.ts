@@ -35,6 +35,10 @@ type RemoveMethodsHelper<Base> = {
 };
 type NonMethodNames<Base> = Exclude<RemoveMethodsHelper<Base>[keyof Base], undefined>;
 
+export type PartialWithoutMethods<Base> = {
+    [P in NonMethodNames<Base>]?: Base[P];
+};
+
 type GetOptionalPropertiesOfHelper<Base> = {
     [Key in keyof Base]: Base[Key] extends string | number | Array<any> | Function | boolean | Object ? never : Key;
 };

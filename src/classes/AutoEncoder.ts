@@ -2,7 +2,7 @@ import { Decoder } from "./Decoder";
 import { Encodeable, PlainObject, isEncodeable } from "./Encodeable";
 import { Data } from "./Data";
 import { field } from "../decorators/Field";
-import { Patchable, isPatchable, PatchType } from "./Patchable";
+import { Patchable, isPatchable, PatchType, PartialWithoutMethods } from "./Patchable";
 import { Identifiable } from "./Identifiable";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
@@ -158,7 +158,7 @@ export class AutoEncoder implements Encodeable {
     /**
      * Create a new one by providing the properties of the object
      */
-    static create<T extends typeof AutoEncoder>(this: T, object: Partial<InstanceType<T>>): InstanceType<T> {
+    static create<T extends typeof AutoEncoder>(this: T, object: PartialWithoutMethods<InstanceType<T>>): InstanceType<T> {
         const model = new this() as InstanceType<T>;
         for (const key in object) {
             if (object.hasOwnProperty(key) && object[key] !== undefined) {
@@ -171,7 +171,7 @@ export class AutoEncoder implements Encodeable {
     /**
      * Create a new one by providing the properties of the object
      */
-    set<T extends AutoEncoder>(this: T, object: Partial<T>) {
+    set<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T>) {
         for (const key in object) {
             if (object.hasOwnProperty(key)) {
                 this[key] = object[key] as any;

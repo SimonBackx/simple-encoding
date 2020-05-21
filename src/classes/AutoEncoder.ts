@@ -61,7 +61,7 @@ export class Field {
 }
 
 type AutoEncoderConstructorNames<T> = { [K in keyof T]: T[K] extends Function | PatchableArray<any, any, any> ? never : K }[Exclude<keyof T, "latestVersion">];
-type AutoEncoderConstructor<T> = Pick<T, AutoEncoderConstructorNames<T>>;
+export type AutoEncoderConstructor<T> = Pick<T, AutoEncoderConstructorNames<T>>;
 
 /**
  * Create patchable auto encoder.
@@ -158,11 +158,11 @@ export class AutoEncoder implements Encodeable {
     /**
      * Create a new one by providing the properties of the object
      */
-    static create<T extends typeof AutoEncoder>(this: T, object: AutoEncoderConstructor<InstanceType<T>>): InstanceType<T> {
+    static create<T extends typeof AutoEncoder>(this: T, object: Partial<InstanceType<T>>): InstanceType<T> {
         const model = new this() as InstanceType<T>;
         for (const key in object) {
-            if (object.hasOwnProperty(key)) {
-                model[key] = object[key];
+            if (object.hasOwnProperty(key) && object[key] !== undefined) {
+                model[key] = object[key] as any;
             }
         }
         return model;

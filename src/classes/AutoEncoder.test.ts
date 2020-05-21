@@ -1,4 +1,4 @@
-import { AutoEncoder } from "./AutoEncoder";
+import { AutoEncoder, AutoEncoderConstructor } from "./AutoEncoder";
 import { field } from "../decorators/Field";
 import StringDecoder from "../structs/StringDecoder";
 import { ObjectData } from "./ObjectData";
@@ -90,6 +90,7 @@ describe("AutoEncoder", () => {
 
         const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
 
+        const shouldCompile = DogPatch.create({ id: "a" });
         const patchDog = DogPatch.create({ id: "a", name: "Change name" });
         patchDog.friendIds.addDelete("84sdg95");
         patchDog.friendIds.addPut("test", "sdgsdg");
@@ -152,5 +153,3 @@ describe("AutoEncoder", () => {
         expect(DogPatch.decode(new ObjectData(patchDog.encode(2), "", 2))).toEqual(patchDog);
     });
 });
-
-type T = PatchType<Dog>;

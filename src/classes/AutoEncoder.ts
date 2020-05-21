@@ -41,7 +41,7 @@ export class Field {
         field.version = this.version;
         field.property = this.property;
         field.field = this.field;
-        field.defaultValue = this.defaultValue;
+        field.defaultValue = undefined; // do not copy default values. Patches never have default values!
 
         if (this.decoder instanceof ArrayDecoder) {
             const elementDecoder = this.decoder.decoder;

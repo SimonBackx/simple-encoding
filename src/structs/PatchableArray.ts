@@ -207,20 +207,20 @@ export class PatchableArray<
         return newArray;
     }
 
-    encode() {
+    encode(version?: number) {
         return this.changes.map(
             (change): PlainObject => {
                 if (isMove(change)) {
                     // First do a delete of this value
                     return {
                         afterId: change.afterId as string | number,
-                        move: isEncodeable(change.move) ? change.move.encode() : (change.move as string | number),
+                        move: isEncodeable(change.move) ? change.move.encode(version) : (change.move as string | number),
                     };
                 } else if (isPut(change)) {
                     // First do a delete of this value
                     return {
                         afterId: change.afterId as string | number,
-                        put: isEncodeable(change.put) ? change.put.encode() : (change.put as string | number),
+                        put: isEncodeable(change.put) ? change.put.encode(version) : (change.put as string | number),
                     };
                 } else if (isDelete(change)) {
                     return {
@@ -229,7 +229,7 @@ export class PatchableArray<
                 } else if (isPatch(change)) {
                     // First do a delete of this value
                     return {
-                        patch: isEncodeable(change.patch) ? change.patch.encode() : (change.patch as string | number),
+                        patch: isEncodeable(change.patch) ? change.patch.encode(version) : (change.patch as string | number),
                     };
                 }
             }

@@ -119,6 +119,27 @@ describe("AutoEncoder", () => {
             ],
         });
 
+        // Test if patchable items are encodeable
+        expect(patchDog.encode(1)).toEqual({
+            id: "a",
+            name: "Change name",
+            friendIds: [
+                {
+                    delete: "84sdg95",
+                },
+                {
+                    put: "test",
+                    afterId: "sdgsdg",
+                },
+            ],
+            friends: [
+                {
+                    put: friendDog.encode(1),
+                    afterId: null,
+                },
+            ],
+        });
+
         // Test if patchable items are decodeable
         expect(DogPatch.decode(new ObjectData(patchDog.encode()))).toEqual(patchDog);
     });

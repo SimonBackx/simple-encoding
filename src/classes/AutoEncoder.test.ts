@@ -142,6 +142,8 @@ describe("AutoEncoder", () => {
 
         // Test if patchable items are decodeable
         expect(DogPatch.decode(new ObjectData(patchDog.encode()))).toEqual(patchDog);
+        expect(DogPatch.decode(new ObjectData(patchDog.encode(1), "", 1))).toEqual(patchDog);
+        expect(DogPatch.decode(new ObjectData(patchDog.encode(2), "", 2))).toEqual(patchDog);
     });
 });
 

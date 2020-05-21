@@ -6,5 +6,8 @@ export interface Encodeable {
 }
 
 export function isEncodeable(object: any): object is Encodeable {
+    if (typeof object !== "object" || object === null) {
+        return false;
+    }
     return !!object.encode;
 }

@@ -194,6 +194,12 @@ export class AutoEncoder implements Encodeable {
         for (let i = this.static.fields.length - 1; i >= 0; i--) {
             const field = this.static.fields[i];
             if (field.version <= version && !appliedProperties[field.property]) {
+                if (this[field.property] === undefined) {
+                    if (!field.optional) {
+                        throw new Error("Value for property " + field.property + " is not set, but is required!");
+                    }
+                    continue;
+                }
                 if (isEncodeable(this[field.property])) {
                     object[field.field] = this[field.property].encode(version);
                 } else {

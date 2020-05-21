@@ -49,7 +49,7 @@ type MakeOptionalRealOptional<Base> = {
 
 export type PatchType<T> = T extends object
     ? T extends PatchableArray<any, any, any>
-        ? never
+        ? T
         : {
               [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
           } &

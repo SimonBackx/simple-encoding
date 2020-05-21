@@ -23,6 +23,7 @@ class Dog extends AutoEncoder {
     friends: Dog[];
 }
 const DogPatch = Dog.patchType();
+const DogPatchPatch = DogPatch.patchType();
 
 describe("AutoEncoder", () => {
     test("encoding works and version support", () => {

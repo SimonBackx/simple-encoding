@@ -171,10 +171,10 @@ export class AutoEncoder implements Encodeable {
     /**
      * Create a new one by providing the properties of the object
      */
-    set<T extends AutoEncoder>(this: T, object: AutoEncoderConstructor<T>) {
+    set<T extends AutoEncoder>(this: T, object: Partial<T>) {
         for (const key in object) {
             if (object.hasOwnProperty(key)) {
-                this[key] = object[key];
+                this[key] = object[key] as any;
             }
         }
     }

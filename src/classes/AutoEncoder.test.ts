@@ -13,13 +13,13 @@ class Dog extends AutoEncoder {
     id: string;
 
     @field({ decoder: StringDecoder })
-    @field({ decoder: StringDecoder, version: 2, field: "breed" })
+    @field({ decoder: StringDecoder, version: 2, field: "breed", defaultValue: () => "" })
     name: string | undefined;
 
-    @field({ decoder: new ArrayDecoder(StringDecoder) })
+    @field({ decoder: new ArrayDecoder(StringDecoder), defaultValue: () => [] })
     friendIds: string[];
 
-    @field({ decoder: new ArrayDecoder(Dog) })
+    @field({ decoder: new ArrayDecoder(Dog), defaultValue: () => [] })
     friends: Dog[];
 }
 const DogPatch = Dog.patchType();
@@ -93,8 +93,8 @@ describe("AutoEncoder", () => {
         const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [existingFriend] });
 
         const shouldCompile = DogPatch.create({ id: "a" });
-        const patchDog = DogPatch.create({ id: "a", name: "Change name" });
-        shouldCompile.patch(patchDog);
+        let patchDog = DogPatch.create({ id: "a", name: "Change name" });
+        patchDog = shouldCompile.patch(patchDog);
 
         patchDog.friendIds.addDelete("84sdg95");
         patchDog.friendIds.addPut("test", "sdgsdg");

@@ -5,6 +5,7 @@ export function field<Key extends keyof any, Value extends AutoEncoder>(settings
     optional?: boolean;
     nullable?: boolean;
     decoder: Decoder<any>;
+    defaultValue?: () => any;
 
     /**
      * Version in which this field was added
@@ -27,6 +28,7 @@ export function field<Key extends keyof any, Value extends AutoEncoder>(settings
         field.decoder = settings.decoder;
         field.version = settings.version ?? 0;
         field.field = settings.field ?? key;
+        field.defaultValue = settings.defaultValue;
         field.property = key;
 
         target.constructor.fields.push(field);

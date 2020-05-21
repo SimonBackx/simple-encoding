@@ -92,6 +92,8 @@ describe("AutoEncoder", () => {
 
         const shouldCompile = DogPatch.create({ id: "a" });
         const patchDog = DogPatch.create({ id: "a", name: "Change name" });
+        shouldCompile.patch(patchDog);
+
         patchDog.friendIds.addDelete("84sdg95");
         patchDog.friendIds.addPut("test", "sdgsdg");
         patchDog.friends.addPut(friendDog, null);

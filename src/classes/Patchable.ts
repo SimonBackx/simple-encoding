@@ -9,6 +9,9 @@ export interface Patchable<T> {
 }
 
 export function isPatchable<T>(object: T): object is T & Patchable<any> {
+    if (!object) {
+        return false;
+    }
     return !!(object as any).patch;
 }
 
@@ -53,5 +56,5 @@ export type PatchType<T> = T extends object
         : {
               [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
           } &
-              NonScalarIdentifiable
+              (T extends NonScalarIdentifiable ? { id: IdentifiableType<T> } : {})
     : T | undefined;

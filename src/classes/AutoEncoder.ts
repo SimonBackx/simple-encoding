@@ -31,7 +31,7 @@ export class Field {
     /**
      * Internal value for unsupported versions
      */
-    defaultValue: any;
+    defaultValue?: () => any;
 
     getOptionalClone() {
         const field = new Field();
@@ -49,10 +49,10 @@ export class Field {
                 const patchType = (elementDecoder as any).patchType as typeof AutoEncoder;
                 const idFieldType = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")!.decoder;
                 field.decoder = new PatchableArrayDecoder(elementDecoder, patchType, idFieldType);
-                field.defaultValue = new PatchableArray<any, any, any>();
+                field.defaultValue = () => new PatchableArray<any, any, any>();
             } else {
                 field.decoder = new PatchableArrayDecoder(elementDecoder, elementDecoder, elementDecoder);
-                field.defaultValue = new PatchableArray<any, any, any>();
+                field.defaultValue = () => new PatchableArray<any, any, any>();
             }
         }
 
@@ -92,7 +92,7 @@ export class AutoEncoder implements Encodeable {
     /// Create a patch for this instance (of reuse if already created)
     static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new (...args: any[]) => PatchType<InstanceType<T>>) {
         if (this.cachedPatchType) {
-            return this.cachedPatchType as any;
+            //return this.cachedPatchType as any;
         }
         // create a new class
         class CreatedPatch extends AutoEncoder {}
@@ -117,7 +117,7 @@ export class AutoEncoder implements Encodeable {
 
         for (const field of this.static.fields) {
             if (field.defaultValue) {
-                this[field.property] = field.defaultValue;
+                this[field.property] = field.defaultValue();
             }
         }
     }

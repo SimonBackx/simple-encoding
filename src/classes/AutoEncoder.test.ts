@@ -84,17 +84,22 @@ describe("AutoEncoder", () => {
     });
 
     test("Automatic patch instances", () => {
-        const friendDog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const friendDog = Dog.create({ id: "b", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const friendDogChanged = Dog.create({ id: "b", name: "My best friend", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+
+        const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
 
         const patchDog = DogPatch.create({ id: "a", name: "Change name" });
         patchDog.friendIds.addDelete("84sdg95");
         patchDog.friendIds.addPut("test", "sdgsdg");
         patchDog.friends.addPut(friendDog, null);
 
-        const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const friendPatch = DogPatch.create({ id: "b", name: "My best friend" });
+        patchDog.friends.addPatch(friendPatch);
+
         const patched = dog.patch(patchDog);
 
-        expect(patched).toEqual(Dog.create({ id: "a", name: "Change name", friendIds: ["sdgsdg", "test", "sdg95sdg26s"], friends: [friendDog] }));
+        expect(patched).toEqual(Dog.create({ id: "a", name: "Change name", friendIds: ["sdgsdg", "test", "sdg95sdg26s"], friends: [friendDogChanged] }));
 
         expect(patchDog.latestVersion).toEqual(Dog.latestVersion);
 
@@ -113,7 +118,7 @@ describe("AutoEncoder", () => {
             ],
             friends: [
                 {
-                    put: friendDog.encode(),
+                    put: friendDogChanged.encode(),
                     afterId: null,
                 },
             ],
@@ -134,7 +139,7 @@ describe("AutoEncoder", () => {
             ],
             friends: [
                 {
-                    put: friendDog.encode(1),
+                    put: friendDogChanged.encode(1),
                     afterId: null,
                 },
             ],

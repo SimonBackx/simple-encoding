@@ -1,7 +1,7 @@
 import { Encodeable } from "./Encodeable";
 import { PatchableArray } from "../structs/PatchableArray";
 import { AutoEncoder } from "./AutoEncoder";
-import { Identifiable, IdentifiableType, NonScalarIdentifiable } from "./Identifiable";
+import { Identifiable, IdentifiableType, NonScalarIdentifiable, BaseIdentifiable } from "./Identifiable";
 
 export interface StrictPatch {}
 export interface Patchable<T> {
@@ -22,10 +22,10 @@ type ConvertArrayToPatchableArray<T> = T extends Array<infer P>
         ? PatchableArray<string, string, string>
         : P extends number
         ? PatchableArray<number, number, number>
-        : P extends AutoEncoder & Patchable<P> & Identifiable
-        ? PatchableArray<IdentifiableType<P>, P, PatchType<P> & AutoEncoder>
+        : P extends AutoEncoder & Identifiable
+        ? PatchableArray<IdentifiableType<P>, P, PatchType<P> & AutoEncoder & NonScalarIdentifiable>
         : T | undefined
-    : T | undefined;
+    : PatchType<T>;
 
 type RemoveMethodsHelper<Base> = {
     [Key in keyof Base]: Base[Key] extends Function ? never : Key;
@@ -47,9 +47,11 @@ type MakeOptionalRealOptional<Base> = {
     [Key in keyof MakeOptionalRealOptionalHelper<Base>]: Base[Key];
 };
 
-export type PatchType<T> = T extends PatchableArray<any, any, any>
-    ? never
-    : {
-          [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
-      } &
-          NonScalarIdentifiable;
+export type PatchType<T> = T extends object
+    ? T extends PatchableArray<any, any, any>
+        ? never
+        : {
+              [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
+          } &
+              NonScalarIdentifiable
+    : T | undefined;

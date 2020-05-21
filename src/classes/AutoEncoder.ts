@@ -168,6 +168,17 @@ export class AutoEncoder implements Encodeable {
         return model;
     }
 
+    /**
+     * Create a new one by providing the properties of the object
+     */
+    set<T extends AutoEncoder>(this: T, object: AutoEncoderConstructor<T>) {
+        for (const key in object) {
+            if (object.hasOwnProperty(key)) {
+                this[key] = object[key];
+            }
+        }
+    }
+
     get static(): typeof AutoEncoder {
         return this.constructor as typeof AutoEncoder;
     }

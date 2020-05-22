@@ -178,6 +178,14 @@ export class AutoEncoder implements Encodeable {
                 }
             }
         }
+
+        for (const field of this.fields) {
+            if (!field.optional) {
+                if (model[field.property] === undefined) {
+                    throw new Error("Expected required property " + field.property + " when creating " + this.name);
+                }
+            }
+        }
         return model;
     }
 

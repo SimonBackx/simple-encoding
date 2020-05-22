@@ -20,3 +20,4 @@ export { default as BooleanDecoder } from "./src/structs/BooleanDecoder";
 export * from "./src/structs/PatchableArray";
 export * from "./src/classes/AutoEncoder";
 export * from "./src/decorators/Field";
+export * from "./src/classes/EncodeContext";

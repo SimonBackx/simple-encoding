@@ -2,7 +2,7 @@
     "name": "@simonbackx/simple-encoding",
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
-    "version": "1.8.2",
+    "version": "1.8.3",
     "scripts": {
         "build": "tsc -p . --declaration",
         "test": "jest"

@@ -156,6 +156,15 @@ export class AutoEncoder implements Encodeable {
         this.fields.sort(compare);
     }
 
+    static doesPropertyExist(property: string): boolean {
+        for (const field of this.fields) {
+            if (field.property === property) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Create a new one by providing the properties of the object
      */
@@ -163,7 +172,10 @@ export class AutoEncoder implements Encodeable {
         const model = new this() as InstanceType<T>;
         for (const key in object) {
             if (object.hasOwnProperty(key) && object[key] !== undefined && typeof object[key] !== "function") {
-                model[key] = object[key] as any;
+                // Also check this is an allowed field, else skip in favor of allowing downcasts without errors
+                if (this.doesPropertyExist(key)) {
+                    model[key] = object[key] as any;
+                }
             }
         }
         return model;
@@ -175,7 +187,9 @@ export class AutoEncoder implements Encodeable {
     set<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T>) {
         for (const key in object) {
             if (object.hasOwnProperty(key) && typeof object[key] !== "function") {
-                this[key] = object[key] as any;
+                if (this.static.doesPropertyExist(key)) {
+                    this[key] = object[key] as any;
+                }
             }
         }
     }

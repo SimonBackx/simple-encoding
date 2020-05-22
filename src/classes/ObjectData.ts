@@ -10,17 +10,18 @@ import BooleanDecoder from "../structs/BooleanDecoder";
 import IntegerDecoder from "../structs/IntegerDecoder";
 import { EnumDecoder } from "../structs/EnumDecoder";
 import { NullableDecoder } from "../structs/NullableDecoder";
+import { EncodeContext } from "./EncodeContext";
 
 /// Implementation of Data that reads an already existing tree of data.
 export class ObjectData implements Data {
     data: any;
     currentField: string;
-    version?: number;
+    context: EncodeContext;
 
-    constructor(data: any, currentField = "", version?: number) {
+    constructor(data: any, context: EncodeContext, currentField = "") {
         this.data = data;
         this.currentField = currentField;
-        this.version = version;
+        this.context = context;
     }
 
     addToCurrentField(field: string | number): string {
@@ -89,7 +90,7 @@ export class ObjectData implements Data {
                     field: this.addToCurrentField(number),
                 });
             }
-            return new ObjectData(this.data[number], this.addToCurrentField(number), this.version);
+            return new ObjectData(this.data[number], this.context, this.addToCurrentField(number));
         }
         throw new DecodingError({
             code: "invalid_field",
@@ -103,7 +104,7 @@ export class ObjectData implements Data {
      */
     optionalField(field: string): Data | undefined {
         if (this.data && this.data[field] !== undefined && this.data[field] !== null) {
-            return new ObjectData(this.data[field], this.addToCurrentField(field), this.version);
+            return new ObjectData(this.data[field], this.context, this.addToCurrentField(field));
         }
     }
 
@@ -112,7 +113,7 @@ export class ObjectData implements Data {
      */
     field(field: string): Data {
         if (this.data && this.data[field] !== undefined) {
-            return new ObjectData(this.data[field], this.addToCurrentField(field), this.version);
+            return new ObjectData(this.data[field], this.context, this.addToCurrentField(field));
         }
         throw new DecodingError({
             code: "missing_field",

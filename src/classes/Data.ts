@@ -1,4 +1,5 @@
 import { Decoder } from "./Decoder";
+import { EncodeContext } from "./EncodeContext";
 
 /// Decode data that is structured in maps and arrays
 export interface Data {
@@ -10,7 +11,7 @@ export interface Data {
     readonly base64: string;
     readonly key: string;
 
-    version?: number;
+    context: EncodeContext;
 
     /// Contains the path where we are reading
     readonly currentField: string;

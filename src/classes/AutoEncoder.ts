@@ -7,6 +7,7 @@ import { Identifiable } from "./Identifiable";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import StringDecoder from "../structs/StringDecoder";
+import { EncodeContext } from "./EncodeContext";
 
 export class Field {
     optional: boolean;
@@ -86,8 +87,6 @@ const p = DogPatch.create({id: "test"})
 export class AutoEncoder implements Encodeable {
     /// Fields should get sorted by version. Low to high
     static fields: Field[];
-    latestVersion?: number;
-    static latestVersion?: number;
     private static cachedPatchType?: typeof AutoEncoder;
 
     /// Create a patch for this instance (of reuse if already created)
@@ -109,8 +108,6 @@ export class AutoEncoder implements Encodeable {
             CreatedPatch.fields.push(field.getOptionalClone());
         }
 
-        CreatedPatch.latestVersion = this.latestVersion;
-
         return CreatedPatch as any;
     }
 
@@ -118,7 +115,6 @@ export class AutoEncoder implements Encodeable {
         if (!this.static.fields) {
             this.static.fields = [];
         }
-        this.latestVersion = this.static.latestVersion;
 
         for (const field of this.static.fields) {
             if (field.defaultValue) {
@@ -188,17 +184,13 @@ export class AutoEncoder implements Encodeable {
         return this.constructor as typeof AutoEncoder;
     }
 
-    encode(version?: number): PlainObject {
+    encode(context: EncodeContext): PlainObject {
         const object = {};
-        if (!version) {
-            console.warn("Avoid encoding without specifying a version. This will get deprectated in the future");
-            version = this.latestVersion ?? 0;
-        }
 
         const appliedProperties = {};
         for (let i = this.static.fields.length - 1; i >= 0; i--) {
             const field = this.static.fields[i];
-            if (field.version <= version && !appliedProperties[field.property]) {
+            if (field.version <= context.version && !appliedProperties[field.property]) {
                 if (this[field.property] === undefined) {
                     if (!field.optional) {
                         throw new Error("Value for property " + field.property + " is not set, but is required!");
@@ -206,12 +198,12 @@ export class AutoEncoder implements Encodeable {
                     continue;
                 }
                 if (isEncodeable(this[field.property])) {
-                    object[field.field] = this[field.property].encode(version);
+                    object[field.field] = this[field.property].encode(context);
                 } else {
                     if (Array.isArray(this[field.property])) {
                         object[field.field] = this[field.property].map((e) => {
                             if (isEncodeable(e)) {
-                                return e.encode(version);
+                                return e.encode(context);
                             }
                             return e;
                         });
@@ -229,17 +221,11 @@ export class AutoEncoder implements Encodeable {
     static decode<T extends typeof AutoEncoder>(this: T, data: Data): InstanceType<T> {
         const model = new this() as InstanceType<T>;
 
-        let version = data.version;
-        if (!version) {
-            console.warn("Avoid encoding without specifying a version. This will get deprectated in the future");
-            version = this.latestVersion ?? 0;
-        }
-
         const appliedProperties = {};
         for (let i = this.fields.length - 1; i >= 0; i--) {
             const field = this.fields[i];
 
-            if (field.version <= version && !appliedProperties[field.property]) {
+            if (field.version <= data.context.version && !appliedProperties[field.property]) {
                 if (field.optional) {
                     model[field.property] = data.optionalField(field.field)?.decode(field.decoder);
                 } else {

@@ -4,6 +4,7 @@ import { Data } from "../classes/Data";
 import { DecodingError } from "../classes/DecodingError";
 import { PatchType, Patchable, isPatchable } from "../classes/Patchable";
 import { Identifiable, getId, NonScalarIdentifiable } from "../classes/Identifiable";
+import { EncodeContext } from "../classes/EncodeContext";
 
 type PutAfter<Id, Put> = { afterId: Id | null; put: Put };
 type MoveAfter<Id> = { afterId: Id | null; move: Id };
@@ -207,20 +208,20 @@ export class PatchableArray<
         return newArray;
     }
 
-    encode(version?: number) {
+    encode(context: EncodeContext) {
         return this.changes.map(
             (change): PlainObject => {
                 if (isMove(change)) {
                     // First do a delete of this value
                     return {
                         afterId: change.afterId as string | number,
-                        move: isEncodeable(change.move) ? change.move.encode(version) : (change.move as string | number),
+                        move: isEncodeable(change.move) ? change.move.encode(context) : (change.move as string | number),
                     };
                 } else if (isPut(change)) {
                     // First do a delete of this value
                     return {
                         afterId: change.afterId as string | number,
-                        put: isEncodeable(change.put) ? change.put.encode(version) : (change.put as string | number),
+                        put: isEncodeable(change.put) ? change.put.encode(context) : (change.put as string | number),
                     };
                 } else if (isDelete(change)) {
                     return {
@@ -229,7 +230,7 @@ export class PatchableArray<
                 } else if (isPatch(change)) {
                     // First do a delete of this value
                     return {
-                        patch: isEncodeable(change.patch) ? change.patch.encode(version) : (change.patch as string | number),
+                        patch: isEncodeable(change.patch) ? change.patch.encode(context) : (change.patch as string | number),
                     };
                 }
             }

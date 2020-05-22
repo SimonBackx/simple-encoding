@@ -2,6 +2,7 @@ import { Encodeable } from "./Encodeable";
 import { PatchableArray } from "../structs/PatchableArray";
 import { AutoEncoder } from "./AutoEncoder";
 import { Identifiable, IdentifiableType, NonScalarIdentifiable, BaseIdentifiable } from "./Identifiable";
+import { EncodeContext } from "./EncodeContext";
 
 export interface StrictPatch {}
 export interface Patchable<T> {
@@ -15,9 +16,9 @@ export function isPatchable<T>(object: T): object is T & Patchable<any> {
     return !!(object as any).patch;
 }
 
-export function patchContainsChanges<B extends Encodeable & Patchable<B>, A extends PatchType<B>>(patch: A, model: B): boolean {
+export function patchContainsChanges<B extends Encodeable & Patchable<B>, A extends PatchType<B>>(patch: A, model: B, context: EncodeContext): boolean {
     const patched = model.patch(patch);
-    return JSON.stringify(patched.encode()) != JSON.stringify(model.encode());
+    return JSON.stringify(patched.encode(context)) != JSON.stringify(model.encode(context));
 }
 
 type ConvertArrayToPatchableArray<T> = T extends Array<infer P>

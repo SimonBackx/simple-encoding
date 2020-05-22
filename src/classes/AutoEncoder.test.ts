@@ -29,19 +29,13 @@ describe("AutoEncoder", () => {
     test("encoding works and version support", () => {
         const aFriend = Dog.create({ id: "b", name: "friend", friendIds: [], friends: [] });
         const dog = Dog.create({ id: "a", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [aFriend] });
-        expect(dog.encode()).toEqual({
-            id: "a",
-            breed: "dog",
-            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ id: "b", breed: "friend", friendIds: [], friends: [] }],
-        });
-        expect(dog.encode(1)).toEqual({
+        expect(dog.encode({ version: 1 })).toEqual({
             id: "a",
             name: "dog",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
             friends: [{ id: "b", name: "friend", friendIds: [], friends: [] }],
         });
-        expect(dog.encode(2)).toEqual({
+        expect(dog.encode({ version: 2 })).toEqual({
             id: "a",
             breed: "dog",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
@@ -57,8 +51,7 @@ describe("AutoEncoder", () => {
                 friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
                 friends: [{ id: "b", name: "friend", friendIds: [], friends: [] }],
             },
-            "",
-            1
+            { version: 1 }
         );
         const data2 = new ObjectData(
             {
@@ -67,8 +60,7 @@ describe("AutoEncoder", () => {
                 friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
                 friends: [{ id: "b", breed: "friend", friendIds: [], friends: [] }],
             },
-            "",
-            2
+            { version: 2 }
         );
 
         const dog1 = Dog.decode(data1);
@@ -79,8 +71,7 @@ describe("AutoEncoder", () => {
             id: "a",
             name: "version test",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ id: "b", name: "friend", friendIds: [], friends: [], latestVersion: 2 }],
-            latestVersion: 2,
+            friends: [{ id: "b", name: "friend", friendIds: [], friends: [] }],
         });
     });
 
@@ -113,10 +104,8 @@ describe("AutoEncoder", () => {
             Dog.create({ id: "a", name: "Change name", friendIds: ["sdgsdg", "test", "sdg95sdg26s"], friends: [friendDogChanged, existingFriendChanged] })
         );
 
-        expect(patchDog.latestVersion).toEqual(Dog.latestVersion);
-
         // Test if patchable items are encodeable
-        expect(patchDog.encode()).toEqual({
+        expect(patchDog.encode({ version: 2 })).toEqual({
             id: "a",
             breed: "Change name",
             friendIds: [
@@ -130,17 +119,17 @@ describe("AutoEncoder", () => {
             ],
             friends: [
                 {
-                    put: friendDogChanged.encode(),
+                    put: friendDogChanged.encode({ version: 2 }),
                     afterId: null,
                 },
                 {
-                    patch: friendPatchExist.encode(),
+                    patch: friendPatchExist.encode({ version: 2 }),
                 },
             ],
         });
 
         // Test if patchable items are encodeable
-        expect(patchDog.encode(1)).toEqual({
+        expect(patchDog.encode({ version: 1 })).toEqual({
             id: "a",
             name: "Change name",
             friendIds: [
@@ -154,18 +143,17 @@ describe("AutoEncoder", () => {
             ],
             friends: [
                 {
-                    put: friendDogChanged.encode(1),
+                    put: friendDogChanged.encode({ version: 1 }),
                     afterId: null,
                 },
                 {
-                    patch: friendPatchExist.encode(1),
+                    patch: friendPatchExist.encode({ version: 1 }),
                 },
             ],
         });
 
         // Test if patchable items are decodeable
-        expect(DogPatch.decode(new ObjectData(patchDog.encode()))).toEqual(patchDog);
-        expect(DogPatch.decode(new ObjectData(patchDog.encode(1), "", 1))).toEqual(patchDog);
-        expect(DogPatch.decode(new ObjectData(patchDog.encode(2), "", 2))).toEqual(patchDog);
+        expect(DogPatch.decode(new ObjectData(patchDog.encode({ version: 1 }), { version: 1 }))).toEqual(patchDog);
+        expect(DogPatch.decode(new ObjectData(patchDog.encode({ version: 2 }), { version: 2 }))).toEqual(patchDog);
     });
 });

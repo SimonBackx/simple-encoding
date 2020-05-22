@@ -24,7 +24,7 @@ class Patch implements Patchable<Patch> {
         });
     }
 
-    encode() {
+    encode(context) {
         return {
             id: this.id,
             name: this.name,
@@ -60,7 +60,7 @@ class Put implements Patchable<Put> {
         });
     }
 
-    encode() {
+    encode(context) {
         return {
             id: this.id,
             name: this.name,
@@ -142,9 +142,9 @@ describe("PatchableArray", () => {
         expect(patchableArray.changes.length).toEqual(2);
 
         // Test the decoding and encoding
-        const encoded = patchableArray.encode();
+        const encoded = patchableArray.encode({ version: 0 });
         const decoder = new PatchableArrayDecoder(Put, Patch, StringDecoder);
-        const decoded = decoder.decode(new ObjectData(encoded));
+        const decoded = decoder.decode(new ObjectData(encoded, { version: 0 }));
         expect(decoded).toEqual(patchableArray);
 
         // Check if still results in the same result

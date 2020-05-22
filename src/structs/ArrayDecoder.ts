@@ -12,7 +12,7 @@ export class ArrayDecoder<T> implements Decoder<T[]> {
 
     decode(data: Data): T[] {
         if (Array.isArray(data.value)) {
-            return data.value.map((v, index) => new ObjectData(v, data.addToCurrentField(index), data.version)).map((d) => d.decode(this.decoder));
+            return data.value.map((v, index) => new ObjectData(v, data.context, data.addToCurrentField(index))).map((d) => d.decode(this.decoder));
         }
 
         throw new DecodingError({

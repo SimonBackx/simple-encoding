@@ -53,11 +53,11 @@ class MyClass implements Encodeable {
         });
     }
 
-    encode() {
+    encode(context) {
         return {
             id: this.id,
             name: this.name,
-            other: this.other?.encode(),
+            other: this.other?.encode(context),
         };
     }
 }

@@ -15,6 +15,12 @@ export class Field {
     decoder: Decoder<any>;
 
     /**
+     * Executed after decoding / before encoding to convert to a correct internal value (= latest version)
+     */
+    upgrade?: (old: any) => any;
+    downgrade?: (newer: any) => any;
+
+    /**
      * Version in which this field was added
      */
     version: number;
@@ -42,9 +48,18 @@ export class Field {
         field.version = this.version;
         field.property = this.property;
         field.field = this.field;
+        field.upgrade = this.upgrade;
+        field.downgrade = this.downgrade;
         field.defaultValue = undefined; // do not copy default values. Patches never have default values!
 
         if (this.decoder instanceof ArrayDecoder) {
+            if (field.upgrade || field.downgrade) {
+                console.warn("Upgrade and downgrades on patchable arrays are not yet supported");
+            }
+            // Upgrade / downgrade not supported yet!
+            field.upgrade = undefined;
+            field.downgrade = undefined;
+
             const elementDecoder = this.decoder.decoder;
             if ((elementDecoder as any).patchType) {
                 const patchType = (elementDecoder as any).patchType();
@@ -208,29 +223,30 @@ export class AutoEncoder implements Encodeable {
 
     encode(context: EncodeContext): PlainObject {
         const object = {};
+        const source = this.static.downgrade(context.version, this);
 
         const appliedProperties = {};
         for (let i = this.static.fields.length - 1; i >= 0; i--) {
             const field = this.static.fields[i];
             if (field.version <= context.version && !appliedProperties[field.property]) {
-                if (this[field.property] === undefined) {
+                if (source[field.property] === undefined) {
                     if (!field.optional) {
                         throw new Error("Value for property " + field.property + " is not set, but is required!");
                     }
                     continue;
                 }
                 if (isEncodeable(this[field.property])) {
-                    object[field.field] = this[field.property].encode(context);
+                    object[field.field] = source[field.property].encode(context);
                 } else {
-                    if (Array.isArray(this[field.property])) {
-                        object[field.field] = this[field.property].map((e) => {
+                    if (Array.isArray(source[field.property])) {
+                        object[field.field] = source[field.property].map((e) => {
                             if (isEncodeable(e)) {
                                 return e.encode(context);
                             }
                             return e;
                         });
                     } else {
-                        object[field.field] = this[field.property];
+                        object[field.field] = source[field.property];
                     }
                 }
                 appliedProperties[field.property] = true;
@@ -244,6 +260,8 @@ export class AutoEncoder implements Encodeable {
         const model = new this() as InstanceType<T>;
 
         const appliedProperties = {};
+
+        // Loop from newest version to older version
         for (let i = this.fields.length - 1; i >= 0; i--) {
             const field = this.fields[i];
 
@@ -258,6 +276,42 @@ export class AutoEncoder implements Encodeable {
             }
         }
 
+        // We now have model with values equal to version data.context.version
+
+        // Run upgrade / downgrade migrations to convert changes in fields
+        this.upgrade(data.context.version, model);
+
         return model;
+    }
+
+    /**
+     * Upgrade property values coming from an older version
+     * @param from
+     * @param object
+     */
+    static upgrade(from: number, object: any) {
+        for (const field of this.fields) {
+            if (field.version > from) {
+                if (field.upgrade) {
+                    object[field.property] = field.upgrade(object[field.property]);
+                }
+            }
+        }
+    }
+
+    /**
+     * Downgrade property values to a new object
+     */
+    static downgrade(to: number, object: any): object {
+        const older: object = Object.assign({}, object);
+        for (let i = this.fields.length - 1; i >= 0; i--) {
+            const field = this.fields[i];
+            if (field.version > to) {
+                if (field.downgrade) {
+                    older[field.property] = field.downgrade(older[field.property]);
+                }
+            }
+        }
+        return older;
     }
 }

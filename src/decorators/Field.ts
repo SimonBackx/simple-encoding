@@ -7,6 +7,9 @@ export function field<Key extends keyof any, Value extends AutoEncoder>(settings
     decoder: Decoder<any>;
     defaultValue?: () => any;
 
+    upgrade?: (old: any) => any;
+    downgrade?: (newer: any) => any;
+
     /**
      * Version in which this field was added
      */
@@ -28,6 +31,8 @@ export function field<Key extends keyof any, Value extends AutoEncoder>(settings
         field.decoder = settings.decoder;
         field.version = settings.version ?? 0;
         field.field = settings.field ?? key;
+        field.upgrade = settings.upgrade;
+        field.downgrade = settings.downgrade;
         field.defaultValue = settings.defaultValue;
         field.property = key;
 

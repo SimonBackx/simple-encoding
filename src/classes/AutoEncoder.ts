@@ -43,7 +43,7 @@ export class Field {
     getOptionalClone() {
         const field = new Field();
         field.optional = true;
-        field.nullable = this.optional;
+        field.nullable = this.nullable;
         field.decoder = this.decoder;
         field.version = this.version;
         field.property = this.property;
@@ -203,6 +203,12 @@ export class AutoEncoder implements Encodeable {
                     throw new Error("Expected required property " + field.property + " when creating " + this.name);
                 }
             }
+
+            if (!field.nullable) {
+                if (model[field.property] === null) {
+                    throw new Error("Expected non null property " + field.property + " when creating " + this.name);
+                }
+            }
         }
         return model;
     }
@@ -270,9 +276,17 @@ export class AutoEncoder implements Encodeable {
 
             if (field.version <= data.context.version && !appliedProperties[field.property]) {
                 if (field.optional) {
-                    model[field.property] = data.optionalField(field.field)?.decode(field.decoder);
+                    if (field.nullable) {
+                        model[field.property] = data.undefinedField(field.field)?.nullable(field.decoder);
+                    } else {
+                        model[field.property] = data.optionalField(field.field)?.decode(field.decoder);
+                    }
                 } else {
-                    model[field.property] = data.field(field.field)?.decode(field.decoder);
+                    if (field.nullable) {
+                        model[field.property] = data.field(field.field)?.nullable(field.decoder);
+                    } else {
+                        model[field.property] = data.field(field.field)?.decode(field.decoder);
+                    }
                 }
 
                 appliedProperties[field.property] = true;

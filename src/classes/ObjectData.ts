@@ -109,6 +109,15 @@ export class ObjectData implements Data {
     }
 
     /**
+     * Expects an optional field that could be undefined. Returns Data if the field value is null or not undefined
+     */
+    undefinedField(field: string): Data | undefined {
+        if (this.data && this.data[field] !== undefined) {
+            return new ObjectData(this.data[field], this.context, this.addToCurrentField(field));
+        }
+    }
+
+    /**
      * Expects an existing field that is defined and not null
      */
     field(field: string): Data {

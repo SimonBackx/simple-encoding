@@ -19,6 +19,7 @@ export interface Data {
 
     field(field: string): Data;
     optionalField(field: string): Data | undefined;
+    undefinedField(field: string): Data | undefined;
     index(number: number): Data;
     decode<T>(decoder: Decoder<T>): T;
     nullable<T>(decoder: Decoder<T>): T | null;

@@ -277,7 +277,7 @@ export class PatchableArrayItemDecoder<
             // throw decoding errors from putDecoder and idDecoder
             return {
                 put: put.decode(this.putDecoder),
-                afterId: data.optionalField("afterId")?.nullable(this.idDecoder),
+                afterId: data.undefinedField("afterId")?.nullable(this.idDecoder),
             };
         }
 

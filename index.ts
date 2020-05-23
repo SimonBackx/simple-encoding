@@ -21,3 +21,4 @@ export * from "./src/structs/PatchableArray";
 export * from "./src/classes/AutoEncoder";
 export * from "./src/decorators/Field";
 export * from "./src/classes/EncodeContext";
+export { default as DateDecoder } from "./src/structs/DateDecoder";

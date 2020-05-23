@@ -6,7 +6,7 @@ import { PatchType, Patchable, isPatchable } from "../classes/Patchable";
 import { Identifiable, getId, NonScalarIdentifiable } from "../classes/Identifiable";
 import { EncodeContext } from "../classes/EncodeContext";
 
-type PutAfter<Id, Put> = { afterId: Id | null; put: Put };
+type PutAfter<Id, Put> = { afterId?: Id | null; put: Put };
 type MoveAfter<Id> = { afterId: Id | null; move: Id };
 type PatchItem<Patch> = { patch: Patch };
 type DeleteItem<Id> = { delete: Id };
@@ -75,7 +75,7 @@ export class PatchableArray<
         return cloned;
     }
 
-    addPut(value: Put, after: Id | null) {
+    addPut(value: Put, after?: Id | null) {
         this.changes.push({ afterId: after, put: value });
     }
 
@@ -178,6 +178,9 @@ export class PatchableArray<
                         afterIndex = newArray.length - 1;
                     }
                 }
+                if (change.afterId === undefined) {
+                    afterIndex = newArray.length - 1;
+                }
                 newArray.splice(afterIndex + 1, 0, change.put);
             } else if (isDelete(change)) {
                 // First do a delete of this value
@@ -214,18 +217,18 @@ export class PatchableArray<
                 if (isMove(change)) {
                     // First do a delete of this value
                     return {
-                        afterId: change.afterId as string | number,
-                        move: isEncodeable(change.move) ? change.move.encode(context) : (change.move as string | number),
+                        afterId: change.afterId,
+                        move: isEncodeable(change.move) ? change.move.encode(context) : change.move,
                     };
                 } else if (isPut(change)) {
                     // First do a delete of this value
                     return {
-                        afterId: change.afterId as string | number,
+                        afterId: change.afterId,
                         put: isEncodeable(change.put) ? change.put.encode(context) : (change.put as string | number),
                     };
                 } else if (isDelete(change)) {
                     return {
-                        delete: (change.delete as string | number) as string | number,
+                        delete: change.delete,
                     };
                 } else if (isPatch(change)) {
                     // First do a delete of this value
@@ -274,7 +277,7 @@ export class PatchableArrayItemDecoder<
             // throw decoding errors from putDecoder and idDecoder
             return {
                 put: put.decode(this.putDecoder),
-                afterId: data.field("afterId").nullable(this.idDecoder),
+                afterId: data.optionalField("afterId")?.nullable(this.idDecoder),
             };
         }
 

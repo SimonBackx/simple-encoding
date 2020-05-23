@@ -143,8 +143,10 @@ export class AutoEncoder implements Encodeable {
         for (const field of this.static.fields) {
             const prop = field.property;
             if (isPatchable(this[prop])) {
-                if (patch[prop]) {
+                if (patch[prop] !== undefined) {
                     instance[prop] = this[prop].patch(patch[prop]);
+                } else {
+                    instance[prop] = this[prop];
                 }
             } else {
                 if (Array.isArray(this[prop])) {
@@ -154,6 +156,7 @@ export class AutoEncoder implements Encodeable {
                 }
             }
         }
+
         return instance;
     }
 

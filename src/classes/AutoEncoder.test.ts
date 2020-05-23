@@ -23,6 +23,9 @@ class Dog extends AutoEncoder {
 
     @field({ decoder: new ArrayDecoder(Dog) })
     friends: Dog[] = [];
+
+    @field({ decoder: Dog, optional: true })
+    bestFriend?: Dog;
 }
 const DogPatch = Dog.patchType();
 const DogPatchPatch = DogPatch.patchType();
@@ -82,10 +85,25 @@ describe("AutoEncoder", () => {
     });
 
     test("Automatic patch instances", () => {
-        const existingFriend = Dog.create({ id: "DOG3", name: "existing friend", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const existingFriendBestFriend = Dog.create({ id: "DOG4", name: "best friend", friendIds: [], friends: [] });
+
+        const existingFriend = Dog.create({
+            id: "DOG3",
+            name: "existing friend",
+            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
+            friends: [],
+            // this is needed to test if existing relations are left unchanged on patches
+            bestFriend: existingFriendBestFriend,
+        });
         const friendDog = Dog.create({ id: "DOG2", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
         const friendDogChanged = Dog.create({ id: "DOG2", name: "My best friend", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
-        const existingFriendChanged = Dog.create({ id: "DOG3", name: "My not good friend", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const existingFriendChanged = Dog.create({
+            id: "DOG3",
+            name: "My not good friend",
+            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
+            friends: [],
+            bestFriend: existingFriendBestFriend,
+        });
 
         const dog = Dog.create({ id: "DOG1", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [existingFriend] });
 

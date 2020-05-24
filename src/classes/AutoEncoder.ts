@@ -152,7 +152,13 @@ export class AutoEncoder implements Encodeable {
                 if (Array.isArray(this[prop])) {
                     instance[prop] = patch[prop].applyTo(this[prop]);
                 } else {
-                    instance[prop] = patch[prop] ?? this[prop];
+                    // we need to check for undefined and not use ??
+                    // because we also need to set values to null
+                    if (patch[prop] === undefined) {
+                        instance[prop] = this[prop];
+                    } else {
+                        instance[prop] = patch[prop];
+                    }
                 }
             }
         }
@@ -172,6 +178,17 @@ export class AutoEncoder implements Encodeable {
             return 0;
         }
         this.fields.sort(compare);
+    }
+
+    static get latestFields(): Field[] {
+        const latestFields = {};
+        for (let i = this.fields.length - 1; i >= 0; i--) {
+            const field = this.fields[i];
+            if (!latestFields[field.property]) {
+                latestFields[field.property] = field;
+            }
+        }
+        return Object.values(latestFields);
     }
 
     static doesPropertyExist(property: string): boolean {
@@ -197,7 +214,7 @@ export class AutoEncoder implements Encodeable {
             }
         }
 
-        for (const field of this.fields) {
+        for (const field of this.latestFields) {
             if (!field.optional) {
                 if (model[field.property] === undefined) {
                     throw new Error("Expected required property " + field.property + " when creating " + this.name);

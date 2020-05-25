@@ -23,12 +23,12 @@ export function field<Key extends keyof any, Value extends AutoEncoder>(settings
     return (target: any /* future typeof Model */, key: string) => {
         if (!target.constructor.fields) {
             target.constructor.fields = [];
-            target.constructor.fields.createdFor = target.constructor.name;
+            target.constructor.fields.createdFor = target.constructor;
         } else {
-            if (target.constructor.fields.createdFor && target.constructor.fields.createdFor != target.constructor.name) {
+            if (target.constructor.fields.createdFor && target.constructor.fields.createdFor !== target.constructor) {
                 // need to clone instead of creating a new reference
                 target.constructor.fields = target.constructor.fields.slice(0);
-                target.constructor.fields.createdFor = target.constructor.name;
+                target.constructor.fields.createdFor = target.constructor;
             }
         }
 

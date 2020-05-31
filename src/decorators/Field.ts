@@ -29,6 +29,7 @@ export function field<Key extends keyof any, Value extends AutoEncoder>(settings
                 // need to clone instead of creating a new reference
                 target.constructor.fields = target.constructor.fields.slice(0);
                 target.constructor.fields.createdFor = target.constructor;
+                target.constructor.cachedPatchType = undefined;
             }
         }
 

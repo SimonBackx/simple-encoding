@@ -52,6 +52,7 @@ export class Field {
         field.downgrade = this.downgrade;
         field.defaultValue = undefined; // do not copy default values. Patches never have default values!
 
+        const aDecoder = this.decoder as any;
         if (this.decoder instanceof ArrayDecoder) {
             if (field.upgrade || field.downgrade) {
                 console.warn("Upgrade and downgrades on patchable arrays are not yet supported");
@@ -71,6 +72,14 @@ export class Field {
                 field.decoder = new PatchableArrayDecoder(elementDecoder, elementDecoder, elementDecoder);
                 field.defaultValue = () => new PatchableArray<any, any, any>();
             }
+        } else if (aDecoder.prototype && aDecoder.prototype instanceof AutoEncoder) {
+            if (field.upgrade || field.downgrade) {
+                console.warn("Upgrade and downgrades on patchable AutoEncoder objects are not yet supported");
+            }
+            // Upgrade / downgrade not supported yet!
+            field.upgrade = undefined;
+            field.downgrade = undefined;
+            field.decoder = aDecoder.patchType();
         }
 
         return field;

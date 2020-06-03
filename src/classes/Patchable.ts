@@ -21,7 +21,7 @@ export function patchContainsChanges<B extends Encodeable & Patchable<B>, A exte
     return JSON.stringify(patched.encode(context)) != JSON.stringify(model.encode(context));
 }
 
-type ConvertArrayToPatchableArray<T> = T extends Array<infer P>
+export type ConvertArrayToPatchableArray<T> = T extends Array<infer P>
     ? P extends string
         ? PatchableArray<string, string, string>
         : P extends number

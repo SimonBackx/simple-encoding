@@ -305,7 +305,7 @@ export class AutoEncoder implements Encodeable {
                     if (field.nullable) {
                         model[field.property] = data.undefinedField(field.field)?.nullable(field.decoder);
                     } else {
-                        model[field.property] = data.optionalField(field.field)?.decode(field.decoder);
+                        model[field.property] = data.optionalField(field.field)?.decode(field.decoder) ?? model[field.property] ?? undefined;
                     }
                 } else {
                     if (field.nullable) {

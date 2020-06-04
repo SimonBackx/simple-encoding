@@ -123,7 +123,7 @@ export class PatchableArray<
     }
 
     addDelete(id: Id) {
-        // Remove all puts and patches
+        // Remove all puts, patches and moves
         const otherPut = this.changes.findIndex((e) => isPut(e) && getId(e.put) == id);
         if (otherPut !== -1) {
             // if it had a put, remove the put but don't add a delete

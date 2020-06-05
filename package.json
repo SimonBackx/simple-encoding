@@ -1,10 +1,14 @@
 {
     "name": "@simonbackx/simple-encoding",
     "main": "./dist/index.js",
+    "module": "./esm/dist/index.js",
     "types": "./dist/index.d.ts",
     "version": "1.8.14",
+    "sideEffects": false,
     "scripts": {
-        "build": "tsc -p . --declaration",
+        "build": "yarn build-cjs && yarn build-esm",
+        "build-cjs": "tsc -p . --declaration",
+        "build-esm": "tsc -p esm --declaration",
         "test": "jest"
     },
     "files": [

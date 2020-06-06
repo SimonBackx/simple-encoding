@@ -332,11 +332,11 @@ export class AutoEncoder implements Encodeable {
      * @param from
      * @param object
      */
-    static upgrade(from: number, object: any) {
+    static upgrade<T extends typeof AutoEncoder>(from: number, object: InstanceType<T>) {
         for (const field of this.fields) {
             if (field.version > from) {
                 if (field.upgrade) {
-                    object[field.property] = field.upgrade(object[field.property]);
+                    object[field.property] = field.upgrade.call(object, object[field.property]);
                 }
             }
         }

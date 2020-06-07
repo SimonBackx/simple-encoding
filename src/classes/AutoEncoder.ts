@@ -54,10 +54,7 @@ export class Field {
 
         const aDecoder = this.decoder as any;
         if (this.decoder instanceof ArrayDecoder) {
-            if (field.upgrade || field.downgrade) {
-                console.warn("Upgrade and downgrades on patchable arrays are not yet supported");
-            }
-            // Upgrade / downgrade not supported yet!
+            // Upgrade / downgrades cannot work when pathcing, should be placed on instances
             field.upgrade = undefined;
             field.downgrade = undefined;
 

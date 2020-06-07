@@ -70,9 +70,9 @@ export class Field {
                 field.defaultValue = () => new PatchableArray<any, any, any>();
             }
         } else if (aDecoder.prototype && aDecoder.prototype instanceof AutoEncoder) {
-            if (field.upgrade || field.downgrade) {
+            /*if (field.upgrade || field.downgrade) {
                 console.warn("Upgrade and downgrades on patchable AutoEncoder objects are not yet supported");
-            }
+            }*/
             // Upgrade / downgrade not supported yet!
             field.upgrade = undefined;
             field.downgrade = undefined;

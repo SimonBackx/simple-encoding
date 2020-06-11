@@ -86,6 +86,29 @@ export class PatchableArray<
         this.changes.push({ afterId: after, move: item });
     }
 
+    hasChanges(item: Id) {
+        for (const change of this.changes) {
+            if (isMove(change)) {
+                // ok
+            } else if (isPut(change)) {
+                if (getId(change.put) == item) {
+                    return true;
+                }
+            } else if (isDelete(change)) {
+                if (change.delete == item) {
+                    return true;
+                }
+            } else if (isPatch(change)) {
+                if (getId(change.patch) == item) {
+                    return true;
+                }
+            } else {
+                throw new Error("Invalid change: " + JSON.stringify(change));
+            }
+        }
+        return false;
+    }
+
     filter(item: Id): PatchableArray<Id, Put, Patch> {
         const construct = this.constructor as typeof PatchableArray;
         const n: PatchableArray<Id, Put, Patch> = new construct();

@@ -150,4 +150,36 @@ describe("PatchableArray", () => {
         // Check if still results in the same result
         expect(decoded.applyTo(currentValue)).toEqual([A]);
     });
+
+    test("Test filtering", () => {
+        const patchableArray = new PatchableArray<string, Put, Patch>();
+
+        const A = new Put({ id: "A", name: "Letter A", description: "This is a letter" });
+        const B = new Put({ id: "B", name: "Letter B", description: "This is a letter" });
+        const BResult = new Put({ id: "B", name: "Letter B", description: "This is the best letter" });
+        const AResult = new Put({ id: "A", name: "The letter A", description: "This is a letter" });
+
+        patchableArray.addPut(A, null);
+        //patchableArray.addPut(B, A.id);
+        const betterDescription = new Patch({ id: "B", description: "This is the best letter" });
+        patchableArray.addPatch(betterDescription);
+        patchableArray.addMove(A.id, B.id);
+        const betterName = new Patch({ id: "A", name: "The letter A" });
+        patchableArray.addPatch(betterName);
+
+        // Check patchable array remains untouched after useless filter
+        patchableArray.filter("C");
+
+        // Real filter
+        const filtered = patchableArray.filter(A.id);
+        expect(filtered.changes).toEqual([{ afterId: null, put: AResult }]);
+
+        expect(patchableArray.changes).toEqual([{ patch: betterDescription }, { move: A.id, afterId: B.id }]);
+        patchableArray.addDelete(B.id);
+        expect(patchableArray.changes).toEqual([{ move: A.id, afterId: B.id }, { delete: B.id }]);
+
+        const filtered2 = patchableArray.filter(B.id);
+        expect(patchableArray.changes).toEqual([{ move: A.id, afterId: B.id }]);
+        expect(filtered2.changes).toEqual([{ delete: B.id }]);
+    });
 });

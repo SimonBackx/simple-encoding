@@ -83,6 +83,42 @@ export class PatchableArray<
         this.changes.push({ afterId: after, move: item });
     }
 
+    filter(item: Id): PatchableArray<Id, Put, Patch> {
+        const construct = this.constructor as typeof PatchableArray;
+        const n: PatchableArray<Id, Put, Patch> = new construct();
+
+        const newCurrentChanges: Change<Id, Put, Patch>[] = [];
+
+        for (const change of this.changes) {
+            if (isMove(change)) {
+                newCurrentChanges.push(change);
+            } else if (isPut(change)) {
+                if (getId(change.put) == item) {
+                    n.changes.push(change);
+                } else {
+                    newCurrentChanges.push(change);
+                }
+            } else if (isDelete(change)) {
+                if (change.delete == item) {
+                    n.changes.push(change);
+                } else {
+                    newCurrentChanges.push(change);
+                }
+            } else if (isPatch(change)) {
+                if (change.patch == item) {
+                    n.changes.push(change);
+                } else {
+                    newCurrentChanges.push(change);
+                }
+            } else {
+                throw new Error("Invalid change: " + JSON.stringify(change));
+            }
+        }
+
+        this.changes = newCurrentChanges;
+        return n;
+    }
+
     addPatch(value: Patch) {
         const id = getId(value);
         const otherPut = this.changes.findIndex((e) => isPut(e) && getId(e.put) == id);

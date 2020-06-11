@@ -108,7 +108,7 @@ export class PatchableArray<
                     newCurrentChanges.push(change);
                 }
             } else if (isPatch(change)) {
-                if (change.patch == item) {
+                if (getId(change.patch) == item) {
                     n.changes.push(change);
                 } else {
                     newCurrentChanges.push(change);

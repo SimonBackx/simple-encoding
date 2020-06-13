@@ -14,9 +14,6 @@
     "files": [
         "dist"
     ],
-    "publishConfig": {
-        "registry": "https://npm.pkg.github.com/"
-    },
     "dependencies": {},
     "devDependencies": {
         "@types/jest": "^25.1.4",

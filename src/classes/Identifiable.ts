@@ -17,12 +17,18 @@ export type IdentifiableType<T extends Identifiable> = T extends string | number
         : never
     : never;
 
+export type NonScalarIdentifiableType<T> = T extends { id: infer P }
+    ? P extends string | number
+        ? P
+        : never
+    : never;
+
 export function isBaseIdentifiable(val: any): val is BaseIdentifiable<any> {
-    return (val as any).getIdentifier !== undefined;
+    return val.getIdentifier !== undefined;
 }
 
 function hasId(val: any): val is { id: string | number } {
-    return (val as any).id !== undefined;
+    return val.id !== undefined;
 }
 
 export function getId(val: Identifiable): string | number {

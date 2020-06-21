@@ -1,18 +1,15 @@
-import { AutoEncoder, AutoEncoderConstructor } from "./AutoEncoder";
 import { field } from "../decorators/Field";
-import StringDecoder from "../structs/StringDecoder";
-import { ObjectData } from "./ObjectData";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
-import { PatchableArray } from "../structs/PatchableArray";
-import { Encodeable } from "./Encodeable";
-import { Patchable, PatchType } from "./Patchable";
-import { Identifiable, IdentifiableType } from "./Identifiable";
 import IntegerDecoder from "../structs/IntegerDecoder";
+import StringDecoder from "../structs/StringDecoder";
+import { AutoEncoder } from "./AutoEncoder";
+import { ObjectData } from "./ObjectData";
+import { PatchType } from './Patchable';
 
 class Dog extends AutoEncoder {
     @field({ decoder: IntegerDecoder })
     @field({ decoder: StringDecoder, version: 2, upgrade: (int: number) => "DOG" + int, downgrade: (str: string) => parseInt(str.substring(3)) })
-    id: string = "";
+    id = "";
 
     @field({ decoder: StringDecoder })
     @field({ decoder: StringDecoder, version: 2, field: "breed", defaultValue: () => "" })
@@ -28,7 +25,6 @@ class Dog extends AutoEncoder {
     bestFriend?: Dog;
 }
 const DogPatch = Dog.patchType();
-const DogPatchPatch = DogPatch.patchType();
 
 describe("AutoEncoder", () => {
     test("encoding works and version support", () => {

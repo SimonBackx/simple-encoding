@@ -1,14 +1,15 @@
-import { Encodeable, TypedEncodeable, PlainObject } from "./Encodeable";
 import { PatchableArray } from "../structs/PatchableArray";
 import { AutoEncoder } from "./AutoEncoder";
-import { Identifiable, IdentifiableType, NonScalarIdentifiable, BaseIdentifiable } from "./Identifiable";
+import { Encodeable, PlainObject,TypedEncodeable } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
-import { Decoder } from './Decoder';
+import { Identifiable, IdentifiableType, NonScalarIdentifiable, NonScalarIdentifiableType } from "./Identifiable";
 
 export interface StrictPatch { }
-export interface Patchable<T> {
-    patch(patch: PatchType<T>): T;
+export interface Patchable<P> {
+    patch(patch: P): this;
 }
+
+export type PatchType<T> = T extends Patchable<infer P> ? P : (T | undefined)
 
 export function isPatchable<T>(object: T): object is T & Patchable<any> {
     if (!object) {
@@ -22,15 +23,18 @@ export function patchContainsChanges<B extends Encodeable & Patchable<B>, A exte
     return JSON.stringify(patched.encode(context)) != JSON.stringify(model.encode(context));
 }
 
-export type ConvertArrayToPatchableArray<T> = T extends Array<infer P>
+export type ConvertArrayToPatchableArray<T> = 
+T extends PatchableArray<any, any, any>
+    ? T :
+(T extends Array<infer P>
     ? P extends string
     ? PatchableArray<string, string, string>
     : P extends number
     ? PatchableArray<number, number, number>
-    : P extends AutoEncoder & Identifiable
-    ? PatchableArray<IdentifiableType<P>, P, PatchType<P> & AutoEncoder & NonScalarIdentifiable>
+    : P extends AutoEncoder & NonScalarIdentifiable
+    ? PatchableArrayAutoEncoder<P>
     : T | undefined
-    : PatchType<T>;
+    : PatchType<T> | undefined);
 
 type RemoveMethodsHelper<Base> = {
     [Key in keyof Base]: Base[Key] extends Function ? never : Key;
@@ -42,7 +46,7 @@ export type PartialWithoutMethods<Base> = {
 };
 
 type GetOptionalPropertiesOfHelper<Base> = {
-    [Key in keyof Base]: Base[Key] extends string | number | Array<any> | Function | boolean | Object ? never : Key;
+    [Key in keyof Base]: Base[Key] extends string | number | Array<any> | Function | boolean | Record<string, any> ? never : Key;
 };
 type GetOptionalPropertiesOf<Base> = Exclude<GetOptionalPropertiesOfHelper<Base>[keyof Base], undefined>;
 
@@ -56,21 +60,18 @@ type MakeOptionalRealOptional<Base> = {
     [Key in keyof MakeOptionalRealOptionalHelper<Base>]: Base[Key];
 };
 
-export type PatchType<T> = T extends PatchableArray<any, any, any>
-    ? T : (
-        T extends AutoEncoder ?
-        {
-            [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
-        } &
-        (T extends NonScalarIdentifiable ? { id: IdentifiableType<T> } : {})
-        : (T extends TypedEncodeable<infer D> ? {
-            [Z in keyof D]: PatchType<D[Z]>;
-        } : (
-                T extends object ?
-                {
-                    [P in Exclude<NonMethodNames<T>, "id">]: PatchType<T[P]>;
-                } &
-                (T extends NonScalarIdentifiable ? { id: IdentifiableType<T> } : {}) : (T | undefined)
+/**
+ * Automatically determine the patchtype of an autoencoder object
+ */
 
-            ))
-    )
+/**
+ * Automatically determine the patchtype of an autoencoder object
+ */
+export type AutoEncoderPatchType<T> = {
+    [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
+} & ( T extends NonScalarIdentifiable ? NonScalarIdentifiable : {})
+
+/**
+ * Helper type to fix TypeScript circular dependency by making a synonym for a patchable array for an autoencoder
+ */
+export type PatchableArrayAutoEncoder<P extends AutoEncoder & NonScalarIdentifiable> = PatchableArray<NonScalarIdentifiableType<P>, P, PatchType<P> & AutoEncoder> 

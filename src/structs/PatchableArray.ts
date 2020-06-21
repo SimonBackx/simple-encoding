@@ -34,8 +34,8 @@ function isPatch(val: Change<any, any, any>): val is PatchItem<any> {
  */
 export class PatchableArray<
     Id extends string | number,
-    Put extends (Identifiable & Encodeable & Patchable<Put>) | Id,
-    Patch extends (Identifiable & Encodeable & Patchable<Patch> & PatchType<Put>) | Put
+    Put extends (NonScalarIdentifiable & Encodeable & Patchable<Patch>) | Id,
+    Patch extends (NonScalarIdentifiable & Encodeable) | Put
 > implements Encodeable, Patchable<PatchableArray<Id, Put, Patch>> {
     changes: Change<Id, Put, Patch>[];
 
@@ -56,7 +56,7 @@ export class PatchableArray<
         }
     }
 
-    patch(patch: PatchableArray<Id, Put, Patch>): PatchableArray<Id, Put, Patch> {
+    patch(patch: PatchableArray<Id, Put, Patch>): this {
         // Deep clone self
         const cloned = this.clone();
 
@@ -75,7 +75,7 @@ export class PatchableArray<
             }
         }
 
-        return cloned;
+        return cloned as this;
     }
 
     addPut(value: Put, after?: Id | null) {
@@ -321,8 +321,8 @@ export class PatchableArray<
 
 export class PatchableArrayItemDecoder<
     Id extends string | number,
-    Put extends (Identifiable & Encodeable & Patchable<Put>) | Id,
-    Patch extends (Identifiable & Encodeable & Patchable<Patch> & PatchType<Put>) | Put
+    Put extends (NonScalarIdentifiable & Encodeable & Patchable<Patch>) | Id,
+    Patch extends (NonScalarIdentifiable & Encodeable) | Put
 > implements Decoder<Change<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;
@@ -375,8 +375,8 @@ export class PatchableArrayItemDecoder<
 
 export class PatchableArrayDecoder<
     Id extends string | number,
-    Put extends (Identifiable & Encodeable & Patchable<Put>) | Id,
-    Patch extends (Identifiable & Encodeable & Patchable<Patch> & PatchType<Put>) | Put
+    Put extends (NonScalarIdentifiable & Encodeable & Patchable<Patch>) | Id,
+    Patch extends (NonScalarIdentifiable & Encodeable) | Put
 > implements Decoder<PatchableArray<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;

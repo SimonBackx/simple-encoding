@@ -1,10 +1,11 @@
-import { Encodeable } from "./Encodeable";
+import { Encodeable, TypedEncodeable } from "./Encodeable";
 import { PatchableArray } from "../structs/PatchableArray";
 import { AutoEncoder } from "./AutoEncoder";
 import { Identifiable, IdentifiableType, NonScalarIdentifiable, BaseIdentifiable } from "./Identifiable";
 import { EncodeContext } from "./EncodeContext";
+import { Decoder } from './Decoder';
 
-export interface StrictPatch {}
+export interface StrictPatch { }
 export interface Patchable<T> {
     patch(patch: PatchType<T>): T;
 }
@@ -23,12 +24,12 @@ export function patchContainsChanges<B extends Encodeable & Patchable<B>, A exte
 
 export type ConvertArrayToPatchableArray<T> = T extends Array<infer P>
     ? P extends string
-        ? PatchableArray<string, string, string>
-        : P extends number
-        ? PatchableArray<number, number, number>
-        : P extends AutoEncoder & Identifiable
-        ? PatchableArray<IdentifiableType<P>, P, PatchType<P> & AutoEncoder & NonScalarIdentifiable>
-        : T | undefined
+    ? PatchableArray<string, string, string>
+    : P extends number
+    ? PatchableArray<number, number, number>
+    : P extends AutoEncoder & Identifiable
+    ? PatchableArray<IdentifiableType<P>, P, PatchType<P> & AutoEncoder & NonScalarIdentifiable>
+    : T | undefined
     : PatchType<T>;
 
 type RemoveMethodsHelper<Base> = {
@@ -55,11 +56,23 @@ type MakeOptionalRealOptional<Base> = {
     [Key in keyof MakeOptionalRealOptionalHelper<Base>]: Base[Key];
 };
 
-export type PatchType<T> = T extends object
-    ? T extends PatchableArray<any, any, any>
-        ? T
-        : {
-              [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
-          } &
-              (T extends NonScalarIdentifiable ? { id: IdentifiableType<T> } : {})
-    : T | undefined;
+export type PatchType<T> = T extends PatchableArray<any, any, any>
+    ? T : (
+        T extends AutoEncoder ?
+        {
+            [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
+        } &
+        (T extends NonScalarIdentifiable ? { id: IdentifiableType<T> } : {})
+        : (T extends TypedEncodeable<infer D> ? {
+            [P in Exclude<NonMethodNames<D>, "id">]: ConvertArrayToPatchableArray<D[P]>;
+        } &
+            (D extends NonScalarIdentifiable ? { id: IdentifiableType<D> } : {}) : (
+
+                T extends object ?
+                {
+                    [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
+                } &
+                (T extends NonScalarIdentifiable ? { id: IdentifiableType<T> } : {}) : (T | undefined)
+
+            ))
+    )

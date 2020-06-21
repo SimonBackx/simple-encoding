@@ -1,4 +1,4 @@
-import { Encodeable, TypedEncodeable } from "./Encodeable";
+import { Encodeable, TypedEncodeable, PlainObject } from "./Encodeable";
 import { PatchableArray } from "../structs/PatchableArray";
 import { AutoEncoder } from "./AutoEncoder";
 import { Identifiable, IdentifiableType, NonScalarIdentifiable, BaseIdentifiable } from "./Identifiable";
@@ -64,13 +64,11 @@ export type PatchType<T> = T extends PatchableArray<any, any, any>
         } &
         (T extends NonScalarIdentifiable ? { id: IdentifiableType<T> } : {})
         : (T extends TypedEncodeable<infer D> ? {
-            [P in Exclude<NonMethodNames<D>, "id">]: ConvertArrayToPatchableArray<D[P]>;
-        } &
-            (D extends NonScalarIdentifiable ? { id: IdentifiableType<D> } : {}) : (
-
+            [Z in keyof D]: PatchType<D[Z]>;
+        } : (
                 T extends object ?
                 {
-                    [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
+                    [P in Exclude<NonMethodNames<T>, "id">]: PatchType<T[P]>;
                 } &
                 (T extends NonScalarIdentifiable ? { id: IdentifiableType<T> } : {}) : (T | undefined)
 

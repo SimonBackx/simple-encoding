@@ -6,6 +6,10 @@ export interface Encodeable {
     encode(context: EncodeContext): PlainObject;
 }
 
+export interface TypedEncodeable<T extends PlainObject> extends Encodeable {
+    encode(context: EncodeContext): T;
+}
+
 export function isEncodeable(object: any): object is Encodeable {
     if (typeof object !== "object" || object === null) {
         return false;

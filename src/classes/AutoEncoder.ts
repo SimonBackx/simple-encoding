@@ -2,7 +2,7 @@ import { Decoder } from "./Decoder";
 import { Encodeable, PlainObject, isEncodeable } from "./Encodeable";
 import { Data } from "./Data";
 import { field } from "../decorators/Field";
-import { Patchable, isPatchable, PatchType, PartialWithoutMethods } from "./Patchable";
+import { Patchable, isPatchable, PatchType, PartialWithoutMethods, AutoEncoderPatchType } from "./Patchable";
 import { Identifiable } from "./Identifiable";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
@@ -90,9 +90,9 @@ export type AutoEncoderConstructor<T> = Pick<T, AutoEncoderConstructorNames<T>>;
  * Create patchable auto encoder.
  * We are not able to add types here, gets too complex. But we'll add a convenience method with typings
  */
-export function createPatchableAutoEncoder(constructor: typeof AutoEncoder): typeof AutoEncoder {
+/*export function createPatchableAutoEncoder(constructor: typeof AutoEncoder): typeof AutoEncoder {
     return constructor as any;
-}
+}*/
 /*
 class Dog extends AutoEncoder {
     id: string;
@@ -111,7 +111,7 @@ export class AutoEncoder implements Encodeable {
     private static cachedPatchType?: typeof AutoEncoder;
 
     /// Create a patch for this instance (of reuse if already created)
-    static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new (...args: any[]) => PatchType<InstanceType<T>>) {
+    static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new () => AutoEncoderPatchType<InstanceType<T>>) {
         if (this.cachedPatchType) {
             return this.cachedPatchType as any;
         }
@@ -144,8 +144,8 @@ export class AutoEncoder implements Encodeable {
         }
     }
 
-    patch<T extends AutoEncoder>(this: T, patch: PatchType<T>): T {
-        const instance = new this.static() as T;
+    patch<T extends AutoEncoder>(this: T, patch: AutoEncoderPatchType<T>): this {
+        const instance = new this.static() as this;
         for (const field of this.static.fields) {
             const prop = field.property;
             if (isPatchable(this[prop])) {
@@ -212,6 +212,7 @@ export class AutoEncoder implements Encodeable {
     static create<T extends typeof AutoEncoder>(this: T, object: PartialWithoutMethods<InstanceType<T>>): InstanceType<T> {
         const model = new this() as InstanceType<T>;
         for (const key in object) {
+            // eslint-disable-next-line no-prototype-builtins
             if (object.hasOwnProperty(key) && object[key] !== undefined && typeof object[key] !== "function") {
                 // Also check this is an allowed field, else skip in favor of allowing downcasts without errors
                 if (this.doesPropertyExist(key)) {

@@ -16,12 +16,12 @@ class Patch implements Patchable<Patch> {
         this.description = data.description;
     }
 
-    patch(patch: PatchType<Patch>): Patch {
+    patch(patch: Patch): this {
         return new Patch({
             id: this.id,
             name: patch.name ?? this.name,
             description: patch.description ?? this.description,
-        });
+        }) as this;
     }
 
     encode(context) {
@@ -52,12 +52,12 @@ class Put implements Patchable<Put> {
         this.description = data.description;
     }
 
-    patch(patch: PatchType<Put>): Put {
+    patch(patch: Patch): this {
         return new Put({
             id: this.id,
             name: patch.name ?? this.name,
             description: patch.description ?? this.description,
-        });
+        }) as this;
     }
 
     encode(context) {

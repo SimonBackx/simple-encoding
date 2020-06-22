@@ -24,17 +24,20 @@ export function patchContainsChanges<B extends Encodeable & Patchable<B>, A exte
 }
 
 export type ConvertArrayToPatchableArray<T> = 
-T extends PatchableArray<any, any, any>
-    ? T :
-(T extends Array<infer P>
-    ? P extends string
-    ? PatchableArray<string, string, string>
-    : P extends number
-    ? PatchableArray<number, number, number>
-    : P extends AutoEncoder & NonScalarIdentifiable
-    ? PatchableArrayAutoEncoder<P>
-    : T | undefined
-    : PatchType<T> | undefined);
+T extends AutoEncoder ?
+    AutoEncoderPatchType<T> // This is needed to help Typescript Understand to keep T instead of just generalizing to AutoEncoderPatchType<AutoEncoder>
+: T extends PatchableArray<any, any, any>
+        ? T :
+    (T extends Array<infer P>
+        ? P extends string
+        ? PatchableArray<string, string, string>
+        : P extends number
+        ? PatchableArray<number, number, number>
+        : P extends AutoEncoder & NonScalarIdentifiable<any>
+        ? PatchableArrayAutoEncoder<P>
+        : T | undefined
+        : PatchType<T> | undefined)
+    ;
 
 type RemoveMethodsHelper<Base> = {
     [Key in keyof Base]: Base[Key] extends Function ? never : Key;
@@ -69,9 +72,9 @@ type MakeOptionalRealOptional<Base> = {
  */
 export type AutoEncoderPatchType<T> = {
     [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
-} & ( T extends NonScalarIdentifiable ? NonScalarIdentifiable : {})
+} & ( T extends NonScalarIdentifiable<infer P> ? NonScalarIdentifiable<P> : {}) & AutoEncoder
 
 /**
  * Helper type to fix TypeScript circular dependency by making a synonym for a patchable array for an autoencoder
  */
-export type PatchableArrayAutoEncoder<P extends AutoEncoder & NonScalarIdentifiable> = PatchableArray<NonScalarIdentifiableType<P>, P, PatchType<P> & AutoEncoder> 
+export type PatchableArrayAutoEncoder<P extends AutoEncoder & NonScalarIdentifiable<any>> = PatchableArray<NonScalarIdentifiableType<P>, P, AutoEncoderPatchType<P>> 

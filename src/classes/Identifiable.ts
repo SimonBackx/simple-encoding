@@ -2,8 +2,8 @@ export interface BaseIdentifiable<Id> {
     getIdentifier(): Id;
 }
 
-export type NonScalarIdentifiable = { id: string | number };
-export type Identifiable = BaseIdentifiable<string | number> | NonScalarIdentifiable | string | number;
+export type NonScalarIdentifiable<P extends string | number> = { id: P };
+export type Identifiable = BaseIdentifiable<string | number> | NonScalarIdentifiable<string | number> | string | number;
 
 export type IdentifiableType<T extends Identifiable> = T extends string | number
     ? T

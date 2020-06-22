@@ -111,7 +111,7 @@ export class AutoEncoder implements Encodeable {
     private static cachedPatchType?: typeof AutoEncoder;
 
     /// Create a patch for this instance (of reuse if already created)
-    static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new () => AutoEncoderPatchType<InstanceType<T>> & AutoEncoder) {
+    static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new () => AutoEncoderPatchType<InstanceType<T>>) {
         if (this.cachedPatchType) {
             return this.cachedPatchType as any;
         }
@@ -144,7 +144,7 @@ export class AutoEncoder implements Encodeable {
         }
     }
 
-    patch<T extends AutoEncoder>(this: T, patch: AutoEncoderPatchType<this>): this {
+    patch<T extends AutoEncoder>(this: T, patch: AutoEncoderPatchType<T>): this {
         const instance = new this.static() as this;
         for (const field of this.static.fields) {
             const prop = field.property;

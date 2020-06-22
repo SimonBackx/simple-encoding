@@ -1,10 +1,10 @@
-import { AutoEncoder, Field } from "../classes/AutoEncoder";
+import { AutoEncoder, Field, PatchableDecoder } from "../classes/AutoEncoder";
 import { Decoder } from "../classes/Decoder";
 
-export function field<Key extends keyof any, Value extends AutoEncoder>(settings: {
+export function field<T>(settings: {
     optional?: boolean;
     nullable?: boolean;
-    decoder: Decoder<any>;
+    decoder: PatchableDecoder<T>;
     defaultValue?: () => any;
 
     upgrade?: (old: any) => any;
@@ -33,7 +33,7 @@ export function field<Key extends keyof any, Value extends AutoEncoder>(settings
             }
         }
 
-        const field = new Field();
+        const field = new Field<T>();
         field.optional = settings.optional ?? false;
         field.nullable = settings.nullable ?? false;
         field.decoder = settings.decoder;

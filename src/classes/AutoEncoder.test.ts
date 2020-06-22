@@ -5,6 +5,17 @@ import StringDecoder from "../structs/StringDecoder";
 import { AutoEncoder } from "./AutoEncoder";
 import { ObjectData } from "./ObjectData";
 import { PatchType } from './Patchable';
+import { EnumDecoder } from '../structs/EnumDecoder';
+
+enum PaymentMethod {
+    PointOfSale = "PointOfSale",
+    CreditCard = "CreditCard",
+    Bancontact = "Bancontact",
+    Payconiq = "Payconiq",
+    IDeal = "IDeal",
+    ApplePay = "ApplePay"
+}
+
 
 class Dog extends AutoEncoder {
     @field({ decoder: IntegerDecoder })
@@ -23,6 +34,9 @@ class Dog extends AutoEncoder {
 
     @field({ decoder: Dog, optional: true })
     bestFriend?: Dog;
+
+    @field({ decoder: new EnumDecoder(PaymentMethod), optional: true })
+    test?: PaymentMethod;
 }
 const DogPatch = Dog.patchType();
 

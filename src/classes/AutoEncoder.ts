@@ -9,10 +9,12 @@ import { ArrayDecoder } from "../structs/ArrayDecoder";
 import StringDecoder from "../structs/StringDecoder";
 import { EncodeContext } from "./EncodeContext";
 
-export class Field {
+export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
+
+export class Field<T> {
     optional: boolean;
     nullable: boolean;
-    decoder: Decoder<any>;
+    decoder: PatchableDecoder<T>;
 
     /**
      * Executed after decoding / before encoding to convert to a correct internal value (= latest version)
@@ -77,6 +79,10 @@ export class Field {
             field.upgrade = undefined;
             field.downgrade = undefined;
             field.decoder = aDecoder.patchType();
+        } else if (aDecoder.patchType) {
+            field.upgrade = undefined;
+            field.downgrade = undefined;
+            field.decoder = aDecoder.patchType()
         }
 
         return field;
@@ -107,7 +113,7 @@ const p = DogPatch.create({id: "test"})
 
 export class AutoEncoder implements Encodeable {
     /// Fields should get sorted by version. Low to high
-    static fields: Field[];
+    static fields: Field<any>[];
     private static cachedPatchType?: typeof AutoEncoder;
 
     /// Create a patch for this instance (of reuse if already created)
@@ -173,7 +179,7 @@ export class AutoEncoder implements Encodeable {
     }
 
     static sortFields() {
-        function compare(a: Field, b: Field) {
+        function compare(a: Field<any>, b: Field<any>) {
             if (a.version < b.version) {
                 return -1;
             }
@@ -186,7 +192,7 @@ export class AutoEncoder implements Encodeable {
         this.fields.sort(compare);
     }
 
-    static get latestFields(): Field[] {
+    static get latestFields(): Field<any>[] {
         const latestFields = {};
         for (let i = this.fields.length - 1; i >= 0; i--) {
             const field = this.fields[i];

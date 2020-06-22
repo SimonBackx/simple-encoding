@@ -50,8 +50,30 @@ export class Field<T> {
         field.version = this.version;
         field.property = this.property;
         field.field = this.field;
-        field.upgrade = this.upgrade;
-        field.downgrade = this.downgrade;
+        if (this.upgrade) {
+            const upg = this.upgrade
+            field.upgrade = (oldValue) => { 
+                if (oldValue !== undefined) {
+                    // Value is set, we need an upgrade 
+                    return upg(oldValue) 
+                } else {
+                    // No value is set, we don't need an upgrade
+                    return undefined
+                }
+            };
+        }
+        if (this.downgrade) {
+            const dwn = this.downgrade
+            field.downgrade = (newValue) => { 
+                if (newValue !== undefined) {
+                    // Value is set, we need an upgrade 
+                    return dwn(newValue) 
+                } else {
+                    // No value is set, we don't need an upgrade
+                    return undefined
+                }
+            };
+        }
         field.defaultValue = undefined; // do not copy default values. Patches never have default values!
 
         const aDecoder = this.decoder as any;

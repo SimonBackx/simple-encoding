@@ -22,6 +22,9 @@ export class Field<T> {
     upgrade?: (old: any) => any;
     downgrade?: (newer: any) => any;
 
+    upgradePatch?: (old: any) => any;
+    downgradePatch?: (newer: any) => any;
+
     /**
      * Version in which this field was added
      */
@@ -74,13 +77,25 @@ export class Field<T> {
                 }
             };
         }
+
+        if (this.upgradePatch) {
+            field.upgrade = this.upgradePatch
+        }
+
+        if (this.downgradePatch) {
+            field.downgrade = this.downgradePatch
+        }
+
+        field.upgradePatch = this.upgradePatch
+        field.downgradePatch = this.downgradePatch
+
         field.defaultValue = undefined; // do not copy default values. Patches never have default values!
 
         const aDecoder = this.decoder as any;
         if (this.decoder instanceof ArrayDecoder) {
             // Upgrade / downgrades cannot work when pathcing, should be placed on instances
-            field.upgrade = undefined;
-            field.downgrade = undefined;
+            field.upgrade = this.upgradePatch
+            field.downgrade = this.downgradePatch
 
             const elementDecoder = this.decoder.decoder;
             if ((elementDecoder as any).patchType) {
@@ -98,10 +113,12 @@ export class Field<T> {
                 console.warn("Upgrade and downgrades on patchable AutoEncoder objects are not yet supported");
             }*/
             // Upgrade / downgrade not supported yet!
-            field.upgrade = undefined;
-            field.downgrade = undefined;
+            field.upgrade = this.upgradePatch
+            field.downgrade = this.downgradePatch
             field.decoder = aDecoder.patchType();
         } else if (aDecoder.patchType) {
+            field.upgrade = this.upgradePatch
+            field.downgrade = this.downgradePatch
             field.decoder = aDecoder.patchType()
         }
 

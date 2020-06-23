@@ -10,6 +10,9 @@ export function field<T>(settings: {
     upgrade?: (old: any) => any;
     downgrade?: (newer: any) => any;
 
+    upgradePatch?: (old: any) => any;
+    downgradePatch?: (newer: any) => any;
+
     /**
      * Version in which this field was added
      */
@@ -41,6 +44,8 @@ export function field<T>(settings: {
         field.field = settings.field ?? key;
         field.upgrade = settings.upgrade;
         field.downgrade = settings.downgrade;
+        field.upgradePatch = settings.upgradePatch;
+        field.downgradePatch = settings.downgradePatch;
         field.defaultValue = settings.defaultValue;
         field.property = key;
 

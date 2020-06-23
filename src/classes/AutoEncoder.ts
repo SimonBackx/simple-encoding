@@ -296,7 +296,7 @@ export class AutoEncoder implements Encodeable {
                     }
                     continue;
                 }
-                if (isEncodeable(this[field.property])) {
+                if (isEncodeable(source[field.property])) {
                     object[field.field] = source[field.property].encode(context);
                 } else {
                     if (Array.isArray(source[field.property])) {

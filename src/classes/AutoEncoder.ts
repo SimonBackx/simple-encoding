@@ -102,8 +102,6 @@ export class Field<T> {
             field.downgrade = undefined;
             field.decoder = aDecoder.patchType();
         } else if (aDecoder.patchType) {
-            field.upgrade = undefined;
-            field.downgrade = undefined;
             field.decoder = aDecoder.patchType()
         }
 

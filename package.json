@@ -14,7 +14,9 @@
     "files": [
         "dist"
     ],
-    "dependencies": {},
+    "dependencies": {
+        "@simonbackx/simple-errors": "^1.0.4"
+    },
     "devDependencies": {
         "@types/jest": "^25.1.4",
         "@types/node": "^13.13.4",

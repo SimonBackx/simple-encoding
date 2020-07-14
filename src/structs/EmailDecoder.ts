@@ -1,6 +1,7 @@
+import { SimpleError } from "@simonbackx/simple-errors";
+
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
-import { DecodingError } from "../classes/DecodingError";
 
 class EmailDecoderStatic implements Decoder<string> {
     decode(data: Data): string {
@@ -8,7 +9,7 @@ class EmailDecoderStatic implements Decoder<string> {
         const regex = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
 
         if (!regex.test(str)) {
-            throw new DecodingError({
+            throw new SimpleError({
                 code: "invalid_field",
                 message: "Received an invalid email address",
                 human: "Dit e-mailadres is ongeldig, kijk je het na?",

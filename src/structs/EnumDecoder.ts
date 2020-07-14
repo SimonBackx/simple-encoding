@@ -1,6 +1,7 @@
+import { SimpleError } from "@simonbackx/simple-errors";
+
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
-import { DecodingError } from "../classes/DecodingError";
 
 export class EnumDecoder<E extends { [key: number]: string | number }> implements Decoder<E[keyof E]> {
     enum: E;
@@ -23,7 +24,7 @@ export class EnumDecoder<E extends { [key: number]: string | number }> implement
                     return str as E[keyof E];
                 }
             } catch (e2) {
-                throw new DecodingError({
+                throw new SimpleError({
                     code: "invalid_field",
                     message: `Expected a number or string for enum: ` + Object.values(this.enum).join(", "),
                     field: data.currentField,
@@ -31,7 +32,7 @@ export class EnumDecoder<E extends { [key: number]: string | number }> implement
             }
         }
 
-        throw new DecodingError({
+        throw new SimpleError({
             code: "invalid_field",
             message: "Unknown enum value " + str + " expected " + Object.values(this.enum).join(", "),
             field: data.currentField,

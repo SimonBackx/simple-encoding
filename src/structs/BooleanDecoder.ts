@@ -1,6 +1,7 @@
+import { SimpleError } from "@simonbackx/simple-errors";
+
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
-import { DecodingError } from "../classes/DecodingError";
 
 class BooleanDecoder implements Decoder<boolean> {
     decode(data: Data): boolean {
@@ -24,7 +25,7 @@ class BooleanDecoder implements Decoder<boolean> {
             return false;
         }
 
-        throw new DecodingError({
+        throw new SimpleError({
             code: "invalid_field",
             message: `Expected a boolean at ${data.currentField}`,
             field: data.currentField,

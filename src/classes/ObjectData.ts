@@ -1,15 +1,16 @@
+import { SimpleError } from "@simonbackx/simple-errors";
+
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import Base64Decoder from "../structs/Base64Decoder";
+import BooleanDecoder from "../structs/BooleanDecoder";
+import { EnumDecoder } from "../structs/EnumDecoder";
+import IntegerDecoder from "../structs/IntegerDecoder";
 import KeyDecoder from "../structs/KeyDecoder";
+import { NullableDecoder } from "../structs/NullableDecoder";
 import NumberDecoder from "../structs/NumberDecoder";
 import StringDecoder from "../structs/StringDecoder";
 import { Data } from "./Data";
 import { Decoder } from "./Decoder";
-import { DecodingError } from "./DecodingError";
-import BooleanDecoder from "../structs/BooleanDecoder";
-import IntegerDecoder from "../structs/IntegerDecoder";
-import { EnumDecoder } from "../structs/EnumDecoder";
-import { NullableDecoder } from "../structs/NullableDecoder";
 import { EncodeContext } from "./EncodeContext";
 
 /// Implementation of Data that reads an already existing tree of data.
@@ -61,7 +62,7 @@ export class ObjectData implements Data {
 
     equals<T>(value: T): T {
         if (this.data !== value) {
-            throw new DecodingError({
+            throw new SimpleError({
                 code: "invalid_field",
                 message: "Expected " + value,
                 field: this.currentField,
@@ -77,14 +78,14 @@ export class ObjectData implements Data {
     index(number: number): Data {
         if (Array.isArray(this.value)) {
             if (!Number.isSafeInteger(number)) {
-                throw new DecodingError({
+                throw new SimpleError({
                     code: "invalid_index",
                     message: `Invalid index`,
                     field: this.currentField,
                 });
             }
             if (this.data[number] !== undefined) {
-                throw new DecodingError({
+                throw new SimpleError({
                     code: "invalid_field",
                     message: `Expected value at ${this.addToCurrentField(number)}`,
                     field: this.addToCurrentField(number),
@@ -92,7 +93,7 @@ export class ObjectData implements Data {
             }
             return new ObjectData(this.data[number], this.context, this.addToCurrentField(number));
         }
-        throw new DecodingError({
+        throw new SimpleError({
             code: "invalid_field",
             message: `Expected an array at ${this.currentField}`,
             field: this.currentField,
@@ -124,7 +125,7 @@ export class ObjectData implements Data {
         if (this.data && this.data[field] !== undefined) {
             return new ObjectData(this.data[field], this.context, this.addToCurrentField(field));
         }
-        throw new DecodingError({
+        throw new SimpleError({
             code: "missing_field",
             message: `Field ${field} is expected at ${this.currentField}`,
             field: this.currentField,

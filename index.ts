@@ -2,8 +2,6 @@ export * from "./src/classes/Data";
 export * from "./src/classes/Decoder";
 export * from "./src/classes/Encodeable";
 export * from "./src/classes/ObjectData";
-export * from "./src/classes/DecodingError";
-export * from "./src/classes/DecodingErrors";
 export * from "./src/classes/Patchable";
 export * from "./src/classes/Identifiable";
 
@@ -21,4 +19,6 @@ export * from "./src/structs/PatchableArray";
 export * from "./src/classes/AutoEncoder";
 export * from "./src/decorators/Field";
 export * from "./src/classes/EncodeContext";
+export * from "./src/structs/VersionBox";
+
 export { default as DateDecoder } from "./src/structs/DateDecoder";

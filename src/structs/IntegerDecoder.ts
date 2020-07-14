@@ -1,6 +1,7 @@
+import { SimpleError } from "@simonbackx/simple-errors";
+
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
-import { DecodingError } from "../classes/DecodingError";
 
 class IntegerDecoder implements Decoder<number> {
     decode(data: Data): number {
@@ -15,7 +16,7 @@ class IntegerDecoder implements Decoder<number> {
             }
         }
 
-        throw new DecodingError({
+        throw new SimpleError({
             code: "invalid_field",
             message: `Expected an integer at ${data.currentField}`,
             field: data.currentField,

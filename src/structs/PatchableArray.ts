@@ -1,10 +1,11 @@
-import { Encodeable, isEncodeable, PlainObject } from "../classes/Encodeable";
-import { Decoder } from "../classes/Decoder";
+import { SimpleError } from "@simonbackx/simple-errors";
+
 import { Data } from "../classes/Data";
-import { DecodingError } from "../classes/DecodingError";
-import { PatchType, Patchable, isPatchable } from "../classes/Patchable";
-import { Identifiable, getId, NonScalarIdentifiable } from "../classes/Identifiable";
+import { Decoder } from "../classes/Decoder";
+import { Encodeable, isEncodeable, PlainObject } from "../classes/Encodeable";
 import { EncodeContext } from "../classes/EncodeContext";
+import { getId, NonScalarIdentifiable } from "../classes/Identifiable";
+import { isPatchable,Patchable } from "../classes/Patchable";
 
 type PutAfter<Id, Put> = { afterId?: Id | null; put: Put };
 type MoveAfter<Id> = { afterId: Id | null; move: Id };
@@ -365,7 +366,7 @@ export class PatchableArrayItemDecoder<
             };
         }
 
-        throw new DecodingError({
+        throw new SimpleError({
             code: "invalid_field",
             message: "Expected put, move, patch or delete",
             field: data.currentField,

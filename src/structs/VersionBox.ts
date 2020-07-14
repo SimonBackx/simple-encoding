@@ -10,6 +10,10 @@ import { EncodeContext } from '../classes/EncodeContext';
 export class VersionBox<T extends Encodeable> implements Encodeable {
     data: T;
 
+    constructor(data: T) {
+        this.data = data
+    }
+
     encode(context: EncodeContext) {
         return {
             data: this.data.encode(context),
@@ -32,8 +36,6 @@ export class VersionBoxDecoder<T extends Encodeable> implements Decoder<VersionB
         const context = data.field("data")
         context.context.version = data.field("version").integer
 
-        const box = new VersionBox<T>()
-        box.data = context.decode(this.decoder)
-        return box
+        return new VersionBox<T>(context.decode(this.decoder))
     }
 }

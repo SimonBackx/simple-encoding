@@ -1,13 +1,13 @@
-import { Decoder } from "./Decoder";
-import { Encodeable, PlainObject, isEncodeable } from "./Encodeable";
-import { Data } from "./Data";
 import { field } from "../decorators/Field";
-import { Patchable, isPatchable, PatchType, PartialWithoutMethods, AutoEncoderPatchType } from "./Patchable";
-import { Identifiable } from "./Identifiable";
-import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
+import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
 import StringDecoder from "../structs/StringDecoder";
+import { Data } from "./Data";
+import { Decoder } from "./Decoder";
+import { Encodeable, isEncodeable,PlainObject } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
+import { Identifiable } from "./Identifiable";
+import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable, PatchType } from "./Patchable";
 
 export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
 
@@ -392,7 +392,7 @@ export class AutoEncoder implements Encodeable {
             const field = this.fields[i];
             if (field.version > to) {
                 if (field.downgrade) {
-                    older[field.property] = field.downgrade(older[field.property]);
+                    older[field.property] = field.downgrade.call(object, older[field.property]);
                 }
             }
         }

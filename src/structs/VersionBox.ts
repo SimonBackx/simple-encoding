@@ -37,7 +37,7 @@ export class VersionBox<T extends Encodeable | Encodeable[]> implements Encodeab
 }
 
 
-export class VersionBoxDecoder<T extends Encodeable> implements Decoder<VersionBox<T>> {
+export class VersionBoxDecoder<T extends Encodeable | Encodeable[]> implements Decoder<VersionBox<T>> {
     decoder: Decoder<T>;
 
     constructor(decoder: Decoder<T>) {

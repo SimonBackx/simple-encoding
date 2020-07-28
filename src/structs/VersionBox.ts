@@ -1,3 +1,5 @@
+import { isEncodeable } from '@simonbackx/simple-encoding';
+
 import { Data } from '../classes/Data';
 import { Decoder } from '../classes/Decoder';
 import { Encodeable } from '../classes/Encodeable';
@@ -7,7 +9,7 @@ import { EncodeContext } from '../classes/EncodeContext';
  * When you need to store data for a long period, a VersionBox can be very usefull. It saves the version of the data in it's encoding.
  * During decoding, it reads the version and continues decoding the data using the provided version instead of the version in the context.
  */
-export class VersionBox<T extends Encodeable> implements Encodeable {
+export class VersionBox<T extends Encodeable | Encodeable[]> implements Encodeable {
     data: T;
 
     constructor(data: T) {
@@ -15,10 +17,21 @@ export class VersionBox<T extends Encodeable> implements Encodeable {
     }
 
     encode(context: EncodeContext) {
-        return {
-            data: this.data.encode(context),
-            version: context.version
+        if (Array.isArray(this.data)) {
+            return {
+                data: this.data.map(d => d.encode(context)),
+                version: context.version
+            }
         }
+
+        if (isEncodeable(this.data)) {
+            return {
+                data: this.data.encode(context),
+                version: context.version
+            }
+        }
+
+        throw new Error("Unexpected non-encodeable data in versionbox")
     }
 
 }

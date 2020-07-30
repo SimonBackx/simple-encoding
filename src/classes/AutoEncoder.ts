@@ -92,27 +92,40 @@ export class Field<T> {
 
         const aDecoder = this.decoder as any;
         if (this.decoder instanceof ArrayDecoder) {
-            // Upgrade / downgrades cannot work when pathcing, should be placed on instances
-            field.upgrade = this.upgradePatch
-            field.downgrade = this.downgradePatch
-
             const elementDecoder = this.decoder.decoder;
             if ((elementDecoder as any).patchType) {
                 const patchType = (elementDecoder as any).patchType();
 
                 // Check if we have a method called "getIdentifier"
-                let idFieldType: Decoder<string | number>;
+                let idFieldType: Decoder<string | number> | undefined;
                 if (patchType.prototype.getIdentifier) {
                     // This autoencoder uses the getIdentifier method to define the id
                     idFieldType = StringOrNumberDecoder;
                 } else {
                     // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                    idFieldType = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")!.decoder;
+                    const field = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")
+                    if (field) {
+                        idFieldType = field.decoder;
+                    }
                 }
 
-                field.decoder = new PatchableArrayDecoder(elementDecoder, patchType, idFieldType);
-                field.defaultValue = () => new PatchableArray<any, any, any>();
+                if (idFieldType) {
+                     // Upgrade / downgrades cannot work when pathcing, should be placed on instances
+                    field.upgrade = this.upgradePatch
+                    field.downgrade = this.downgradePatch
+                    
+                    field.decoder = new PatchableArrayDecoder(elementDecoder, patchType, idFieldType);
+                    field.defaultValue = () => new PatchableArray<any, any, any>();
+                } else {
+                    // A non identifiable array -> we expect an optional array instead = default behaviour
+                    // upgrade / downgrade kan stay the same as default
+                }
+                
             } else {
+                 // Upgrade / downgrades cannot work when pathcing, should be placed on instances
+                field.upgrade = this.upgradePatch
+                field.downgrade = this.downgradePatch
+
                 field.decoder = new PatchableArrayDecoder(elementDecoder, elementDecoder, elementDecoder);
                 field.defaultValue = () => new PatchableArray<any, any, any>();
             }

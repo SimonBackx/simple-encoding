@@ -1,13 +1,10 @@
-import { field } from "../decorators/Field";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
-import StringDecoder from "../structs/StringDecoder";
 import { Data } from "./Data";
 import { Decoder } from "./Decoder";
 import { Encodeable, isEncodeable,PlainObject } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
-import { Identifiable } from "./Identifiable";
-import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable, PatchType } from "./Patchable";
+import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable } from "./Patchable";
 
 export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
 
@@ -172,6 +169,11 @@ export class AutoEncoder implements Encodeable {
             CreatedPatch.fields.push(field.getOptionalClone());
         }
 
+        // move over getIdentifier if available
+        if ((this as any).prototype.getIdentifier && (this as any).prototype.getIdentifier instanceof Function) {
+            (CreatedPatch.prototype as any).getIdentifier = (this as any).prototype.getIdentifier;
+        }
+
         return CreatedPatch as any;
     }
 
@@ -199,7 +201,16 @@ export class AutoEncoder implements Encodeable {
                 }
             } else {
                 if (Array.isArray(this[prop])) {
-                    instance[prop] = patch[prop].applyTo(this[prop]);
+                    // Check if patch[prop] is a patchable array
+                    if (patch[prop] instanceof PatchableArray) {
+                        instance[prop] = patch[prop].applyTo(this[prop]);
+                    } else {
+                        // What happens when an array field is set?
+                        // This can only happen when the autocoder is not identifieable, but
+                        // technically also in other cases if typescript doesn't check types
+                        // we just take over the new values and 'remove' all old elements
+                        instance[prop] = patch[prop];
+                    }
                 } else {
                     // we need to check for undefined and not use ??
                     // because we also need to set values to null

@@ -4,7 +4,7 @@ import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
 import { Encodeable, isEncodeable, PlainObject } from "../classes/Encodeable";
 import { EncodeContext } from "../classes/EncodeContext";
-import { getId, NonScalarIdentifiable } from "../classes/Identifiable";
+import { getId, Identifiable } from "../classes/Identifiable";
 import { isPatchable,Patchable } from "../classes/Patchable";
 
 type PutAfter<Id, Put> = { afterId?: Id | null; put: Put };
@@ -35,8 +35,8 @@ function isPatch(val: Change<any, any, any>): val is PatchItem<any> {
  */
 export class PatchableArray<
     Id extends string | number,
-    Put extends (NonScalarIdentifiable<Id> & Encodeable & Patchable<Patch>) | Id,
-    Patch extends (NonScalarIdentifiable<Id> & Encodeable) | Put
+    Put extends (Identifiable<Id> & Encodeable & Patchable<Patch>) | Id,
+    Patch extends (Identifiable<Id> & Encodeable) | Put
 > implements Encodeable, Patchable<PatchableArray<Id, Put, Patch>> {
     changes: Change<Id, Put, Patch>[];
 
@@ -322,8 +322,8 @@ export class PatchableArray<
 
 export class PatchableArrayItemDecoder<
     Id extends string | number,
-    Put extends (NonScalarIdentifiable<Id> & Encodeable & Patchable<Patch>) | Id,
-    Patch extends (NonScalarIdentifiable<Id> & Encodeable) | Put
+    Put extends (Identifiable<Id> & Encodeable & Patchable<Patch>) | Id,
+    Patch extends (Identifiable<Id> & Encodeable) | Put
 > implements Decoder<Change<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;
@@ -376,8 +376,8 @@ export class PatchableArrayItemDecoder<
 
 export class PatchableArrayDecoder<
     Id extends string | number,
-    Put extends (NonScalarIdentifiable<Id> & Encodeable & Patchable<Patch>) | Id,
-    Patch extends (NonScalarIdentifiable<Id> & Encodeable) | Put
+    Put extends (Identifiable<Id> & Encodeable & Patchable<Patch>) | Id,
+    Patch extends (Identifiable<Id> & Encodeable) | Put
 > implements Decoder<PatchableArray<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;

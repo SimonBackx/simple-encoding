@@ -1,11 +1,11 @@
-export interface BaseIdentifiable<Id> {
+export interface BaseIdentifiable<Id extends string | number> {
     getIdentifier(): Id;
 }
 
 export type NonScalarIdentifiable<P extends string | number> = { id: P };
-export type Identifiable = BaseIdentifiable<string | number> | NonScalarIdentifiable<string | number> | string | number;
+export type Identifiable<P extends string | number> = BaseIdentifiable<P> | NonScalarIdentifiable<P>;
 
-export type IdentifiableType<T extends Identifiable> = T extends string | number
+/*export type IdentifiableType<T extends Identifiable> = T extends string | number
     ? T
     : T extends { id: infer P }
     ? P extends string | number
@@ -15,7 +15,7 @@ export type IdentifiableType<T extends Identifiable> = T extends string | number
     ? P extends string | number
         ? P
         : never
-    : never;
+    : never;*/
 
 export type NonScalarIdentifiableType<T> = T extends { id: infer P }
     ? P extends string | number
@@ -31,7 +31,7 @@ function hasId(val: any): val is { id: string | number } {
     return val.id !== undefined;
 }
 
-export function getId(val: Identifiable): string | number {
+export function getId<P extends string | number>(val: Identifiable<P> | P): P {
     if (isBaseIdentifiable(val)) {
         return val.getIdentifier();
     }

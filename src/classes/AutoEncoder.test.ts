@@ -1,11 +1,15 @@
 import { field } from "../decorators/Field";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
+import { EnumDecoder } from '../structs/EnumDecoder';
 import IntegerDecoder from "../structs/IntegerDecoder";
+import { PatchableArray } from '../structs/PatchableArray';
 import StringDecoder from "../structs/StringDecoder";
 import { AutoEncoder } from "./AutoEncoder";
+import { Data } from './Data';
+import { Encodeable } from './Encodeable';
+import { EncodeContext } from './EncodeContext';
 import { ObjectData } from "./ObjectData";
-import { PatchType } from './Patchable';
-import { EnumDecoder } from '../structs/EnumDecoder';
+import { PatchableArrayAutoEncoder } from './Patchable';
 
 enum PaymentMethod {
     PointOfSale = "PointOfSale",
@@ -14,6 +18,23 @@ enum PaymentMethod {
     Payconiq = "Payconiq",
     IDeal = "IDeal",
     ApplePay = "ApplePay"
+}
+
+class NotPatchable implements Encodeable {
+    id = ""
+    constructor(id: string) {
+        this.id = id
+    }
+
+    encode(encode: EncodeContext) {
+        return {
+            id: this.id
+        }
+    }
+
+    static decode(data: Data) {
+        return new NotPatchable(data.field("id").string)
+    }
 }
 
 
@@ -37,8 +58,39 @@ class Dog extends AutoEncoder {
 
     @field({ decoder: new EnumDecoder(PaymentMethod), optional: true })
     test?: PaymentMethod;
+
+    /// Test support and compile support for getIdentifier (should work with and without it)
+    getIdentifier(): number {
+        return parseInt(this.id.substring(3))
+    }
 }
 const DogPatch = Dog.patchType();
+
+class Dog2 extends AutoEncoder {
+    @field({ decoder: IntegerDecoder })
+    @field({ decoder: StringDecoder, version: 2, upgrade: (int: number) => "DOG" + int, downgrade: (str: string) => parseInt(str.substring(3)) })
+    id = "";
+
+    @field({ decoder: StringDecoder })
+    @field({ decoder: StringDecoder, version: 2, field: "breed", defaultValue: () => "" })
+    name: string | undefined;
+
+    @field({ decoder: new ArrayDecoder(StringDecoder) })
+    friendIds: string[] = [];
+
+    @field({ decoder: new ArrayDecoder(Dog) })
+    friends: Dog[] = [];
+
+    @field({ decoder: new ArrayDecoder(NotPatchable) })
+    notPatchableFriends: NotPatchable[] = [];
+
+    @field({ decoder: Dog, optional: true })
+    bestFriend?: Dog;
+
+    @field({ decoder: new EnumDecoder(PaymentMethod), optional: true })
+    test?: PaymentMethod;
+}
+const Dog2Patch = Dog2.patchType();
 
 describe("AutoEncoder", () => {
     test("encoding works and version support", () => {
@@ -189,5 +241,33 @@ describe("AutoEncoder", () => {
         // Test if patchable items are decodeable
         expect(DogPatch.decode(new ObjectData(patchDog.encode({ version: 1 }), { version: 1 }))).toEqual(patchDog);
         expect(DogPatch.decode(new ObjectData(patchDog.encode({ version: 2 }), { version: 2 }))).toEqual(patchDog);
+    });
+
+    test("Patchable array", () => {
+        const arr: PatchableArrayAutoEncoder<Dog> = new PatchableArray()
+        const friendDog = Dog.create({ id: "DOG2", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        arr.addPut(friendDog, 3)
+
+        const clean: Dog[] = []
+        expect(arr.applyTo(clean)).toEqual([friendDog])
+    });
+
+    test("Patchable array 2", () => {
+        const arr: PatchableArrayAutoEncoder<Dog2> = new PatchableArray()
+        const friendDog = Dog2.create({ id: "DOG2", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        arr.addPut(friendDog, "DOG3")
+
+        const clean: Dog2[] = []
+        expect(arr.applyTo(clean)).toEqual([friendDog])
+    });
+
+    test("Patch array fields by setting them", () => {
+        const friendDog = Dog.create({ id: "DOG2", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const patch = DogPatch.create({ friendIds: ["force-set"] as any })
+        expect(friendDog.patch(patch).friendIds).toEqual(["force-set"])
+
+        const test = Dog2.create({ id: "DOG2", name: "dog", notPatchableFriends: [new NotPatchable("test"), new NotPatchable("test2")], friends: [] });
+        const patch2 = Dog2Patch.create({ notPatchableFriends: [new NotPatchable("hallo!")] })
+        expect(test.patch(patch2).notPatchableFriends).toEqual([new NotPatchable("hallo!")])
     });
 });

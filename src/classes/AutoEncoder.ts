@@ -1,5 +1,7 @@
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
+import StringDecoder from '../structs/StringDecoder';
+import StringOrNumberDecoder from '../structs/StringOrNumberDecoder';
 import { Data } from "./Data";
 import { Decoder } from "./Decoder";
 import { Encodeable, isEncodeable,PlainObject } from "./Encodeable";
@@ -97,7 +99,16 @@ export class Field<T> {
             const elementDecoder = this.decoder.decoder;
             if ((elementDecoder as any).patchType) {
                 const patchType = (elementDecoder as any).patchType();
-                const idFieldType = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")!.decoder;
+
+                // Check if we have a method called "getIdentifier"
+                let idFieldType: Decoder<string | number>;
+                if (patchType.prototype.getIdentifier) {
+                    // This autoencoder uses the getIdentifier method to define the id
+                    idFieldType = StringOrNumberDecoder;
+                } else {
+                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
+                    idFieldType = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")!.decoder;
+                }
 
                 field.decoder = new PatchableArrayDecoder(elementDecoder, patchType, idFieldType);
                 field.defaultValue = () => new PatchableArray<any, any, any>();
@@ -105,6 +116,7 @@ export class Field<T> {
                 field.decoder = new PatchableArrayDecoder(elementDecoder, elementDecoder, elementDecoder);
                 field.defaultValue = () => new PatchableArray<any, any, any>();
             }
+        // eslint-disable-next-line @typescript-eslint/no-use-before-define
         } else if (aDecoder.prototype && aDecoder.prototype instanceof AutoEncoder) {
             /*if (field.upgrade || field.downgrade) {
                 console.warn("Upgrade and downgrades on patchable AutoEncoder objects are not yet supported");

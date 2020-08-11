@@ -242,6 +242,14 @@ export class AutoEncoder implements Encodeable {
         }
     }
 
+    isPatch<T extends AutoEncoder>(this: T | AutoEncoderPatchType<T> ): this is AutoEncoderPatchType<T> {
+        return this.static.isPatch
+    }
+
+    isPut<T extends AutoEncoder>(this: T | AutoEncoderPatchType<T> ): this is T {
+        return !this.static.isPatch
+    }
+
     static patch<T extends typeof AutoEncoder>(this: T, object: PartialWithoutMethods<AutoEncoderPatchType<InstanceType<T>>>): AutoEncoderPatchType<InstanceType<T>> {
         return this.patchType().create(object)
     }

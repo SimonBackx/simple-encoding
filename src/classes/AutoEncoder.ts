@@ -246,6 +246,14 @@ export class AutoEncoder implements Encodeable {
         return this.patchType().create(object)
     }
 
+    patchOrPut<T extends AutoEncoder>(this: T, patch: AutoEncoderPatchType<T> | T) {
+        if (patch.static.isPatch) {
+            this.set(this.patch(patch as AutoEncoderPatchType<T>))
+            return
+        }
+        this.set(patch as T)
+    }
+
     patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>): this {
         const instance = new this.static() as this;
         for (const field of this.static.fields) {

@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { field } from "../decorators/Field";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import { EnumDecoder } from '../structs/EnumDecoder';
 import IntegerDecoder from "../structs/IntegerDecoder";
 import { PatchableArray } from '../structs/PatchableArray';
+import { PatchOrPut } from '../structs/PatchOrPut';
 import StringDecoder from "../structs/StringDecoder";
 import { AutoEncoder } from "./AutoEncoder";
 import { Data } from './Data';
@@ -269,5 +271,33 @@ describe("AutoEncoder", () => {
         const test = Dog2.create({ id: "DOG2", name: "dog", notPatchableFriends: [new NotPatchable("test"), new NotPatchable("test2")], friends: [] });
         const patch2 = Dog2Patch.create({ notPatchableFriends: [new NotPatchable("hallo!")] })
         expect(test.patch(patch2).notPatchableFriends).toEqual([new NotPatchable("hallo!")])
+    });
+
+    test("Patch or put properties", () => {
+        const existingFriendBestFriend = Dog.create({ id: "DOG4", name: "best friend", friendIds: [], friends: [] });
+        const newBestFriend = Dog.create({ id: "DOG5", name: "Better best friend", friendIds: [], friends: [] });
+
+        const existingFriend = Dog.create({
+            id: "DOG3",
+            name: "existing friend",
+            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
+            friends: [],
+            // this is needed to test if existing relations are left unchanged on patches
+            bestFriend: existingFriendBestFriend,
+        });
+
+        // Check if we can do a normal patch
+        const patchDog = DogPatch.create({ bestFriend: DogPatch.create({ name: "Best friend 2" }) })
+        const patchedDog = existingFriend.patch(patchDog);
+
+        expect(patchedDog.bestFriend!.name).toEqual("Best friend 2")
+        expect(patchedDog.bestFriend!.id).toEqual("DOG4")
+
+        // Check if we can do a put
+        const patchDog2 = DogPatch.create({ bestFriend: PatchOrPut.put(newBestFriend) })
+        const patchedDog2 = existingFriend.patch(patchDog2);
+
+        expect(patchedDog2.bestFriend!.name).toEqual("Better best friend")
+        expect(patchedDog2.bestFriend!.id).toEqual("DOG5")
     });
 });

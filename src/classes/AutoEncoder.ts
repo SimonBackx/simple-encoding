@@ -1,5 +1,6 @@
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
+import { PatchOrPut,PatchOrPutDecoder } from '../structs/PatchOrPut';
 import StringDecoder from '../structs/StringDecoder';
 import StringOrNumberDecoder from '../structs/StringOrNumberDecoder';
 import { Data } from "./Data";
@@ -135,13 +136,14 @@ export class Field<T> {
                 console.warn("Upgrade and downgrades on patchable AutoEncoder objects are not yet supported");
             }*/
             // Upgrade / downgrade not supported yet!
+
             field.upgrade = this.upgradePatch
             field.downgrade = this.downgradePatch
-            field.decoder = aDecoder.patchType();
+            field.decoder = new PatchOrPutDecoder(aDecoder, aDecoder.patchType());
         } else if (aDecoder.patchType) {
             field.upgrade = this.upgradePatch
             field.downgrade = this.downgradePatch
-            field.decoder = aDecoder.patchType()
+            field.decoder = new PatchOrPutDecoder(aDecoder, aDecoder.patchType());
         }
 
         return field;
@@ -219,10 +221,15 @@ export class AutoEncoder implements Encodeable {
         for (const field of this.static.fields) {
             const prop = field.property;
             if (isPatchable(this[prop])) {
-                if (patch[prop] !== undefined) {
-                    instance[prop] = this[prop].patch(patch[prop]);
+                // Check if patch[prop] is a patchable array
+                if (patch[prop] instanceof PatchOrPut) {
+                    instance[prop] = PatchOrPut.apply(this[prop], patch[prop])
                 } else {
-                    instance[prop] = this[prop];
+                    if (patch[prop] !== undefined) {
+                        instance[prop] = this[prop].patch(patch[prop]);
+                    } else {
+                        instance[prop] = this[prop];
+                    }
                 }
             } else {
                 if (Array.isArray(this[prop])) {

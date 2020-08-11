@@ -1,4 +1,5 @@
 import { PatchableArray } from "../structs/PatchableArray";
+import { PatchOrPut } from '../structs/PatchOrPut';
 import { AutoEncoder } from "./AutoEncoder";
 import { Encodeable } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
@@ -25,7 +26,7 @@ export function patchContainsChanges<B extends Encodeable & Patchable<B>, A exte
 
 export type ConvertArrayToPatchableArray<T> =
     T extends AutoEncoder ?
-    AutoEncoderPatchType<T> // This is needed to help Typescript Understand to keep T instead of just generalizing to AutoEncoderPatchType<AutoEncoder>
+        PatchOrPut<T, AutoEncoderPatchType<T>> | AutoEncoderPatchType<T> // This is needed to help Typescript Understand to keep T instead of just generalizing to AutoEncoderPatchType<AutoEncoder>
     : T extends PatchableArray<any, any, any>
     ? T :
     (T extends Array<infer P>

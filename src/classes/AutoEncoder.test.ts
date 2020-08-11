@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
+import { Decoder, PatchType } from '@simonbackx/simple-encoding';
+
 import { field } from "../decorators/Field";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import { EnumDecoder } from '../structs/EnumDecoder';
 import IntegerDecoder from "../structs/IntegerDecoder";
 import { PatchableArray } from '../structs/PatchableArray';
-import { PatchOrPut } from '../structs/PatchOrPut';
 import StringDecoder from "../structs/StringDecoder";
 import { AutoEncoder } from "./AutoEncoder";
 import { Data } from './Data';
@@ -99,16 +100,18 @@ describe("AutoEncoder", () => {
         const aFriend = Dog.create({ id: "DOG2", name: "friend", friendIds: [], friends: [] });
         const dog = Dog.create({ id: "DOG1", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [aFriend] });
         expect(dog.encode({ version: 1 })).toEqual({
+            _isPatch: false,
             id: 1,
             name: "dog",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ id: 2, name: "friend", friendIds: [], friends: [] }],
+            friends: [{ _isPatch: false, id: 2, name: "friend", friendIds: [], friends: [] }],
         });
         expect(dog.encode({ version: 2 })).toEqual({
+            _isPatch: false,
             id: "DOG1",
             breed: "dog",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ id: "DOG2", breed: "friend", friendIds: [], friends: [] }],
+            friends: [{ _isPatch: false, id: "DOG2", breed: "friend", friendIds: [], friends: [] }],
         });
     });
 
@@ -194,6 +197,7 @@ describe("AutoEncoder", () => {
 
         // Test if patchable items are encodeable
         expect(patchDog.encode({ version: 2 })).toEqual({
+            _isPatch: true,
             id: "DOG1",
             breed: "Change name",
             friendIds: [
@@ -218,6 +222,7 @@ describe("AutoEncoder", () => {
 
         // Test if patchable items are encodeable
         expect(patchDog.encode({ version: 1 })).toEqual({
+            _isPatch: true,
             id: 1,
             name: "Change name",
             friendIds: [
@@ -275,7 +280,6 @@ describe("AutoEncoder", () => {
 
     test("Patch or put properties", () => {
         const existingFriendBestFriend = Dog.create({ id: "DOG4", name: "best friend", friendIds: [], friends: [] });
-        const newBestFriend = Dog.create({ id: "DOG5", name: "Better best friend", friendIds: [], friends: [] });
 
         const existingFriend = Dog.create({
             id: "DOG3",
@@ -287,7 +291,7 @@ describe("AutoEncoder", () => {
         });
 
         // Check if we can do a normal patch
-        const patchDog = DogPatch.create({ bestFriend: DogPatch.create({ name: "Best friend 2" }) })
+        const patchDog = Dog.patch({ bestFriend: Dog.patch({ name: "Best friend 2" }) })
         const patchedDog = existingFriend.patch(patchDog);
         const patchedDog3 = existingFriend.patch({ name: "test" });
 
@@ -295,10 +299,18 @@ describe("AutoEncoder", () => {
         expect(patchedDog.bestFriend!.id).toEqual("DOG4")
 
         // Check if we can do a put
-        const patchDog2 = DogPatch.create({ bestFriend: PatchOrPut.put(newBestFriend) })
+        const patchDog2 = Dog.patch({ bestFriend: Dog.create({ id: "DOG5", name: "Better best friend", friendIds: [], friends: [
+             Dog.create({ id: "DOG6", name: "Another friend", friendIds: [], friends: [] })
+        ] }) })
         const patchedDog2 = existingFriend.patch(patchDog2);
 
         expect(patchedDog2.bestFriend!.name).toEqual("Better best friend")
         expect(patchedDog2.bestFriend!.id).toEqual("DOG5")
+
+        // Try exactly the same by encdoing the patch and applying it again
+        const encoded = patchDog2.encode({ version: 2 })
+        const decoded = new ObjectData(encoded, { version: 2}).decode(DogPatch as Decoder<PatchType<Dog>>)
+        const patchedDog2b = existingFriend.patch(decoded);
+        expect(patchedDog2b).toEqual(patchedDog2)
     });
 });

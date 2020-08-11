@@ -1,6 +1,5 @@
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
-import { PatchOrPut,PatchOrPutDecoder } from '../structs/PatchOrPut';
 import StringDecoder from '../structs/StringDecoder';
 import StringOrNumberDecoder from '../structs/StringOrNumberDecoder';
 import { Data } from "./Data";
@@ -10,6 +9,29 @@ import { EncodeContext } from "./EncodeContext";
 import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable } from "./Patchable";
 
 export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
+
+/**
+ * Uses the meta data of AutoEncoder to check if something is a patch or a put
+ */
+export class PatchOrPutDecoder<Put extends Patchable<Patch> & AutoEncoder, Patch extends AutoEncoder> implements Decoder<Patch | Put> {
+    putDecoder:  Decoder<Put>;
+    patchDecoder: Decoder<Patch>;
+    
+    constructor(put: Decoder<Put>, patch: Decoder<Patch>) {
+        this.putDecoder = put
+        this.patchDecoder = patch
+    }
+
+    decode(data: Data): Put | Patch {
+        const isPatch = data.optionalField("_isPatch")
+        if (!isPatch || isPatch.boolean) {
+            // Default to patch behaviour for backwards compatibility
+            return this.patchDecoder.decode(data)
+        }
+
+        return this.putDecoder.decode(data)
+    }
+}
 
 export class Field<T> {
     optional: boolean;
@@ -177,6 +199,8 @@ export class AutoEncoder implements Encodeable {
     static fields: Field<any>[];
     private static cachedPatchType?: typeof AutoEncoder;
 
+    static isPatch = false
+
     /// Create a patch for this instance (of reuse if already created)
     static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new () => AutoEncoderPatchType<InstanceType<T>>) {
         if (this.cachedPatchType) {
@@ -201,6 +225,8 @@ export class AutoEncoder implements Encodeable {
             (CreatedPatch.prototype as any).getIdentifier = (this as any).prototype.getIdentifier;
         }
 
+        CreatedPatch.isPatch = true
+
         return CreatedPatch as any;
     }
 
@@ -216,20 +242,19 @@ export class AutoEncoder implements Encodeable {
         }
     }
 
+    static patch<T extends typeof AutoEncoder>(this: T, object: PartialWithoutMethods<AutoEncoderPatchType<InstanceType<T>>>): AutoEncoderPatchType<InstanceType<T>> {
+        return this.patchType().create(object)
+    }
+
     patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>): this {
         const instance = new this.static() as this;
         for (const field of this.static.fields) {
             const prop = field.property;
             if (isPatchable(this[prop])) {
-                // Check if patch[prop] is a patchable array
-                if (patch[prop] instanceof PatchOrPut) {
-                    instance[prop] = PatchOrPut.apply(this[prop], patch[prop])
+                if (patch[prop] !== undefined) {
+                    instance[prop] = this[prop].patch(patch[prop]);
                 } else {
-                    if (patch[prop] !== undefined) {
-                        instance[prop] = this[prop].patch(patch[prop]);
-                    } else {
-                        instance[prop] = this[prop];
-                    }
+                    instance[prop] = this[prop];
                 }
             } else {
                 if (Array.isArray(this[prop])) {
@@ -371,6 +396,9 @@ export class AutoEncoder implements Encodeable {
                 appliedProperties[field.property] = true;
             }
         }
+
+        // Add meta data
+        object["_isPatch"] = this.static.isPatch
 
         return object;
     }

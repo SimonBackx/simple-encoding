@@ -12,12 +12,12 @@ export class PatchOrPut<Put extends Patchable<Patch> & Encodeable, Patch extends
         return !this.isPut
     }
 
-    private constructor(value: Patch | Put, isPut = false) {
+    constructor(value: Patch | Put, isPut = false) {
         this.value = value
         this.isPut = isPut
     }
 
-    patch(patch: PatchOrPut<Put, Patch>): this {
+    patch(this: PatchOrPut<Put, Patch>, patch: PatchOrPut<Put, Patch>): this {
         if (patch.isPut) {
             return patch as any
         }

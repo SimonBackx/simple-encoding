@@ -289,6 +289,7 @@ describe("AutoEncoder", () => {
         // Check if we can do a normal patch
         const patchDog = DogPatch.create({ bestFriend: DogPatch.create({ name: "Best friend 2" }) })
         const patchedDog = existingFriend.patch(patchDog);
+        const patchedDog3 = existingFriend.patch({ name: "test" });
 
         expect(patchedDog.bestFriend!.name).toEqual("Best friend 2")
         expect(patchedDog.bestFriend!.id).toEqual("DOG4")

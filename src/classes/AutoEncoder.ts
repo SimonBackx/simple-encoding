@@ -216,7 +216,7 @@ export class AutoEncoder implements Encodeable {
         }
     }
 
-    patch<T extends AutoEncoder>(this: T, patch: AutoEncoderPatchType<T>): this {
+    patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>): this {
         const instance = new this.static() as this;
         for (const field of this.static.fields) {
             const prop = field.property;

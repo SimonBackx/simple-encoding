@@ -22,3 +22,4 @@ export * from "./src/classes/EncodeContext";
 export * from "./src/structs/VersionBox";
 export { default as StringOrNumberDecoder } from "./src/structs/StringOrNumberDecoder";
 export { default as DateDecoder } from "./src/structs/DateDecoder";
+export * from "./src/structs/PatchOrPut";

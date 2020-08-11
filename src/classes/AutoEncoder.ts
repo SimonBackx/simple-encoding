@@ -267,7 +267,7 @@ export class AutoEncoder implements Encodeable {
         for (const field of this.static.fields) {
             const prop = field.property;
             if (isPatchable(this[prop])) {
-                if (patch[prop] !== undefined) {
+                if (patch[prop] !== undefined && patch[prop] !== null) {
                     instance[prop] = this[prop].patch(patch[prop]);
                 } else {
                     instance[prop] = this[prop];

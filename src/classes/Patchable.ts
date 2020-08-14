@@ -25,7 +25,7 @@ export function patchContainsChanges<B extends Encodeable & Patchable<B>, A exte
 
 export type ConvertArrayToPatchableArray<T> =
     T extends AutoEncoder ?
-        T | AutoEncoderPatchType<T> // This is needed to help Typescript Understand to keep T instead of just generalizing to AutoEncoderPatchType<AutoEncoder>
+        T | AutoEncoderPatchType<T> | undefined // This is needed to help Typescript Understand to keep T instead of just generalizing to AutoEncoderPatchType<AutoEncoder>
     : T extends PatchableArray<any, any, any>
     ? T :
     (T extends Array<infer P>

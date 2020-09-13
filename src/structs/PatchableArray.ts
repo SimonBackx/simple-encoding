@@ -1,5 +1,6 @@
 import { SimpleError } from "@simonbackx/simple-errors";
 
+import { PatchOrPutDecoder } from '../classes/AutoEncoder';
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
 import { Encodeable, isEncodeable, PlainObject } from "../classes/Encodeable";
@@ -362,7 +363,7 @@ export class PatchableArrayItemDecoder<
         const patch = data.optionalField("patch");
         if (patch !== undefined) {
             return {
-                patch: patch.decode(this.patchDecoder),
+                patch: patch.decode(new PatchOrPutDecoder<any, any>(this.putDecoder, this.patchDecoder)),
             };
         }
 

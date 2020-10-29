@@ -21,7 +21,7 @@ npm install @simonbackx/simple-encoding
 ## Features
 
 -   Great errors out of the box
--   Customize as you which:
+-   Customize as you wish:
     -   By not using automatic generation of the encoded format, you can easily let the field names and types differ between the encoded version and your actual instances.
     -   You can add your own decoders/validators for custom fields (e.g. phone number)
 -   Minor and readable boilerplate code

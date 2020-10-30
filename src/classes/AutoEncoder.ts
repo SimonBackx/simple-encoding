@@ -266,16 +266,21 @@ export class AutoEncoder implements Encodeable {
         const instance = new this.static() as this;
         for (const field of this.static.fields) {
             const prop = field.property;
+
+            if (patch[prop] === undefined) {
+                // When a property is set to undefined, we always ignore it, always. You can never set something to undefined.
+                // Use null instead.
+                instance[prop] = this[prop];
+                continue;
+            }
+
             if (isPatchable(this[prop])) {
-                if (patch[prop] !== undefined) {
-                    if (patch[prop] == null) {
-                        instance[prop] = null;
-                    } else {
-                        instance[prop] = this[prop].patch(patch[prop]);
-                    }
+                if (patch[prop] == null) {
+                    instance[prop] = null;
                 } else {
-                    instance[prop] = this[prop];
+                    instance[prop] = this[prop].patch(patch[prop]);
                 }
+
             } else {
                 if (Array.isArray(this[prop])) {
                     // Check if patch[prop] is a patchable array
@@ -289,13 +294,8 @@ export class AutoEncoder implements Encodeable {
                         instance[prop] = patch[prop];
                     }
                 } else {
-                    // we need to check for undefined and not use ??
-                    // because we also need to set values to null
-                    if (patch[prop] === undefined) {
-                        instance[prop] = this[prop];
-                    } else {
-                        instance[prop] = patch[prop];
-                    }
+
+                    instance[prop] = patch[prop];
                 }
             }
         }

@@ -235,7 +235,7 @@ export class AutoEncoder implements Encodeable {
             this.static.fields = [];
         }
 
-        for (const field of this.static.fields) {
+        for (const field of this.static.latestFields) {
             if (field.defaultValue) {
                 this[field.property] = field.defaultValue();
             }

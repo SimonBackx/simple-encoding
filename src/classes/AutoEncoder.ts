@@ -67,6 +67,11 @@ export class Field<T> {
      */
     defaultValue?: () => any;
 
+    /**
+     * Internal value for unsupported versions
+     */
+    patchDefaultValue?: () => any;
+
     getOptionalClone() {
         const field = new Field();
         field.optional = true;
@@ -110,6 +115,7 @@ export class Field<T> {
 
         field.upgradePatch = this.upgradePatch
         field.downgradePatch = this.downgradePatch
+        field.patchDefaultValue = this.patchDefaultValue
 
         field.defaultValue = undefined; // do not copy default values. Patches never have default values!
 
@@ -166,6 +172,10 @@ export class Field<T> {
             field.upgrade = this.upgradePatch
             field.downgrade = this.downgradePatch
             field.decoder = new PatchOrPutDecoder(aDecoder, aDecoder.patchType());
+        }
+
+        if (this.patchDefaultValue) {
+            field.defaultValue = this.patchDefaultValue; 
         }
 
         return field;

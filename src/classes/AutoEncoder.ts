@@ -8,7 +8,11 @@ import { Encodeable, isEncodeable,PlainObject } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
 import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable } from "./Patchable";
 
-export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
+//export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
+export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? (
+    { patchType: () => PatchableDecoder<P> }
+    & (T extends AutoEncoder ? {} : { patchIdentifier: () => Decoder<string | number> }) // when patchType is a custom decoder, we also need the decoder for the identifier
+) : {})
 
 /**
  * Uses the meta data of AutoEncoder to check if something is a patch or a put
@@ -127,14 +131,20 @@ export class Field<T> {
 
                 // Check if we have a method called "getIdentifier"
                 let idFieldType: Decoder<string | number> | undefined;
-                if (patchType.prototype.getIdentifier) {
-                    // This autoencoder uses the getIdentifier method to define the id
-                    idFieldType = StringOrNumberDecoder;
+
+                if ((elementDecoder as any).patchIdentifier) {
+                    // Custom identifier (in case no automatic detection is possible)
+                    idFieldType = (elementDecoder as any).patchIdentifier()
                 } else {
-                    // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                    const field = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")
-                    if (field) {
-                        idFieldType = field.decoder;
+                    if (patchType.prototype.getIdentifier) {
+                        // This autoencoder uses the getIdentifier method to define the id
+                        idFieldType = StringOrNumberDecoder;
+                    } else {
+                        // eslint-disable-next-line @typescript-eslint/no-use-before-define
+                        const field = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")
+                        if (field) {
+                            idFieldType = field.decoder;
+                        }
                     }
                 }
 

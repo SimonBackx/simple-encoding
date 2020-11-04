@@ -6,6 +6,7 @@ export function field<T>(settings: {
     nullable?: boolean;
     decoder: PatchableDecoder<T>;
     defaultValue?: () => any;
+    patchDefaultValue?: () => any;
 
     upgrade?: (old: any) => any;
     downgrade?: (newer: any) => any;
@@ -47,6 +48,7 @@ export function field<T>(settings: {
         field.upgradePatch = settings.upgradePatch;
         field.downgradePatch = settings.downgradePatch;
         field.defaultValue = settings.defaultValue;
+        field.patchDefaultValue = settings.patchDefaultValue;
         field.property = key;
 
         target.constructor.fields.push(field);

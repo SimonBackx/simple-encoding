@@ -1,8 +1,6 @@
-import { isEncodeable } from '@simonbackx/simple-encoding';
-
 import { Data } from '../classes/Data';
 import { Decoder } from '../classes/Decoder';
-import { Encodeable } from '../classes/Encodeable';
+import { Encodeable, isEncodeable } from '../classes/Encodeable';
 import { EncodeContext } from '../classes/EncodeContext';
 
 /**

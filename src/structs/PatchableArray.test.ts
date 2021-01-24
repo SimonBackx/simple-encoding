@@ -1,9 +1,8 @@
-import { PatchableArray, PatchableArrayDecoder } from "./PatchableArray";
-import { Patchable, PatchType } from "../classes/Patchable";
-import { Identifiable } from "../classes/Identifiable";
-import StringDecoder from "./StringDecoder";
 import { Data } from "../classes/Data";
 import { ObjectData } from "../classes/ObjectData";
+import { Patchable } from "../classes/Patchable";
+import { PatchableArray, PatchableArrayDecoder } from "./PatchableArray";
+import StringDecoder from "./StringDecoder";
 
 class Patch implements Patchable<Patch> {
     id: string;

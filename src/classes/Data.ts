@@ -26,4 +26,9 @@ export interface Data {
     equals<T>(value: T): T;
     array<T>(decoder: Decoder<T>): T[];
     enum<E extends { [key: number]: string | number }>(e: E): E[keyof E];
+
+    /**
+     * Use this method to create a new instance of the same type, but with different field and data. 
+     */
+    clone(set: { data: any; context: EncodeContext; field: string }): Data;
 }

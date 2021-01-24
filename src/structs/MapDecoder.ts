@@ -2,7 +2,6 @@ import { SimpleError } from "@simonbackx/simple-errors";
 
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
-import { ObjectData } from "../classes/ObjectData";
 
 export class MapDecoder<A, B> implements Decoder<Map<A, B>> {
     keyDecoder: Decoder<A>;
@@ -17,7 +16,11 @@ export class MapDecoder<A, B> implements Decoder<Map<A, B>> {
         if (typeof data.value === 'object' && data.value !== null) {
             const map = new Map<A, B>()
             for (const key in data.value) {
-                const keyDecoded = new ObjectData(key, data.context, data.addToCurrentField(key)).decode(this.keyDecoder)
+                const keyDecoded = data.clone({ 
+                    data: key, 
+                    context: data.context, 
+                    field: data.addToCurrentField(key) 
+                }).decode(this.keyDecoder)
                 const valueDecoded = data.field(key).decode(this.valueDecoder)
                 map.set(keyDecoded, valueDecoded)
             }

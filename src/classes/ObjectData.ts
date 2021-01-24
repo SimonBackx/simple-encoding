@@ -147,4 +147,12 @@ export class ObjectData implements Data {
     enum<E extends { [key: number]: string | number }>(e: E): E[keyof E] {
         return new EnumDecoder(e).decode(this);
     }
+
+    clone(set: { data: any; context: EncodeContext; field: string }): ObjectData {
+        return new ObjectData(
+            set.data, 
+            set.context, 
+            set.field
+        );
+    }
 }

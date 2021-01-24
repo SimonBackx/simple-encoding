@@ -12,7 +12,8 @@
         "test": "jest"
     },
     "files": [
-        "dist"
+        "dist",
+        "esm/dist"
     ],
     "peerDependencies": {
         "@simonbackx/simple-errors": "^1.0.4"

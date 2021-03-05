@@ -314,8 +314,20 @@ export class AutoEncoder implements Encodeable {
                         instance[prop] = patch[prop];
                     }
                 } else {
-
-                    instance[prop] = patch[prop];
+                    if (this[prop] === undefined && patch[prop] instanceof PatchableArray) {
+                        // Patch on optional array: ignore if empty patch, else fake empty array patch
+                        if (patch[prop].changes.length === 0) {
+                            continue;
+                        }
+                        const patched = patch[prop].applyTo([]);
+                        if (patched.length === 0) {
+                            // Nothing changed, keep it undefined
+                            continue;
+                        }
+                        instance[prop] = patched;
+                    } else {
+                        instance[prop] = patch[prop];
+                    }
                 }
             }
         }

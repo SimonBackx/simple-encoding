@@ -100,18 +100,16 @@ describe("AutoEncoder", () => {
         const aFriend = Dog.create({ id: "DOG2", name: "friend", friendIds: [], friends: [] });
         const dog = Dog.create({ id: "DOG1", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [aFriend] });
         expect(dog.encode({ version: 1 })).toEqual({
-            _isPatch: false,
             id: 1,
             name: "dog",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ _isPatch: false, id: 2, name: "friend", friendIds: [], friends: [] }],
+            friends: [{ id: 2, name: "friend", friendIds: [], friends: [] }],
         });
         expect(dog.encode({ version: 2 })).toEqual({
-            _isPatch: false,
             id: "DOG1",
             breed: "dog",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ _isPatch: false, id: "DOG2", breed: "friend", friendIds: [], friends: [] }],
+            friends: [{ id: "DOG2", breed: "friend", friendIds: [], friends: [] }],
         });
     });
 

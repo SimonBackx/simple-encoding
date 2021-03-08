@@ -28,8 +28,7 @@ export class PatchOrPutDecoder<Put extends Patchable<Patch> & AutoEncoder, Patch
 
     decode(data: Data): Put | Patch {
         const isPatch = data.optionalField("_isPatch")
-        if (!isPatch || isPatch.boolean) {
-            // Default to patch behaviour for backwards compatibility
+        if (isPatch?.boolean ?? false) {
             return this.patchDecoder.decode(data)
         }
 
@@ -450,7 +449,9 @@ export class AutoEncoder implements Encodeable {
         }
 
         // Add meta data
-        object["_isPatch"] = this.static.isPatch
+        if (this.static.isPatch) {
+            object["_isPatch"] = this.static.isPatch
+        }
 
         return object;
     }

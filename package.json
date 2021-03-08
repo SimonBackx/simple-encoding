@@ -3,7 +3,7 @@
     "main": "./dist/index.js",
     "module": "./esm/dist/index.js",
     "types": "./dist/index.d.ts",
-    "version": "1.14.0",
+    "version": "2.0.0",
     "sideEffects": false,
     "scripts": {
         "build": "yarn build-cjs && yarn build-esm",

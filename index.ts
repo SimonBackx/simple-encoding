@@ -7,6 +7,7 @@ export * from "./src/classes/Identifiable";
 
 export * from "./src/structs/ArrayDecoder";
 export * from "./src/structs/MapDecoder";
+export * from "./src/structs/RecordDecoder";
 export * from "./src/structs/NullableDecoder";
 export { default as Base64Decoder } from "./src/structs/Base64Decoder";
 export * from "./src/structs/EmailDecoder";

@@ -440,6 +440,22 @@ export class AutoEncoder implements Encodeable {
                             }
                             return e;
                         });
+                    } else if (source[field.property] instanceof Map) {
+                        // Transform into a normal object to conform to MapDecoders expected format
+                        const obj = {}
+
+                        for (let [key, value] of (source[field.property] as any as Map<any, any>)) {
+                            if (isEncodeable(key)) {
+                                key = key.encode(context);
+                            }
+
+                            if (isEncodeable(value)) {
+                                value = value.encode(context);
+                            }
+
+                            object[key] = value
+                        }
+                        object[field.field] = obj
                     } else {
                         object[field.field] = source[field.property];
                     }

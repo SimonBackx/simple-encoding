@@ -16,3 +16,34 @@ export function isEncodeable(object: any): object is Encodeable {
     }
     return !!object.encode;
 }
+
+export type EncodableObject = Encodeable | EncodableObject[] | Map<EncodableObject & keyof any, EncodableObject> | string | number | null | undefined | boolean
+
+/**
+ * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
+ */
+export function encodeObject(obj: EncodableObject, context: EncodeContext): PlainObject {
+    if (isEncodeable(obj)) {
+        return obj.encode(context);
+    }
+
+    if (Array.isArray(obj)) {
+        return obj.map((e) => {
+            return encodeObject(e, context)
+        });
+    }
+    
+    if (obj instanceof Map) {
+        // Transform into a normal object to conform to MapDecoders expected format
+        const encodedObj = {}
+
+        for (const [key, value] of obj) {
+            const k: EncodableObject & keyof any = encodeObject(key, context) as any
+            encodedObj[k] = encodeObject(value, context)
+        }
+        return encodedObj
+    }
+    
+    // Failed to decode
+    return obj;
+}

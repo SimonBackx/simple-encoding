@@ -1,10 +1,9 @@
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
-import StringDecoder from '../structs/StringDecoder';
 import StringOrNumberDecoder from '../structs/StringOrNumberDecoder';
 import { Data } from "./Data";
 import { Decoder } from "./Decoder";
-import { Encodeable, isEncodeable,PlainObject } from "./Encodeable";
+import { Encodeable, encodeObject, PlainObject } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
 import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable } from "./Patchable";
 
@@ -430,36 +429,7 @@ export class AutoEncoder implements Encodeable {
                     }
                     continue;
                 }
-                if (isEncodeable(source[field.property])) {
-                    object[field.field] = source[field.property].encode(context);
-                } else {
-                    if (Array.isArray(source[field.property])) {
-                        object[field.field] = source[field.property].map((e) => {
-                            if (isEncodeable(e)) {
-                                return e.encode(context);
-                            }
-                            return e;
-                        });
-                    } else if (source[field.property] instanceof Map) {
-                        // Transform into a normal object to conform to MapDecoders expected format
-                        const obj = {}
-
-                        for (let [key, value] of (source[field.property] as any as Map<any, any>)) {
-                            if (isEncodeable(key)) {
-                                key = key.encode(context);
-                            }
-
-                            if (isEncodeable(value)) {
-                                value = value.encode(context);
-                            }
-
-                            obj[key] = value
-                        }
-                        object[field.field] = obj
-                    } else {
-                        object[field.field] = source[field.property];
-                    }
-                }
+                object[field.field] = encodeObject(source[field.property], context);
                 appliedProperties[field.property] = true;
             }
         }

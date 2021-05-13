@@ -2,7 +2,7 @@ import { SimpleError } from "@simonbackx/simple-errors";
 
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
-import { Encodeable, isEncodeable, PlainObject } from "../classes/Encodeable";
+import { Encodeable, encodeObject, PlainObject } from "../classes/Encodeable";
 import { EncodeContext } from "../classes/EncodeContext";
 import { getId, Identifiable } from "../classes/Identifiable";
 import { isPatchable,Patchable } from "../classes/Patchable";
@@ -281,13 +281,13 @@ export class PatchableArray<
                     // First do a delete of this value
                     return {
                         afterId: change.afterId,
-                        move: isEncodeable(change.move) ? change.move.encode(context) : change.move,
+                        move: encodeObject(change.move, context),
                     };
                 } else if (isPut(change)) {
                     // First do a delete of this value
                     return {
                         afterId: change.afterId,
-                        put: isEncodeable(change.put) ? change.put.encode(context) : (change.put as string | number),
+                        put: encodeObject(change.put, context),
                     };
                 } else if (isDelete(change)) {
                     return {
@@ -296,7 +296,7 @@ export class PatchableArray<
                 } else if (isPatch(change)) {
                     // First do a delete of this value
                     return {
-                        patch: isEncodeable(change.patch) ? change.patch.encode(context) : (change.patch as string | number),
+                        patch: encodeObject(change.patch, context),
                     };
                 }
             }

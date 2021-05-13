@@ -453,7 +453,7 @@ export class AutoEncoder implements Encodeable {
                                 value = value.encode(context);
                             }
 
-                            object[key] = value
+                            obj[key] = value
                         }
                         object[field.field] = obj
                     } else {

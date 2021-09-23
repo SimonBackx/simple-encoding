@@ -302,7 +302,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
             if (patch[prop] === undefined) {
                 // When a property is set to undefined, we always ignore it, always. You can never set something to undefined.
                 // Use null instead.
-                instance[prop] = cloneObject(this[prop]);
+                instance[prop] = this[prop];
                 continue;
             }
 

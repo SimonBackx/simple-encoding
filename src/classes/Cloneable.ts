@@ -44,11 +44,11 @@ export function cloneObject<T extends CloneableObject>(obj: T): T {
         const out: Record<string, CloneableObject> = {};
 
         for (const key in obj) {
-            if (typeof key === "function") {
+            if (typeof obj[key] === "function") {
                 // This is not an anonoymous object.
                 // Skip early and return reference
                 console.warn("Unsupported clone of object", obj)
-                return obj
+                return obj;
             }
             out[key] = cloneObject(obj[key])
         }

@@ -282,13 +282,27 @@ export class AutoEncoder implements Encodeable {
 
     patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>): this {
         const instance = new this.static() as this;
-        for (const field of this.static.fields) {
+        for (const field of this.static.latestFields) {
             const prop = field.property;
 
             if (patch[prop] === undefined) {
                 // When a property is set to undefined, we always ignore it, always. You can never set something to undefined.
                 // Use null instead.
-                instance[prop] = this[prop];
+                // Make sure we make a deep clone here
+                if (isPatchable(this[prop])) {
+                    instance[prop] = this[prop].patch({});
+                } else if (Array.isArray(this[prop])) {
+                    instance[prop] = this[prop].slice();
+
+                    // Make sure we do a deep clone of arrays too
+                    for (const [item, itemIndex] of instance[prop]) {
+                        if (isPatchable(item)) {
+                            instance[prop][itemIndex] = item.patch({})
+                        }
+                    }
+                } else {
+                    instance[prop] = this[prop];
+                }
                 continue;
             }
 

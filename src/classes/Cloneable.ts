@@ -41,19 +41,7 @@ export function cloneObject<T extends CloneableObject>(obj: T): T {
     }
 
     if (typeof obj === "object" && obj !== null) {
-        const out: Record<string, CloneableObject> = {};
-
-        for (const key in obj) {
-            if (typeof obj[key] === "function") {
-                // This is not an anonoymous object.
-                // Skip early and return reference
-                console.warn("Unsupported clone of object", obj)
-                return obj;
-            }
-            out[key] = cloneObject(obj[key])
-        }
-
-        return out as T
+        return Object.assign(Object.create(obj.constructor.prototype), obj)
     }
     
     // Singular value

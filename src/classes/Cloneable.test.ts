@@ -77,4 +77,26 @@ describe("Cloneable", () => {
         expect(cloneObject(obj)).toEqual(obj);
         expect(cloneObject(obj)).not.toBe(obj);
     });
+
+    test("Cloning an object with constructor", () => {
+        class Test {
+            name: string
+            id: number
+            
+            hallo() {
+                return this.name+" "+this.id
+            }
+        }
+        const obj = new Test()
+        obj.name = "test"
+        obj.id = 12345945
+        expect(cloneObject(obj as any)).toEqual(obj);
+        expect(cloneObject(obj as any)).toBeInstanceOf(Test);
+        expect(cloneObject(obj as any)).not.toBe(obj);
+        expect(cloneObject(obj as any).hallo).not.toBeUndefined()
+
+        // Default objects
+        expect(obj.toString).not.toBeUndefined()
+        expect(cloneObject(obj as any).toString).not.toBeUndefined()
+    });
 });

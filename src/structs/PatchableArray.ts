@@ -1,5 +1,6 @@
 import { SimpleError } from "@simonbackx/simple-errors";
 
+import { Cloneable, cloneObject } from "../classes/Cloneable";
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
 import { Encodeable, encodeObject, PlainObject } from "../classes/Encodeable";
@@ -37,23 +38,25 @@ export class PatchableArray<
     Id extends string | number,
     Put extends (Identifiable<Id> & Encodeable & Patchable<Patch>) | Id,
     Patch extends (Identifiable<Id> & Encodeable) | Put
-> implements Encodeable, Patchable<PatchableArray<Id, Put, Patch>> {
+> implements Encodeable, Patchable<PatchableArray<Id, Put, Patch>>, Cloneable {
     changes: Change<Id, Put, Patch>[];
 
     constructor(changes?: Change<Id, Put, Patch>[]) {
         this.changes = changes ?? [];
     }
 
-    clone(): PatchableArray<Id, Put, Patch> {
+    clone<T extends this>(this: T): this {
         // Deep clone self
-        const cloned = new PatchableArray<Id, Put, Patch>();
+        const cloned = new PatchableArray<Id, Put, Patch>() as this;
         cloned.merge(this);
         return cloned;
     }
 
     merge(other: PatchableArray<Id, Put, Patch>) {
+        // We need to clone the incoming changes, because otherwise we would keep the same reference
+        // to individual changes we might still change
         for (const change of other.changes) {
-            this.changes.push(Object.assign({}, change));
+            this.changes.push(cloneObject<any>(change));
         }
     }
 
@@ -76,7 +79,7 @@ export class PatchableArray<
             }
         }
 
-        return cloned as this;
+        return cloned;
     }
 
     addPut(value: Put, after?: Id | null) {

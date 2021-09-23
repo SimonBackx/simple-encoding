@@ -4,6 +4,7 @@ export * from "./src/classes/Encodeable";
 export * from "./src/classes/ObjectData";
 export * from "./src/classes/Patchable";
 export * from "./src/classes/Identifiable";
+export * from "./src/classes/Cloneable";
 
 export * from "./src/structs/ArrayDecoder";
 export * from "./src/structs/MapDecoder";

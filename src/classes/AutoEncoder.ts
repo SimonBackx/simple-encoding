@@ -1,6 +1,7 @@
 import { ArrayDecoder } from "../structs/ArrayDecoder";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
 import StringOrNumberDecoder from '../structs/StringOrNumberDecoder';
+import { Cloneable, cloneObject } from "./Cloneable";
 import { Data } from "./Data";
 import { Decoder } from "./Decoder";
 import { Encodeable, encodeObject, PlainObject } from "./Encodeable";
@@ -212,7 +213,7 @@ const p = DogPatch.create({id: "test"})
 
 */
 
-export class AutoEncoder implements Encodeable {
+export class AutoEncoder implements Encodeable, Cloneable {
     /// Fields should get sorted by version. Low to high
     static fields: Field<any>[];
     private static cachedPatchType?: typeof AutoEncoder;
@@ -280,6 +281,19 @@ export class AutoEncoder implements Encodeable {
         this.set(patch as T)
     }
 
+    /**
+     * Make a deep clone of this object
+     */
+    clone<T extends this>(this: T): this {
+        const instance = new this.static() as this;
+        for (const field of this.static.latestFields) {
+            const prop = field.property;
+            instance[prop] = cloneObject(this[prop]);
+        }
+
+        return instance;
+    }
+
     patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>): this {
         const instance = new this.static() as this;
         for (const field of this.static.latestFields) {
@@ -288,21 +302,7 @@ export class AutoEncoder implements Encodeable {
             if (patch[prop] === undefined) {
                 // When a property is set to undefined, we always ignore it, always. You can never set something to undefined.
                 // Use null instead.
-                // Make sure we make a deep clone here
-                if (isPatchable(this[prop])) {
-                    instance[prop] = this[prop].patch({});
-                } else if (Array.isArray(this[prop])) {
-                    instance[prop] = this[prop].slice();
-
-                    // Make sure we do a deep clone of arrays too
-                    for (const [itemIndex, item] of (instance[prop] as Array<any>).entries()) {
-                        if (isPatchable(item)) {
-                            instance[prop][itemIndex] = item.patch({})
-                        }
-                    }
-                } else {
-                    instance[prop] = this[prop];
-                }
+                instance[prop] = cloneObject(this[prop]);
                 continue;
             }
 

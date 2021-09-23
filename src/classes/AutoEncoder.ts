@@ -295,7 +295,7 @@ export class AutoEncoder implements Encodeable {
                     instance[prop] = this[prop].slice();
 
                     // Make sure we do a deep clone of arrays too
-                    for (const [item, itemIndex] of instance[prop]) {
+                    for (const [itemIndex, item] of instance[prop]) {
                         if (isPatchable(item)) {
                             instance[prop][itemIndex] = item.patch({})
                         }

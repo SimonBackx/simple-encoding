@@ -9,7 +9,7 @@ export function isCloneable(object: any): object is Cloneable {
     return !!object.clone;
 }
 
-export type CloneableObject = Cloneable | CloneableObject[] | Map<CloneableObject, CloneableObject> | string | number | { [key: string]: CloneableObject } | boolean | undefined | null;
+export type CloneableObject = Cloneable | CloneableObject[] | Map<CloneableObject, CloneableObject> | string | number | { [key: string]: CloneableObject } | boolean | undefined | null | Date;
 
 /**
  * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
@@ -36,10 +36,20 @@ export function cloneObject<T extends CloneableObject>(obj: T): T {
         return encodedObj as Map<CloneableObject & keyof any, CloneableObject> & T
     }
 
+    if (obj instanceof Date) {
+        return new Date(obj) as T
+    }
+
     if (typeof obj === "object" && obj !== null) {
         const out: Record<string, CloneableObject> = {};
 
         for (const key in obj) {
+            if (typeof key === "function") {
+                // This is not an anonoymous object.
+                // Skip early and return reference
+                console.warn("Unsupported clone of object", obj)
+                return obj
+            }
             out[key] = cloneObject(obj[key])
         }
 

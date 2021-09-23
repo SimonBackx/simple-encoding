@@ -284,7 +284,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
     /**
      * Make a deep clone of this object
      */
-    clone<T extends this>(this: T): this {
+    clone<T extends AutoEncoder>(this: T): this {
         const instance = new this.static() as this;
         for (const field of this.static.latestFields) {
             const prop = field.property;

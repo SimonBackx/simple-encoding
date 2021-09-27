@@ -39,9 +39,21 @@ export type ConvertArrayToPatchableArray<T> =
         : PatchType<T> | undefined)
     ;
 
+    // detect if two types X and Y are exactly identical
+type IfEquals<X, Y, A=X, B=never> =
+  (<T>() => T extends X ? 1 : 2) extends
+  (<T>() => T extends Y ? 1 : 2) ? A : B;
+  
 type RemoveMethodsHelper<Base> = {
-    [Key in keyof Base]: Base[Key] extends Function ? never : Key;
+    [Key in keyof Base]: Base[Key] extends Function ? never : IfEquals<{ [Q in Key]: Base[Key] }, { -readonly [Q in Key]: Base[Key] }, Key>;
 };
+
+// writable keys are those which are exactly equal when you strip readonly off
+// in a mapped type
+type WritableKeys<T> = {
+  [P in keyof T]: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, P>
+}[keyof T];
+
 type NonMethodNames<Base> = Exclude<RemoveMethodsHelper<Base>[keyof Base], undefined>;
 
 export type PartialWithoutMethods<Base> = {

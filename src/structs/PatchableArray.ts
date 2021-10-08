@@ -60,7 +60,11 @@ export class PatchableArray<
         }
     }
 
-    patch(patch: PatchableArray<Id, Put, Patch>): this {
+    patch(patch: PatchableArray<Id, Put, Patch> | Put[]): this {
+        if (Array.isArray(patch)) {
+            // Transform itself into a normal array. Override all existing patches
+            return patch.slice() as any
+        }
         // Deep clone self
         const cloned = this.clone();
 
@@ -278,32 +282,35 @@ export class PatchableArray<
     }
 
     encode(context: EncodeContext) {
-        return this.changes.map(
-            (change): PlainObject => {
-                if (isMove(change)) {
-                    // First do a delete of this value
-                    return {
-                        afterId: change.afterId,
-                        move: encodeObject(change.move, context),
-                    };
-                } else if (isPut(change)) {
-                    // First do a delete of this value
-                    return {
-                        afterId: change.afterId,
-                        put: encodeObject(change.put, context),
-                    };
-                } else if (isDelete(change)) {
-                    return {
-                        delete: change.delete,
-                    };
-                } else if (isPatch(change)) {
-                    // First do a delete of this value
-                    return {
-                        patch: encodeObject(change.patch, context),
-                    };
+        return {
+            _isPatch: true,
+            changes: this.changes.map(
+                (change): PlainObject => {
+                    if (isMove(change)) {
+                        // First do a delete of this value
+                        return {
+                            afterId: change.afterId,
+                            move: encodeObject(change.move, context),
+                        };
+                    } else if (isPut(change)) {
+                        // First do a delete of this value
+                        return {
+                            afterId: change.afterId,
+                            put: encodeObject(change.put, context),
+                        };
+                    } else if (isDelete(change)) {
+                        return {
+                            delete: change.delete,
+                        };
+                    } else if (isPatch(change)) {
+                        // First do a delete of this value
+                        return {
+                            patch: encodeObject(change.patch, context),
+                        };
+                    }
                 }
-            }
-        );
+            )
+        }
     }
 
     getPuts(): PutAfter<Id, Put>[] {
@@ -393,6 +400,14 @@ export class PatchableArrayDecoder<
     }
 
     decode(data: Data): PatchableArray<Id, Put, Patch> {
-        return new PatchableArray<Id, Put, Patch>(data.array(new PatchableArrayItemDecoder(this.putDecoder, this.patchDecoder, this.idDecoder)));
+        if (Array.isArray(data.value)) {
+            console.warn("Found legacy patchable array. Make sure to use the new patchable array encoding, as this will get removed and replaced with a PUT in future versions.")
+            // Legacy encode version
+            // This will remain supported for a period
+            // but is deprecated
+            return new PatchableArray<Id, Put, Patch>(data.array(new PatchableArrayItemDecoder(this.putDecoder, this.patchDecoder, this.idDecoder)));
+        }
+        const changes = data.field("changes").array(new PatchableArrayItemDecoder(this.putDecoder, this.patchDecoder, this.idDecoder))
+        return new PatchableArray<Id, Put, Patch>(changes);
     }
 }

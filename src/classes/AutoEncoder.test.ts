@@ -198,24 +198,30 @@ describe("AutoEncoder", () => {
             _isPatch: true,
             id: "DOG1",
             breed: "Change name",
-            friendIds: [
-                {
-                    delete: "84sdg95",
-                },
-                {
-                    put: "test",
-                    afterId: "sdgsdg",
-                },
-            ],
-            friends: [
-                {
-                    put: friendDogChanged.encode({ version: 2 }),
-                    afterId: null,
-                },
-                {
-                    patch: friendPatchExist.encode({ version: 2 }),
-                },
-            ],
+            friendIds: {
+                _isPatch: true,
+                changes: [
+                    {
+                        delete: "84sdg95",
+                    },
+                    {
+                        put: "test",
+                        afterId: "sdgsdg",
+                    },
+                ]
+            },
+            friends: {
+                _isPatch: true,
+                changes: [
+                    {
+                        put: friendDogChanged.encode({ version: 2 }),
+                        afterId: null,
+                    },
+                    {
+                        patch: friendPatchExist.encode({ version: 2 }),
+                    },
+                ],
+            }
         });
 
         // Test if patchable items are encodeable
@@ -223,24 +229,30 @@ describe("AutoEncoder", () => {
             _isPatch: true,
             id: 1,
             name: "Change name",
-            friendIds: [
-                {
-                    delete: "84sdg95",
-                },
-                {
-                    put: "test",
-                    afterId: "sdgsdg",
-                },
-            ],
-            friends: [
-                {
-                    put: friendDogChanged.encode({ version: 1 }),
-                    afterId: null,
-                },
-                {
-                    patch: friendPatchExist.encode({ version: 1 }),
-                },
-            ],
+            friendIds: {
+                _isPatch: true,
+                    changes: [
+                    {
+                        delete: "84sdg95",
+                    },
+                    {
+                        put: "test",
+                        afterId: "sdgsdg",
+                    },
+                ]
+            },
+            friends: {
+                _isPatch: true,
+                changes: [
+                    {
+                        put: friendDogChanged.encode({ version: 1 }),
+                        afterId: null,
+                    },
+                    {
+                        patch: friendPatchExist.encode({ version: 1 }),
+                    },
+                ],
+            }
         });
 
         // Test if patchable items are decodeable

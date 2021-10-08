@@ -120,67 +120,24 @@ export class Field<T> {
         field.downgradePatch = this.downgradePatch
         field.patchDefaultValue = this.patchDefaultValue
 
-        field.defaultValue = undefined; // do not copy default values. Patches never have default values!
+        field.defaultValue = undefined; // do not copy default values. Patches never have default values, unless for patchable arrays
 
         const aDecoder = this.decoder as any;
-        if (this.decoder instanceof ArrayDecoder) {
-            const elementDecoder = this.decoder.decoder;
-            if ((elementDecoder as any).patchType) {
-                const patchType = (elementDecoder as any).patchType();
 
-                // Check if we have a method called "getIdentifier"
-                let idFieldType: Decoder<string | number> | undefined;
+        // Do we have a custom patch decoder? (this can be configured in the decoder)
+        if (aDecoder.patchType) {
+            field.upgrade = this.upgradePatch
+            field.downgrade = this.downgradePatch
+            const patchDecoder = aDecoder.patchType()
+            field.decoder = new PatchOrPutDecoder(aDecoder, patchDecoder);
 
-                if ((elementDecoder as any).patchIdentifier) {
-                    // Custom identifier (in case no automatic detection is possible)
-                    idFieldType = (elementDecoder as any).patchIdentifier()
-                } else {
-                    if (patchType.prototype.getIdentifier) {
-                        // This autoencoder uses the getIdentifier method to define the id
-                        idFieldType = StringOrNumberDecoder;
-                    } else {
-                        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-                        const field = (elementDecoder as typeof AutoEncoder).fields.find((field) => field.property == "id")
-                        if (field) {
-                            idFieldType = field.decoder;
-                        }
-                    }
-                }
+            if (patchDecoder instanceof PatchableArrayDecoder) {
+                // For now we don't support array PUT's, but we'll implement this in the future
+                field.decoder = patchDecoder
 
-                if (idFieldType) {
-                     // Upgrade / downgrades cannot work when pathcing, should be placed on instances
-                    field.upgrade = this.upgradePatch
-                    field.downgrade = this.downgradePatch
-                    
-                    field.decoder = new PatchableArrayDecoder(elementDecoder, patchType, idFieldType);
-                    field.defaultValue = () => new PatchableArray<any, any, any>();
-                } else {
-                    // A non identifiable array -> we expect an optional array instead = default behaviour
-                    // upgrade / downgrade kan stay the same as default
-                }
-                
-            } else {
-                 // Upgrade / downgrades cannot work when pathcing, should be placed on instances
-                field.upgrade = this.upgradePatch
-                field.downgrade = this.downgradePatch
-
-                field.decoder = new PatchableArrayDecoder(elementDecoder, elementDecoder, elementDecoder);
+                // Always set a default value for patchable arrays
                 field.defaultValue = () => new PatchableArray<any, any, any>();
             }
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        } else if (aDecoder.prototype && aDecoder.prototype instanceof AutoEncoder) {
-            /*if (field.upgrade || field.downgrade) {
-                console.warn("Upgrade and downgrades on patchable AutoEncoder objects are not yet supported");
-            }*/
-            // Upgrade / downgrade not supported yet!
-
-            field.upgrade = this.upgradePatch
-            field.downgrade = this.downgradePatch
-            field.decoder = new PatchOrPutDecoder(aDecoder, aDecoder.patchType());
-        } else if (aDecoder.patchType) {
-            field.upgrade = this.upgradePatch
-            field.downgrade = this.downgradePatch
-            field.decoder = new PatchOrPutDecoder(aDecoder, aDecoder.patchType());
         }
 
         if (this.patchDefaultValue) {

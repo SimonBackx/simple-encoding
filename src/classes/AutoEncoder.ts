@@ -83,6 +83,7 @@ export class Field<T> {
         field.version = this.version;
         field.property = this.property;
         field.field = this.field;
+
         if (this.upgrade) {
             const upg = this.upgrade
             field.upgrade = (oldValue) => { 
@@ -95,6 +96,7 @@ export class Field<T> {
                 }
             };
         }
+        
         if (this.downgrade) {
             const dwn = this.downgrade
             field.downgrade = (newValue) => { 
@@ -134,10 +136,12 @@ export class Field<T> {
             if (patchDecoder instanceof PatchableArrayDecoder) {
                 // For now we don't support array PUT's, but we'll implement this in the future
                 field.decoder = patchDecoder
-
-                // Always set a default value for patchable arrays
-                field.defaultValue = () => new PatchableArray<any, any, any>();
             }
+        }
+
+        if (aDecoder.patchDefaultValue) {
+            // e.g. for patchable arrays we always set a default value
+            field.defaultValue = aDecoder.patchDefaultValue;
         }
 
         if (this.patchDefaultValue) {

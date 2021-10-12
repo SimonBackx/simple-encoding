@@ -3,7 +3,7 @@ import { SimpleError } from "@simonbackx/simple-errors";
 import { AutoEncoder } from "../classes/AutoEncoder";
 import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
-import { PatchableArrayDecoder } from "./PatchableArray";
+import { PatchableArray, PatchableArrayDecoder } from "./PatchableArray";
 import StringOrNumberDecoder from "./StringOrNumberDecoder";
 
 export class ArrayDecoder<T> implements Decoder<T[]> {
@@ -57,7 +57,7 @@ export class ArrayDecoder<T> implements Decoder<T[]> {
             }
 
             if (idFieldType) {
-                return new PatchableArrayDecoder(elementDecoder as any, patchDecoder, idFieldType);
+                return new PatchableArrayDecoder<any, any, any>(elementDecoder as any, patchDecoder, idFieldType as any);
             } else {
                 // A non identifiable array -> we expect an optional array instead = default behaviour
                 // upgrade / downgrade kan stay the same as default
@@ -70,7 +70,13 @@ export class ArrayDecoder<T> implements Decoder<T[]> {
         //field.upgrade = this.upgradePatch
         //field.downgrade = this.downgradePatch
 
-        return new PatchableArrayDecoder(elementDecoder as any, elementDecoder, elementDecoder as any);
-        //field.defaultValue = () => new PatchableArray<any, any, any>();
+        return new PatchableArrayDecoder<any, any, any>(elementDecoder as any, elementDecoder as any, elementDecoder as any);
+    }
+
+    /**
+     * Patchable values of an array always create a default empty patchable array for convenience
+     */
+    patchDefaultValue() {
+        return new PatchableArray<any, any, any>()
     }
 }

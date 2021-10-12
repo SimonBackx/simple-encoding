@@ -96,7 +96,7 @@ export class Field<T> {
                 }
             };
         }
-        
+
         if (this.downgrade) {
             const dwn = this.downgrade
             field.downgrade = (newValue) => { 
@@ -287,14 +287,14 @@ export class AutoEncoder implements Encodeable, Cloneable {
                         instance[prop] = patch[prop];
                     }
                 } else {
-                    if (this[prop] === undefined && patch[prop] instanceof PatchableArray) {
+                    if ((this[prop] === undefined || this[prop] === null) && patch[prop] instanceof PatchableArray) {
                         // Patch on optional array: ignore if empty patch, else fake empty array patch
                         if (patch[prop].changes.length === 0) {
                             continue;
                         }
                         const patched = patch[prop].applyTo([]);
                         if (patched.length === 0) {
-                            // Nothing changed, keep it undefined
+                            // Nothing changed, keep it undefined or null
                             continue;
                         }
                         instance[prop] = patched;

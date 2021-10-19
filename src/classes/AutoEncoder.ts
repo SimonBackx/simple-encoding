@@ -139,7 +139,9 @@ export class Field<T> {
 
         if (aDecoder.patchDefaultValue) {
             // e.g. for patchable arrays we always set a default value
-            field.defaultValue = aDecoder.patchDefaultValue();
+            field.defaultValue = () => {
+                return aDecoder.patchDefaultValue();
+            }
         }
 
         if (this.patchDefaultValue) {

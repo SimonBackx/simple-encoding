@@ -1,6 +1,4 @@
-import { ArrayDecoder } from "../structs/ArrayDecoder";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
-import StringOrNumberDecoder from '../structs/StringOrNumberDecoder';
 import { Cloneable, cloneObject } from "./Cloneable";
 import { Data } from "./Data";
 import { Decoder } from "./Decoder";
@@ -141,7 +139,7 @@ export class Field<T> {
 
         if (aDecoder.patchDefaultValue) {
             // e.g. for patchable arrays we always set a default value
-            field.defaultValue = aDecoder.patchDefaultValue;
+            field.defaultValue = aDecoder.patchDefaultValue();
         }
 
         if (this.patchDefaultValue) {

@@ -271,7 +271,12 @@ export class AutoEncoder implements Encodeable, Cloneable {
                 if (patch[prop] == null) {
                     instance[prop] = null;
                 } else {
-                    instance[prop] = this[prop].patch(patch[prop]);
+                    if (patch[prop] instanceof AutoEncoder && !patch[prop].isPatch()) {
+                        // Instance type could be different
+                        instance[prop] = patch[prop];
+                    } else {
+                        instance[prop] = this[prop].patch(patch[prop]);
+                    }
                 }
 
             } else {

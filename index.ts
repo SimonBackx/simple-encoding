@@ -6,7 +6,7 @@ export * from "./src/classes/Patchable";
 export * from "./src/classes/Identifiable";
 export * from "./src/classes/Cloneable";
 
-export * from "./src/structs/AnyDecoder";
+export { default as AnyDecoder } from "./src/structs/AnyDecoder";
 export * from "./src/structs/ArrayDecoder";
 export * from "./src/structs/MapDecoder";
 export * from "./src/structs/NullableDecoder";

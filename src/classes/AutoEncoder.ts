@@ -130,11 +130,6 @@ export class Field<T> {
             field.downgrade = this.downgradePatch
             const patchDecoder = aDecoder.patchType()
             field.decoder = new PatchOrPutDecoder(aDecoder, patchDecoder);
-
-            if (patchDecoder instanceof PatchableArrayDecoder) {
-                // For now we don't support array PUT's, but we'll implement this in the future
-                field.decoder = patchDecoder
-            }
         }
 
         if (aDecoder.patchDefaultValue) {

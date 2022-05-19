@@ -108,3 +108,58 @@ export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends BaseIde
         PatchableArray<Id, P, AutoEncoderPatchType<P> & NonScalarIdentifiable<Id>> 
     ) 
 : P[])
+
+/**
+ * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
+ */
+export function patchObject(obj: unknown, patch: unknown): any {
+    if (patch === undefined) {
+        // When a property is set to undefined, we always ignore it, always. You can never set something to undefined.
+        // Use null instead.
+        return obj;
+    }
+
+    if (isPatchable(obj)) {
+        if (patch == null) {
+            return null;
+        } else {
+            if (patch instanceof AutoEncoder && patch.isPut()) {
+                // Instance type could be different
+                return patch;
+            } else {
+                return obj.patch(patch);
+            }
+        }
+
+    } else {
+        if (Array.isArray(obj)) {
+            // Check if patch is a patchable array
+            if (patch instanceof PatchableArray) {
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                return patch.applyTo(obj);
+            } else {
+                // What happens when an array field is set?
+                // This can only happen when the autocoder is not identifieable, but
+                // technically also in other cases if typescript doesn't check types
+                // we just take over the new values and 'remove' all old elements
+                return patch;
+            }
+        } else {
+            if ((obj === undefined || obj === null) && patch instanceof PatchableArray) {
+                // Patch on optional array: ignore if empty patch, else fake empty array patch
+                if (patch.changes.length === 0) {
+                    return obj;
+                }
+                const patched = patch.applyTo([]);
+                if (patched.length === 0) {
+                    // Nothing changed, keep it undefined or null
+                    return obj;
+                }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                return patched;
+            } else {
+                return patch;
+            }
+        }
+    }
+}

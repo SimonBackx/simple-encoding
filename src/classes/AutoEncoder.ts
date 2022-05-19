@@ -4,7 +4,7 @@ import { Data } from "./Data";
 import { Decoder } from "./Decoder";
 import { Encodeable, encodeObject, PlainObject } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
-import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable } from "./Patchable";
+import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable, patchObject } from "./Patchable";
 
 //export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
 export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? (
@@ -255,53 +255,9 @@ export class AutoEncoder implements Encodeable, Cloneable {
         for (const field of this.static.latestFields) {
             const prop = field.property;
 
-            if (patch[prop] === undefined) {
-                // When a property is set to undefined, we always ignore it, always. You can never set something to undefined.
-                // Use null instead.
-                instance[prop] = this[prop];
-                continue;
-            }
-
-            if (isPatchable(this[prop])) {
-                if (patch[prop] == null) {
-                    instance[prop] = null;
-                } else {
-                    if (patch[prop] instanceof AutoEncoder && !patch[prop].isPatch()) {
-                        // Instance type could be different
-                        instance[prop] = patch[prop];
-                    } else {
-                        instance[prop] = this[prop].patch(patch[prop]);
-                    }
-                }
-
-            } else {
-                if (Array.isArray(this[prop])) {
-                    // Check if patch[prop] is a patchable array
-                    if (patch[prop] instanceof PatchableArray) {
-                        instance[prop] = patch[prop].applyTo(this[prop]);
-                    } else {
-                        // What happens when an array field is set?
-                        // This can only happen when the autocoder is not identifieable, but
-                        // technically also in other cases if typescript doesn't check types
-                        // we just take over the new values and 'remove' all old elements
-                        instance[prop] = patch[prop];
-                    }
-                } else {
-                    if ((this[prop] === undefined || this[prop] === null) && patch[prop] instanceof PatchableArray) {
-                        // Patch on optional array: ignore if empty patch, else fake empty array patch
-                        if (patch[prop].changes.length === 0) {
-                            continue;
-                        }
-                        const patched = patch[prop].applyTo([]);
-                        if (patched.length === 0) {
-                            // Nothing changed, keep it undefined or null
-                            continue;
-                        }
-                        instance[prop] = patched;
-                    } else {
-                        instance[prop] = patch[prop];
-                    }
-                }
+            const patched = patchObject(this[prop], patch[prop])
+            if (patched !== undefined) {
+                instance[prop] = patched;
             }
         }
 

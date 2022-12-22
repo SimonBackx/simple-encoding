@@ -84,14 +84,14 @@ type MakeOptionalRealOptional<Base> = {
  */
 export type AutoEncoderPatchType<T extends AutoEncoder> =
     (
-        T extends BaseIdentifiable<infer Id> ? (
+        T extends AutoEncoder & BaseIdentifiable<infer Id> ? (
             {
                 [P in NonMethodNames<T>]: ConvertArrayToPatchableArray<T[P]>;
             } & BaseIdentifiable<Id>
         ) : (
             {
                 [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
-            } & (T extends NonScalarIdentifiable<infer Id> ? NonScalarIdentifiable<Id> : {})
+            } & (T extends AutoEncoder & NonScalarIdentifiable<infer Id> ? NonScalarIdentifiable<Id> : {})
         )
     ) & AutoEncoder;
 // -> BaseIdentifiable and NonScalarIdentifiable is split up, because identifiable type needs to stay the same
@@ -99,11 +99,11 @@ export type AutoEncoderPatchType<T extends AutoEncoder> =
 /**
  * Helper type to fix TypeScript circular dependency by making a synonym for a patchable array for an autoencoder
  */
-export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends BaseIdentifiable<infer Id> ? 
+export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends AutoEncoder & BaseIdentifiable<infer Id> ? 
     (
         PatchableArray<Id, P, AutoEncoderPatchType<P> & BaseIdentifiable<Id>> 
     ) 
-: (P extends NonScalarIdentifiable<infer Id> ? 
+: (P extends AutoEncoder & NonScalarIdentifiable<infer Id> ? 
     (
         PatchableArray<Id, P, AutoEncoderPatchType<P> & NonScalarIdentifiable<Id>> 
     ) 

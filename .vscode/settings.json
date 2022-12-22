@@ -12,6 +12,7 @@
     "editor.codeActionsOnSave": {
         "source.fixAll.eslint": true
     },
+    "typescript.tsdk": "./node_modules/typescript/lib",
     "editor.formatOnPaste": true,
     "eslint.format.enable": true,
     // Prettier acts fucked up in vue, typescript and javascript, so we let eslint format vue files

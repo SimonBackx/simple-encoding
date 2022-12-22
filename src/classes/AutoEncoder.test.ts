@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Decoder, PatchType } from '@simonbackx/simple-encoding';
+import { Decoder } from './Decoder';
 
 import { field } from "../decorators/Field";
 import { ArrayDecoder } from "../structs/ArrayDecoder";
@@ -12,7 +12,7 @@ import { Data } from './Data';
 import { Encodeable } from './Encodeable';
 import { EncodeContext } from './EncodeContext';
 import { ObjectData } from "./ObjectData";
-import { PatchableArrayAutoEncoder } from './Patchable';
+import { PatchableArrayAutoEncoder, PatchType } from './Patchable';
 
 enum PaymentMethod {
     PointOfSale = "PointOfSale",

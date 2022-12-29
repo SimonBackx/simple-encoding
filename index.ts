@@ -13,6 +13,7 @@ export * from "./src/structs/NullableDecoder";
 export { default as Base64Decoder } from "./src/structs/Base64Decoder";
 export * from "./src/structs/EmailDecoder";
 export * from "./src/structs/EnumDecoder";
+export * from "./src/structs/RecordDecoder";
 export { default as IntegerDecoder } from "./src/structs/IntegerDecoder";
 export { default as KeyDecoder } from "./src/structs/KeyDecoder";
 export { default as NumberDecoder } from "./src/structs/NumberDecoder";

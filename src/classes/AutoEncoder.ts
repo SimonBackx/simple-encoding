@@ -360,6 +360,13 @@ export class AutoEncoder implements Encodeable, Cloneable {
                     }
                     continue;
                 }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+                // const v = source[field.property];
+                // if (field.optional && field.defaultValue && (typeof v === 'string' || Array.isArray(v)) && v.length === 0 && v === field.defaultValue()) {
+                //     // Skip default values
+                //     appliedProperties[field.property] = true;
+                //     continue
+                // }
                 object[field.field] = encodeObject(source[field.property], context);
                 appliedProperties[field.property] = true;
             }

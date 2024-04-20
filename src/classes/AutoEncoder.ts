@@ -250,7 +250,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
         return instance;
     }
 
-    patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>|AutoEncoderPatchType<T>|T): this {
+    patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>|AutoEncoderPatchType<T>|T|PartialWithoutMethods<T>): this {
         const instance = new this.static() as this;
         for (const field of this.static.latestFields) {
             const prop = field.property;

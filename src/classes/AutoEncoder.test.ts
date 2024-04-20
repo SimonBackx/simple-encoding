@@ -69,6 +69,10 @@ class Dog extends AutoEncoder {
     toString() {
         return this.name || ""
     }
+
+    get something() {
+        return "test"
+    }
 }
 const DogPatch = Dog.patchType();
 
@@ -102,6 +106,10 @@ class Dog2 extends AutoEncoder {
 
     toString() {
         return this.name || ""
+    }
+
+    get something() {
+        return "test"
     }
 }
 const Dog2Patch = Dog2.patchType();

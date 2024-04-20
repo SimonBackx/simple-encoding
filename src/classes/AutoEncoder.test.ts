@@ -61,11 +61,6 @@ class Dog extends AutoEncoder {
 
     @field({ decoder: new EnumDecoder(PaymentMethod), optional: true })
     test?: PaymentMethod;
-
-    /// Test support and compile support for getIdentifier (should work with and without it)
-    getIdentifier(): number {
-        return parseInt(this.id.substring(3))
-    }
 }
 const DogPatch = Dog.patchType();
 
@@ -174,7 +169,9 @@ describe("AutoEncoder", () => {
 
         const shouldCompile = DogPatch.create({ id: "DOG1" });
         let patchDog = DogPatch.create({ id: "DOG1", name: "Change name" });
+
         patchDog = shouldCompile.patch(patchDog);
+        shouldCompile.patch({})
 
         patchDog.friendIds.addDelete("84sdg95");
         patchDog.friendIds.addPut("test", "sdgsdg");
@@ -263,7 +260,7 @@ describe("AutoEncoder", () => {
     test("Patchable array", () => {
         const arr: PatchableArrayAutoEncoder<Dog> = new PatchableArray()
         const friendDog = Dog.create({ id: "DOG2", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
-        arr.addPut(friendDog, 3)
+        arr.addPut(friendDog, "3")
 
         const clean: Dog[] = []
         expect(arr.applyTo(clean)).toEqual([friendDog])

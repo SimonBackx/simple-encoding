@@ -2,7 +2,7 @@ import { PatchableArray } from "../structs/PatchableArray";
 import { AutoEncoder } from "./AutoEncoder";
 import { Encodeable } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
-import { BaseIdentifiable, Identifiable, NonScalarIdentifiable } from "./Identifiable";
+import { NonScalarIdentifiable } from "./Identifiable";
 
 export interface StrictPatch { }
 export interface Patchable<P> {
@@ -39,25 +39,8 @@ export type ConvertArrayToPatchableArray<T> =
         : PatchType<T> | undefined)
     ;
 
-    // detect if two types X and Y are exactly identical
-type IfEquals<X, Y, A=X, B=never> =
-  (<T>() => T extends X ? 1 : 2) extends
-  (<T>() => T extends Y ? 1 : 2) ? A : B;
-  
-type RemoveMethodsHelper<Base> = {
-    [Key in keyof Base]: Base[Key] extends Function ? never : IfEquals<{ [Q in Key]: Base[Key] }, { -readonly [Q in Key]: Base[Key] }, Key>;
-};
-
-// writable keys are those which are exactly equal when you strip readonly off
-// in a mapped type
-type WritableKeys<T> = {
-  [P in keyof T]: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, P>
-}[keyof T];
-
-type NonMethodNames<Base> = Exclude<RemoveMethodsHelper<Base>[keyof Base], undefined>;
-
 export type PartialWithoutMethods<Base> = {
-    [P in NonMethodNames<Base>]?: Base[P];
+    [P in keyof Base]?: Base[P] extends Function ? never : Base[P];
 };
 
 type GetOptionalPropertiesOfHelper<Base> = {
@@ -83,31 +66,21 @@ type MakeOptionalRealOptional<Base> = {
  * Automatically determine the patchtype of an autoencoder object
  */
 export type AutoEncoderPatchType<T extends AutoEncoder> =
-    (
-        T extends AutoEncoder & BaseIdentifiable<infer Id> ? (
-            {
-                [P in NonMethodNames<T>]: ConvertArrayToPatchableArray<T[P]>;
-            } & BaseIdentifiable<Id>
-        ) : (
-            {
-                [P in Exclude<NonMethodNames<T>, "id">]: ConvertArrayToPatchableArray<T[P]>;
-            } & (T extends AutoEncoder & NonScalarIdentifiable<infer Id> ? NonScalarIdentifiable<Id> : {})
-        )
-    ) & AutoEncoder;
-// -> BaseIdentifiable and NonScalarIdentifiable is split up, because identifiable type needs to stay the same
+    AutoEncoder & (
+        {
+            [P in Exclude<Exclude<keyof T, "id">, keyof AutoEncoder>]: T[P] extends Function ? never : ConvertArrayToPatchableArray<T[P]>;
+        } & (T extends AutoEncoder & NonScalarIdentifiable<infer Id> ? NonScalarIdentifiable<Id> : {})
+    );
+
 
 /**
  * Helper type to fix TypeScript circular dependency by making a synonym for a patchable array for an autoencoder
  */
-export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends AutoEncoder & BaseIdentifiable<infer Id> ? 
-    (
-        PatchableArray<Id, P, AutoEncoderPatchType<P> & BaseIdentifiable<Id>> 
-    ) 
-: (P extends AutoEncoder & NonScalarIdentifiable<infer Id> ? 
+export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends AutoEncoder & NonScalarIdentifiable<infer Id> ? 
     (
         PatchableArray<Id, P, AutoEncoderPatchType<P> & NonScalarIdentifiable<Id>> 
     ) 
-: P[])
+: P[]
 
 /**
  * Use this method to encode an object (might be an encodeable implementation) into a decodable structure

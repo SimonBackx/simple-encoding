@@ -7,11 +7,16 @@ import { EncodeContext } from "./EncodeContext";
 import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable, patchObject } from "./Patchable";
 
 //export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
-export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? (
-    { patchType: () => PatchableDecoder<P> }
-    & (T extends AutoEncoder ? {} : { patchIdentifier: () => Decoder<string | number> }) // when patchType is a custom decoder, we also need the decoder for the identifier
-) : {})
-
+export type PatchableDecoder<T> = Decoder<T> & (
+        T extends AutoEncoder ? {} : 
+    (
+        T extends Patchable<infer P> ? 
+        { 
+            patchType: () => PatchableDecoder<P>
+            atchIdentifier: () => Decoder<string | number>  // when patchType is a custom decoder, we also need the decoder for the identifier
+        } : {}
+    )
+)
 /**
  * Uses the meta data of AutoEncoder to check if something is a patch or a put
  */
@@ -195,11 +200,6 @@ export class AutoEncoder implements Encodeable, Cloneable {
             CreatedPatch.fields.push(field.getOptionalClone());
         }
 
-        // move over getIdentifier if available
-        if ((this as any).prototype.getIdentifier && (this as any).prototype.getIdentifier instanceof Function) {
-            (CreatedPatch.prototype as any).getIdentifier = (this as any).prototype.getIdentifier;
-        }
-
         CreatedPatch.isPatch = true
 
         return CreatedPatch as any;
@@ -231,7 +231,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
 
     patchOrPut<T extends AutoEncoder>(this: T, patch: AutoEncoderPatchType<T> | T) {
         if (patch.static.isPatch) {
-            this.set(this.patch(patch as AutoEncoderPatchType<T>))
+            this.set(this.patch(patch))
             return
         }
         this.set(patch as T)
@@ -250,7 +250,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
         return instance;
     }
 
-    patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>): this {
+    patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>|AutoEncoderPatchType<T>|T): this {
         const instance = new this.static() as this;
         for (const field of this.static.latestFields) {
             const prop = field.property;
@@ -332,7 +332,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
     /**
      * Create a new one by providing the properties of the object
      */
-    set<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T>) {
+    set<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T>|T) {
         for (const key in object) {
             if (object.hasOwnProperty(key) && typeof object[key] !== "function") {
                 if (this.static.doesPropertyExist(key)) {

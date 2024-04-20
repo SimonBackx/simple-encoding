@@ -12,7 +12,7 @@ import { Data } from './Data';
 import { Encodeable } from './Encodeable';
 import { EncodeContext } from './EncodeContext';
 import { ObjectData } from "./ObjectData";
-import { PatchableArrayAutoEncoder, PatchType } from './Patchable';
+import { PartialWithoutMethods, PatchableArrayAutoEncoder, PatchType } from './Patchable';
 
 enum PaymentMethod {
     PointOfSale = "PointOfSale",
@@ -61,6 +61,14 @@ class Dog extends AutoEncoder {
 
     @field({ decoder: new EnumDecoder(PaymentMethod), optional: true })
     test?: PaymentMethod;
+
+    testMethod2(test: string) {
+        return test
+    }
+
+    toString() {
+        return this.name || ""
+    }
 }
 const DogPatch = Dog.patchType();
 
@@ -87,8 +95,19 @@ class Dog2 extends AutoEncoder {
 
     @field({ decoder: new EnumDecoder(PaymentMethod), optional: true })
     test?: PaymentMethod;
+
+    testMethod(test: string) {
+        return test
+    }
+
+    toString() {
+        return this.name || ""
+    }
 }
 const Dog2Patch = Dog2.patchType();
+
+
+type Testing = PartialWithoutMethods<Dog>;
 
 describe("AutoEncoder", () => {
     test("encoding works and version support", () => {

@@ -39,9 +39,11 @@ export type ConvertArrayToPatchableArray<T> =
         : PatchType<T> | undefined)
     ;
 
-export type PartialWithoutMethods<Base> = {
-    [P in keyof Base]?: Base[P] extends Function ? never : Base[P];
-};
+type NonMethodKeys<T> = {
+    [K in keyof T]: T[K] extends Function ? never : K
+}[keyof T]
+
+export type PartialWithoutMethods<Base> = Partial<Pick<Base, NonMethodKeys<Base>>>
 
 type GetOptionalPropertiesOfHelper<Base> = {
     [Key in keyof Base]: Base[Key] extends string | number | Array<any> | Function | boolean | Record<string, any> ? never : Key;
@@ -69,7 +71,7 @@ export type AutoEncoderPatchType<T extends AutoEncoder> =
     AutoEncoder & (
         {
             [P in Exclude<Exclude<keyof T, "id">, keyof AutoEncoder>]: T[P] extends Function ? never : ConvertArrayToPatchableArray<T[P]>;
-        } & (T extends AutoEncoder & NonScalarIdentifiable<infer Id> ? NonScalarIdentifiable<Id> : {})
+        } & (T extends NonScalarIdentifiable<infer Id> ? NonScalarIdentifiable<Id> : {})
     );
 
 

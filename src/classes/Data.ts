@@ -8,8 +8,6 @@ export interface Data {
     readonly integer: number;
     readonly boolean: boolean;
     readonly value: any;
-    readonly base64: string;
-    readonly key: string;
 
     context: EncodeContext;
 

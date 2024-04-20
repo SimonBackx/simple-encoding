@@ -1,11 +1,9 @@
 import { SimpleError } from "@simonbackx/simple-errors";
 
 import { ArrayDecoder } from "../structs/ArrayDecoder";
-import Base64Decoder from "../structs/Base64Decoder";
 import BooleanDecoder from "../structs/BooleanDecoder";
 import { EnumDecoder } from "../structs/EnumDecoder";
 import IntegerDecoder from "../structs/IntegerDecoder";
-import KeyDecoder from "../structs/KeyDecoder";
 import { NullableDecoder } from "../structs/NullableDecoder";
 import NumberDecoder from "../structs/NumberDecoder";
 import StringDecoder from "../structs/StringDecoder";
@@ -38,14 +36,6 @@ export class ObjectData implements Data {
 
     get string(): string {
         return this.decode(StringDecoder);
-    }
-
-    get base64(): string {
-        return this.decode(Base64Decoder);
-    }
-
-    get key(): string {
-        return this.decode(KeyDecoder);
     }
 
     get number(): number {

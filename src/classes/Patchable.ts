@@ -29,14 +29,18 @@ export type ConvertArrayToPatchableArray<T> =
     : T extends PatchableArray<any, any, any>
     ? T :
     (T extends Array<infer P>
-        ? P extends string
+        ? (P extends string
         ? PatchableArray<string, string, string>
         : P extends number
         ? PatchableArray<number, number, number>
         : P extends AutoEncoder
         ? PatchableArrayAutoEncoder<P>
-        : T | undefined
-        : PatchType<T> | undefined)
+        : T | undefined)
+        : (
+            T extends Map<infer T, infer P> ?
+                (/*Map<T, P> |*/ PatchMap<T, P|ConvertArrayToPatchableArray<P>|null>)
+            : PatchType<T> | undefined
+        ))
     ;
 
 type NonMethodKeys<T> = {
@@ -84,6 +88,66 @@ export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends AutoEnc
     ) 
 : P[]
 
+export class PatchMap<K, V> extends Map<K, V> {
+    _isPatch = true
+
+    applyTo(obj: Map<any, any>) {
+        if (obj instanceof PatchMap) {
+
+            // Combine instead of normal logic
+            const clone = new PatchMap(obj);
+
+            for (const [key, value] of this.entries()) {
+                if (value === null) {
+                    clone.set(key, null)
+                    continue;
+                }
+                const original = obj.get(key);
+                
+                if (original === null) {
+                    // Has been deleted higher up
+                    if (isPatch(value)) {
+                        continue;
+                    }
+                    clone.set(key, value);
+                    continue
+                }
+
+                clone.set(key, patchObject(original, value))
+            }
+            return clone;
+        }
+        const clone = new Map(obj);
+
+        for (const [key, value] of this.entries()) {
+            if (value === null) {
+                clone.delete(key);
+                continue;
+            }
+            const original = obj.get(key);
+            clone.set(key, patchObject(original, value))
+        }
+        return clone;
+    }
+}
+
+export function isPatch(obj: unknown) {
+    if (obj instanceof AutoEncoder) {
+        // Instance type could be different
+        return obj.isPatch();
+    }
+
+    if (obj instanceof PatchMap) {
+        return true;
+    }
+
+    if (obj instanceof PatchableArray) {
+        return true;
+    }
+
+    return false;
+}
+
 /**
  * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
  */
@@ -107,7 +171,9 @@ export function patchObject(obj: unknown, patch: unknown): any {
         }
 
     } else {
-        if (Array.isArray(obj)) {
+        if (obj instanceof Map && patch instanceof PatchMap) {
+            return patch.applyTo(obj)
+        } else if (Array.isArray(obj)) {
             // Check if patch is a patchable array
             if (patch instanceof PatchableArray) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
@@ -127,6 +193,18 @@ export function patchObject(obj: unknown, patch: unknown): any {
                 }
                 const patched = patch.applyTo([]);
                 if (patched.length === 0) {
+                    // Nothing changed, keep it undefined or null
+                    return obj;
+                }
+                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+                return patched;
+            } else if ((obj === undefined || obj === null) && patch instanceof PatchMap) {
+                // Patch on optional array: ignore if empty patch, else fake empty array patch
+                if (patch.size === 0) {
+                    return obj;
+                }
+                const patched = patch.applyTo(new Map());
+                if (patched.size === 0) {
                     // Nothing changed, keep it undefined or null
                     return obj;
                 }

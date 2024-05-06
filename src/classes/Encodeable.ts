@@ -1,4 +1,5 @@
 import { EncodeContext } from "./EncodeContext";
+import { PatchMap } from "./Patchable";
 
 export type PlainObject = string | number | { [key: string]: PlainObject } | boolean | PlainObject[] | undefined | null;
 
@@ -19,6 +20,7 @@ export function isEncodeable(object: any): object is Encodeable {
 
 export type EncodableObject = Encodeable | EncodableObject[] | Map<EncodableObject & keyof any, EncodableObject> | PlainObject
 
+
 /**
  * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
  */
@@ -33,6 +35,21 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
         });
     }
     
+    if (obj instanceof PatchMap) {
+        // Transform into a normal object to conform to MapDecoders expected format
+        const encodedObj = {}
+
+        for (const [key, value] of obj) {
+            const k: EncodableObject & keyof any = encodeObject(key, context) as any
+            encodedObj[k] = encodeObject(value, context)
+        }
+
+        return {
+            _isPatch: true,
+            changes: encodedObj
+        }
+    }
+
     if (obj instanceof Map) {
         // Transform into a normal object to conform to MapDecoders expected format
         const encodedObj = {}
@@ -40,6 +57,13 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
         for (const [key, value] of obj) {
             const k: EncodableObject & keyof any = encodeObject(key, context) as any
             encodedObj[k] = encodeObject(value, context)
+        }
+
+        if ((obj as any)._isPatch) {
+            return {
+                _isPatch: true,
+                changes: encodedObj
+            }
         }
         return encodedObj
     }

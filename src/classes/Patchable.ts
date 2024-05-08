@@ -93,7 +93,6 @@ export class PatchMap<K, V> extends Map<K, V> {
 
     applyTo(obj: Map<any, any>) {
         if (obj instanceof PatchMap) {
-
             // Combine instead of normal logic
             const clone = new PatchMap(obj);
 
@@ -102,6 +101,11 @@ export class PatchMap<K, V> extends Map<K, V> {
                     clone.set(key, null)
                     continue;
                 }
+
+                if (value === undefined) {
+                    continue;
+                }
+
                 const original = obj.get(key);
                 
                 if (original === null) {
@@ -113,10 +117,16 @@ export class PatchMap<K, V> extends Map<K, V> {
                     continue
                 }
 
+                if (original === undefined) {
+                    clone.set(key, value);
+                    continue
+                }
+
                 clone.set(key, patchObject(original, value))
             }
             return clone;
         }
+
         const clone = new Map(obj);
 
         for (const [key, value] of this.entries()) {
@@ -124,8 +134,19 @@ export class PatchMap<K, V> extends Map<K, V> {
                 clone.delete(key);
                 continue;
             }
+
+            if (value === undefined) {
+                continue;
+            }
+            
             const original = obj.get(key);
-            clone.set(key, patchObject(original, value))
+            const patched = patchObject(original, value);
+
+            if (original === undefined && patched === undefined) {
+                // Don't copy it: this is an empty patch to an item that does not exist
+                continue;
+            }
+            clone.set(key, patched)
         }
         return clone;
     }

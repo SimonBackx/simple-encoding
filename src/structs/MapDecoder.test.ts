@@ -1,5 +1,6 @@
 import { AutoEncoder } from "../classes/AutoEncoder";
 import { ObjectData } from "../classes/ObjectData";
+import { AutoEncoderPatchType, PatchMap } from "../classes/Patchable";
 import { field } from "../decorators/Field";
 import { MapDecoder } from "./MapDecoder";
 import StringDecoder from "./StringDecoder";
@@ -19,6 +20,15 @@ class Dog extends AutoEncoder {
     @field({decoder: new MapDecoder(StringDecoder, Cat) })
     friends = new Map<string, Cat>()
 }
+
+class OtherDog extends AutoEncoder {
+    @field({decoder: StringDecoder})
+    id = ''
+
+    @field({decoder: new MapDecoder(StringDecoder, new MapDecoder(StringDecoder, Cat)) })
+    friends = new Map<string, Map<string, Cat>>()
+}
+
 
 describe('MapDecoder', () => {
     test('it can patch map items', () => {
@@ -249,5 +259,117 @@ describe('MapDecoder', () => {
         const patchedDog2 = dog.patch(decoded);
         expect(patchedDog).toEqual(patchedDog2);
 
+    });
+
+    test('it can stack multiple patches of a map with a map', () => {
+        const cat1 = Cat.create({
+            color: 'gray',
+            name: 'Cat1'
+        });
+
+        const cat2 = Cat.create({
+            color: 'red',
+            name: 'Cat2'
+        });
+
+        const dog = OtherDog.create({
+            id: '123',
+            friends: new Map()
+        })
+
+        const bb = new Map<string, Cat>();
+        bb.set('best', cat1);
+
+        dog.friends.set('best', bb);
+        dog.friends.set('second', new Map());
+
+        const patch = OtherDog.patch({})
+        const pm = new PatchMap<string, AutoEncoderPatchType<Cat>>()
+        pm.set('best', Cat.patch({color: 'c'}))
+        patch.friends.set('best', pm)
+        patch.friends.set('second', null)
+
+        const patch2 = OtherDog.patch({})
+
+        const combinedPatch = patch2.patch(patch)
+        expect(combinedPatch.encode({version: 0})).toEqual(patch.encode({version: 0}))
+
+        const patchedDog = dog.patch(combinedPatch);
+
+        expect(patchedDog.friends.get('best')!.get('best')!.name).toEqual('Cat1')
+        expect(patchedDog.friends.get('best')!.get('best')!.color).toEqual('c')
+        
+        // Can do the same with decoded form
+        const encoded = JSON.parse(JSON.stringify(combinedPatch.encode({version: 0})))
+        const decoded = OtherDog.patchType().decode(new ObjectData(encoded, {version: 0}))
+
+        const patchedDog2 = dog.patch(decoded);
+        expect(patchedDog).toEqual(patchedDog2);
+
+    });
+
+    test('it creates keys on stacked maps', () => {
+        const cat1 = Cat.create({
+            color: 'gray',
+            name: 'Cat1'
+        });
+
+        const cat2 = Cat.create({
+            color: 'red',
+            name: 'Cat2'
+        });
+
+        const dog = OtherDog.create({
+            id: '123',
+            friends: new Map()
+        })
+
+        const patch = OtherDog.patch({})
+        
+        const pm = new PatchMap<string, AutoEncoderPatchType<Cat>>()
+        pm.set('second', cat1)
+        patch.friends.set('best', pm)
+
+        const patch2 = OtherDog.patch({})
+
+        const combinedPatch = patch2.patch(patch)
+        expect(combinedPatch.encode({version: 0})).toEqual(patch.encode({version: 0}))
+
+        const patchedDog = dog.patch(combinedPatch);
+
+        expect(patchedDog.friends.get('best')!.get('second')!.name).toEqual('Cat1')
+        expect(patchedDog.friends.get('best')!.get('second')!.color).toEqual('gray')
+
+        expect(patchedDog.friends.get('best') instanceof PatchMap).toEqual(false)
+        expect(patchedDog.friends instanceof PatchMap).toEqual(false)
+
+        // Can do the same with decoded form
+        const encoded = JSON.parse(JSON.stringify(combinedPatch.encode({version: 0})))
+        const decoded = OtherDog.patchType().decode(new ObjectData(encoded, {version: 0}))
+
+        const patchedDog2 = dog.patch(decoded);
+        expect(patchedDog).toEqual(patchedDog2);
+    });
+
+    test('it does not create keys on stacked maps when there are no changes', () => {
+        const dog = OtherDog.create({
+            id: '123',
+            friends: new Map()
+        })
+
+        const patch = OtherDog.patch({})
+        
+        const pm = new PatchMap<string, null>()
+        pm.set('second', null)
+        patch.friends.set('best', pm)
+
+        const patch2 = OtherDog.patch({})
+
+        const combinedPatch = patch2.patch(patch)
+        expect(combinedPatch.encode({version: 0})).toEqual(patch.encode({version: 0}))
+
+        const patchedDog = dog.patch(combinedPatch);
+
+        expect(patchedDog.friends.size).toEqual(0)
     });
 });

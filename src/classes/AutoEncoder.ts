@@ -20,7 +20,7 @@ export type PatchableDecoder<T> = Decoder<T> & (
 /**
  * Uses the meta data of AutoEncoder to check if something is a patch or a put
  */
-export class PatchOrPutDecoder<Put extends Patchable<Patch> & AutoEncoder, Patch extends AutoEncoder> implements Decoder<Patch | Put> {
+export class PatchOrPutDecoder<Put extends Patchable<Patch>, Patch> implements Decoder<Patch | Put> {
     putDecoder:  Decoder<Put>;
     patchDecoder: Decoder<Patch>;
     

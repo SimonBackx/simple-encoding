@@ -4,6 +4,7 @@ import { Data } from "../classes/Data";
 import { Decoder } from "../classes/Decoder";
 import { NullableDecoder } from "./NullableDecoder";
 import { PatchMap } from "../classes/Patchable";
+import { PatchOrPutDecoder } from "../classes/AutoEncoder";
 
 export class MapDecoder<A, B> implements Decoder<Map<A, B>> {
     keyDecoder: Decoder<A>;
@@ -18,7 +19,7 @@ export class MapDecoder<A, B> implements Decoder<Map<A, B>> {
         const elementDecoder = this.valueDecoder;
         if ((elementDecoder as any).patchType) {
             const patchDecoder = (elementDecoder as any).patchType();
-            return new PatchMapDecoder(this.keyDecoder, new NullableDecoder(patchDecoder))
+            return new PatchMapDecoder(this.keyDecoder, new NullableDecoder(new PatchOrPutDecoder(this.valueDecoder as any, patchDecoder)))
         }
 
         return new PatchMapDecoder(this.keyDecoder, new NullableDecoder(this.valueDecoder))

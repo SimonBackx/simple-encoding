@@ -196,7 +196,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
         this.cachedPatchType = CreatedPatch;
 
         // Move over all fields
-        for (const field of this.fields) {
+        for (const field of (this.fields ?? [])) {
             CreatedPatch.fields.push(field.getOptionalClone());
         }
 

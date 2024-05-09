@@ -28,7 +28,13 @@ class OtherDog extends AutoEncoder {
     @field({decoder: new MapDecoder(StringDecoder, new MapDecoder(StringDecoder, Cat)) })
     friends = new Map<string, Map<string, Cat>>()
 }
+class OtherNullableDog extends AutoEncoder {
+    @field({decoder: StringDecoder})
+    id = ''
 
+    @field({decoder: new MapDecoder(StringDecoder, new MapDecoder(StringDecoder, Cat)), nullable: true })
+    friends: Map<string, Map<string, Cat>>|null = null
+}
 
 describe('MapDecoder', () => {
     test('it can patch map items', () => {
@@ -341,6 +347,49 @@ describe('MapDecoder', () => {
         expect(patchedDog.friends.get('best')!.get('second')!.color).toEqual('gray')
 
         expect(patchedDog.friends.get('best') instanceof PatchMap).toEqual(false)
+        expect(patchedDog.friends instanceof PatchMap).toEqual(false)
+
+        // Can do the same with decoded form
+        const encoded = JSON.parse(JSON.stringify(combinedPatch.encode({version: 0})))
+        const decoded = OtherDog.patchType().decode(new ObjectData(encoded, {version: 0}))
+
+        const patchedDog2 = dog.patch(decoded);
+        expect(patchedDog).toEqual(patchedDog2);
+    });
+
+    test.only('it creates keys nullable stacked maps', () => {
+        const cat1 = Cat.create({
+            color: 'gray',
+            name: 'Cat1'
+        });
+
+        const cat2 = Cat.create({
+            color: 'red',
+            name: 'Cat2'
+        });
+
+        const dog = OtherNullableDog.create({
+            id: '123',
+            friends: null
+        })
+
+        const patch = OtherNullableDog.patch({})
+        
+        const pm = new PatchMap<string, AutoEncoderPatchType<Cat>>()
+        pm.set('second', cat1)
+        patch.friends!.set('best', pm)
+
+        const patch2 = OtherNullableDog.patch({})
+
+        const combinedPatch = patch2.patch(patch)
+        expect(combinedPatch.encode({version: 0})).toEqual(patch.encode({version: 0}))
+
+        const patchedDog = dog.patch(combinedPatch);
+
+        expect(patchedDog.friends!.get('best')!.get('second')!.name).toEqual('Cat1')
+        expect(patchedDog.friends!.get('best')!.get('second')!.color).toEqual('gray')
+
+        expect(patchedDog.friends!.get('best') instanceof PatchMap).toEqual(false)
         expect(patchedDog.friends instanceof PatchMap).toEqual(false)
 
         // Can do the same with decoded form

@@ -1,5 +1,5 @@
 import { PatchableArray } from "../structs/PatchableArray";
-import { AutoEncoder } from "./AutoEncoder";
+import { AutoEncoder, isAutoEncoder } from "./AutoEncoder";
 import { Encodeable } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
 import { NonScalarIdentifiable } from "./Identifiable";
@@ -90,9 +90,10 @@ export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends AutoEnc
 
 export class PatchMap<K, V> extends Map<K, V> {
     _isPatch = true
+    _isPatchMap = true
 
     applyTo(obj: Map<any, any>) {
-        if (obj instanceof PatchMap) {
+        if (isPatchMap(obj)) {
             // Combine instead of normal logic
             const clone = new PatchMap(obj);
 
@@ -152,17 +153,25 @@ export class PatchMap<K, V> extends Map<K, V> {
     }
 }
 
+export function isPatchMap(obj: unknown): obj is PatchMap<any, any>{
+    return (obj instanceof PatchMap)
+}
+
+export function isPatchableArray(obj: unknown): obj is PatchableArray<any, any, any>{
+    return (obj instanceof PatchableArray)
+}
+
 export function isPatch(obj: unknown) {
-    if (obj instanceof AutoEncoder) {
+    if (isAutoEncoder(obj)) {
         // Instance type could be different
         return obj.isPatch();
     }
 
-    if (obj instanceof PatchMap) {
+    if (isPatchMap(obj)) {
         return true;
     }
 
-    if (obj instanceof PatchableArray) {
+    if (isPatchableArray(obj)) {
         return true;
     }
 
@@ -183,7 +192,7 @@ export function patchObject(obj: unknown, patch: unknown): any {
         if (patch == null) {
             return null;
         } else {
-            if (patch instanceof AutoEncoder && patch.isPut()) {
+            if (isAutoEncoder(patch) && patch.isPut()) {
                 // Instance type could be different
                 return patch;
             } else {
@@ -192,11 +201,11 @@ export function patchObject(obj: unknown, patch: unknown): any {
         }
 
     } else {
-        if (obj instanceof Map && patch instanceof PatchMap) {
+        if (obj instanceof Map && isPatchMap(patch)) {
             return patch.applyTo(obj)
         } else if (Array.isArray(obj)) {
             // Check if patch is a patchable array
-            if (patch instanceof PatchableArray) {
+            if (isPatchableArray(patch)) {
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return patch.applyTo(obj);
             } else {
@@ -207,7 +216,7 @@ export function patchObject(obj: unknown, patch: unknown): any {
                 return patch;
             }
         } else {
-            if ((obj === undefined || obj === null) && patch instanceof PatchableArray) {
+            if ((obj === undefined || obj === null) && isPatchableArray(patch)) {
                 // Patch on optional array: ignore if empty patch, else fake empty array patch
                 if (patch.changes.length === 0) {
                     return obj;
@@ -219,7 +228,7 @@ export function patchObject(obj: unknown, patch: unknown): any {
                 }
                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return patched;
-            } else if ((obj === undefined || obj === null) && patch instanceof PatchMap) {
+            } else if ((obj === undefined || obj === null) && isPatchMap(patch)) {
                 // Patch on optional array: ignore if empty patch, else fake empty array patch
                 if (patch.size === 0) {
                     return obj;

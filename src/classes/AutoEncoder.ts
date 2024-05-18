@@ -4,7 +4,7 @@ import { Data } from "./Data";
 import { Decoder } from "./Decoder";
 import { Encodeable, encodeObject, PlainObject } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
-import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable, PatchMap, patchObject } from "./Patchable";
+import { AutoEncoderPatchType,isPatchable, isPatchableArray, isPatchMap, PartialWithoutMethods, Patchable, PatchMap, patchObject } from "./Patchable";
 
 //export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
 export type PatchableDecoder<T> = Decoder<T> & (
@@ -174,7 +174,13 @@ const p = DogPatch.create({id: "test"})
 
 */
 
+export function isAutoEncoder(obj: unknown): obj is AutoEncoder{
+    return obj instanceof AutoEncoder || (typeof obj === "object" && obj !== null && (obj as any)._isAutoEncoder);
+}
+
 export class AutoEncoder implements Encodeable, Cloneable {
+    _isAutoEncoder = true;
+
     /// Fields should get sorted by version. Low to high
     static fields: Field<any>[];
     private static cachedPatchType?: typeof AutoEncoder;
@@ -364,11 +370,11 @@ export class AutoEncoder implements Encodeable, Cloneable {
 
                 if (this.static.isPatch) {
                     // Don't send certain values to minimize data
-                    if (source[field.property] instanceof PatchableArray && source[field.property].changes === 0) {
+                    if (isPatchableArray(source[field.property]) && source[field.property].changes.length === 0) {
                         continue;
                     }
 
-                    if (source[field.property] instanceof PatchMap && source[field.property].size === 0) {
+                    if (isPatchMap(source[field.property]) && source[field.property].size === 0) {
                         continue;
                     }
                 }

@@ -39,6 +39,7 @@ export class PatchableArray<
     Put extends (Identifiable<Id> & Encodeable & Patchable<Patch>) | Id,
     Patch extends (Identifiable<Id> & Encodeable) | Put
 > implements Encodeable, Patchable<PatchableArray<Id, Put, Patch>>, Cloneable {
+    _isPatchableArray = true;
     changes: Change<Id, Put, Patch>[];
 
     constructor(changes?: Change<Id, Put, Patch>[]) {

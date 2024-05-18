@@ -1,5 +1,5 @@
 import { EncodeContext } from "./EncodeContext";
-import { PatchMap } from "./Patchable";
+import { isPatchMap } from "./Patchable";
 
 export type PlainObject = string | number | { [key: string]: PlainObject } | boolean | PlainObject[] | undefined | null;
 
@@ -35,7 +35,7 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
         });
     }
     
-    if (obj instanceof PatchMap) {
+    if (isPatchMap(obj)) {
         // Transform into a normal object to conform to MapDecoders expected format
         const encodedObj = {}
 

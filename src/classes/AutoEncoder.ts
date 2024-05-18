@@ -4,7 +4,7 @@ import { Data } from "./Data";
 import { Decoder } from "./Decoder";
 import { Encodeable, encodeObject, PlainObject } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
-import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable, patchObject } from "./Patchable";
+import { AutoEncoderPatchType,isPatchable, PartialWithoutMethods, Patchable, PatchMap, patchObject } from "./Patchable";
 
 //export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
 export type PatchableDecoder<T> = Decoder<T> & (
@@ -360,15 +360,20 @@ export class AutoEncoder implements Encodeable, Cloneable {
                     }
                     continue;
                 }
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-                // const v = source[field.property];
-                // if (field.optional && field.defaultValue && (typeof v === 'string' || Array.isArray(v)) && v.length === 0 && v === field.defaultValue()) {
-                //     // Skip default values
-                //     appliedProperties[field.property] = true;
-                //     continue
-                // }
-                object[field.field] = encodeObject(source[field.property], context);
                 appliedProperties[field.property] = true;
+
+                if (this.static.isPatch) {
+                    // Don't send certain values to minimize data
+                    if (source[field.property] instanceof PatchableArray && source[field.property].changes === 0) {
+                        continue;
+                    }
+
+                    if (source[field.property] instanceof PatchMap && source[field.property].size === 0) {
+                        continue;
+                    }
+                }
+
+                object[field.field] = encodeObject(source[field.property], context);
             }
         }
 

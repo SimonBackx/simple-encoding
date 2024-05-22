@@ -1,8 +1,10 @@
+import { Cloneable } from "@simonbackx/simple-encoding";
 import { PatchableArray } from "../structs/PatchableArray";
 import { AutoEncoder, isAutoEncoder } from "./AutoEncoder";
 import { Encodeable } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
 import { NonScalarIdentifiable } from "./Identifiable";
+import { cloneObject } from "./Cloneable";
 
 export interface StrictPatch { }
 export interface Patchable<P> {
@@ -88,7 +90,7 @@ export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends AutoEnc
     ) 
 : P[]
 
-export class PatchMap<K, V> extends Map<K, V> {
+export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
     _isPatch = true
     _isPatchMap = true
 
@@ -148,6 +150,15 @@ export class PatchMap<K, V> extends Map<K, V> {
                 continue;
             }
             clone.set(key, patched)
+        }
+        return clone;
+    }
+
+    clone<T extends this>(this: T): this {
+        // Deep clone self
+        const clone = new PatchMap<K, V>() as this;
+        for (const [key, value] of this.entries()) {
+            clone.set(key, cloneObject(value as any))
         }
         return clone;
     }

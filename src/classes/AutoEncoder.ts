@@ -40,6 +40,34 @@ export class PatchOrPutDecoder<Put extends Patchable<Patch>, Patch> implements D
     }
 }
 
+export function deepSetArray(oldArr: any[], newArray: any[]) {
+    const oldArray = (oldArr as any[]).slice()
+    
+    // Loop old array
+    // Keep array reference
+    // Delete deleted items
+    // Add new items
+    // Copy over changes from updated items
+    // Maintain new order
+
+    // Clear out old array
+    oldArr.splice(0, oldArr.length)
+
+    for (const newItem of newArray) {
+        if (isAutoEncoder(newItem)) {
+            const oldItem = oldArray.find(i => getOptionalId(i) === getOptionalId(newItem))
+            if (oldItem && isAutoEncoder(oldItem)) {
+                oldItem.deepSet(newItem)
+                oldArr.push(oldItem)
+            } else {
+                oldArr.push(newItem)
+            }
+        } else {
+            oldArr.push(newItem)
+        }
+    }
+}
+
 export class Field<T> {
     optional: boolean;
     nullable: boolean;
@@ -362,32 +390,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
                     if (isAutoEncoder(this[key])) {
                         this[key].deepSet(object[key])
                     } else if (Array.isArray(this[key]) && Array.isArray(object[key])) {
-                        const oldArray = (this[key] as any[]).slice()
-                        const newArray = object[key] as any[]
-                        
-                        // Loop old array
-                        // Keep array reference
-                        // Delete deleted items
-                        // Add new items
-                        // Copy over changes from updated items
-                        // Maintain new order
-
-                        // Clear out old array
-                        this[key].splice(0, this[key].length)
-
-                        for (const newItem of newArray) {
-                            if (isAutoEncoder(newItem)) {
-                                const oldItem = oldArray.find(i => getOptionalId(i) === getOptionalId(newItem))
-                                if (oldItem && isAutoEncoder(oldItem)) {
-                                    oldItem.deepSet(newItem)
-                                    this[key].push(oldItem)
-                                } else {
-                                    this[key].push(newItem)
-                                }
-                            } else {
-                                this[key].push(newItem)
-                            }
-                        }
+                        deepSetArray(this[key], object[key])
                     } else {
                         this[key] = object[key] as any;
                     }

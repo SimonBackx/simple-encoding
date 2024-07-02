@@ -160,10 +160,21 @@ describe("AutoEncoder", () => {
 
         expect(dog1).toEqual(dog2);
         expect(dog1).toEqual({
+            _isAutoEncoder: true,
             id: "DOG1",
             name: "version test",
             friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ id: "DOG2", name: "friend", friendIds: [], friends: [] }],
+            friends: [{ 
+                _isAutoEncoder: true,
+                id: "DOG2", 
+                name: "friend", 
+                friendIds: [], 
+                friends: [],
+                bestFriend: undefined,
+                test: undefined,
+            }],
+            bestFriend: undefined,
+            test: undefined,
         });
     });
 

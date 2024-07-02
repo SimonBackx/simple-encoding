@@ -4,6 +4,7 @@ import { Data } from "./Data";
 import { Decoder } from "./Decoder";
 import { Encodeable, encodeObject, PlainObject } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
+import { getId, getOptionalId } from "./Identifiable";
 import { AutoEncoderPatchType,isPatchable, isPatchableArray, isPatchMap, PartialWithoutMethods, Patchable, PatchMap, patchObject } from "./Patchable";
 
 //export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
@@ -343,6 +344,53 @@ export class AutoEncoder implements Encodeable, Cloneable {
             if (object.hasOwnProperty(key) && typeof object[key] !== "function") {
                 if (this.static.doesPropertyExist(key)) {
                     this[key] = object[key] as any;
+                }
+            }
+        }
+    }
+
+    /**
+     * Create a new one by providing the properties of the object.
+     * Maintaining references to objects
+     */
+    deepSet<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T>|T) {
+        for (const key in object) {
+            if (object.hasOwnProperty(key) && typeof object[key] !== "function") {
+                if (this.static.doesPropertyExist(key)) {
+                    //this[key] = object[key] as any;
+
+                    if (isAutoEncoder(this[key])) {
+                        this[key].deepSet(object[key])
+                    } else if (Array.isArray(this[key]) && Array.isArray(object[key])) {
+                        const oldArray = (this[key] as any[]).slice()
+                        const newArray = object[key] as any[]
+                        
+                        // Loop old array
+                        // Keep array reference
+                        // Delete deleted items
+                        // Add new items
+                        // Copy over changes from updated items
+                        // Maintain new order
+
+                        // Clear out old array
+                        this[key].splice(0, this[key].length)
+
+                        for (const newItem of newArray) {
+                            if (isAutoEncoder(newItem)) {
+                                const oldItem = oldArray.find(i => getOptionalId(i) === getOptionalId(newItem))
+                                if (oldItem && isAutoEncoder(oldItem)) {
+                                    oldItem.deepSet(newItem)
+                                    this[key].push(oldItem)
+                                } else {
+                                    this[key].push(newItem)
+                                }
+                            } else {
+                                this[key].push(newItem)
+                            }
+                        }
+                    } else {
+                        this[key] = object[key] as any;
+                    }
                 }
             }
         }

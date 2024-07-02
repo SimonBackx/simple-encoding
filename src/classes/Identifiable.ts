@@ -19,3 +19,10 @@ export function getId<P extends string | number>(val: Identifiable<P> | P): P {
     }
     return val;
 }
+
+export function getOptionalId<T>(val: T): string|number|T {
+    if (hasId(val)) {
+        return val.id;
+    }
+    return val;
+}

@@ -40,7 +40,7 @@ export class PatchOrPutDecoder<Put extends Patchable<Patch>, Patch> implements D
     }
 }
 
-export function deepSetArray(oldArr: any[], newArray: any[]) {
+export function deepSetArray(oldArr: any[], newArray: any[], options?: { keepMissing?: boolean}) {
     const oldArray = (oldArr as any[]).slice()
     
     // Loop old array
@@ -64,6 +64,17 @@ export function deepSetArray(oldArr: any[], newArray: any[]) {
             }
         } else {
             oldArr.push(newItem)
+        }
+    }
+
+    if (options?.keepMissing) {
+        // Readd old missing items
+        for (const oldItem of oldArray) {
+            const found = oldArr.find(i => getOptionalId(i) === getOptionalId(oldItem))
+
+            if (!found) {
+                oldArr.push(oldItem)
+            }
         }
     }
 }

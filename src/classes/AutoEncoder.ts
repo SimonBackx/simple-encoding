@@ -396,9 +396,12 @@ export class AutoEncoder implements Encodeable, Cloneable {
         for (const key in object) {
             if (object.hasOwnProperty(key) && typeof object[key] !== "function") {
                 if (this.static.doesPropertyExist(key)) {
-                    //this[key] = object[key] as any;
+                    if (object[key] === undefined) {
+                        // ignore
+                        continue;
+                    }
 
-                    if (isAutoEncoder(this[key])) {
+                    if (isAutoEncoder(this[key]) && object[key] !== null && typeof object[key] === "object") {
                         this[key].deepSet(object[key])
                     } else if (Array.isArray(this[key]) && Array.isArray(object[key])) {
                         deepSetArray(this[key], object[key])

@@ -4,7 +4,7 @@ import { Decoder } from "../classes/Decoder";
 import { EncodeContext } from "../classes/EncodeContext";
 
 export class URLDecoder implements Decoder<URL> {
-    allowedProtocols = ['https'];
+    allowedProtocols = ['https:'];
     allowPorts = false
 
     constructor(options?: {allowedProtocols?: string[], allowPorts?: boolean}) {

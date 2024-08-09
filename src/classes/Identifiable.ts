@@ -9,7 +9,7 @@ export type NonScalarIdentifiableType<T> = T extends { id: infer P }
     : never;
 
 
-function hasId(val: any): val is { id: string | number } {
+export function hasId(val: any): val is Identifiable<string|number> {
     return val.id !== undefined;
 }
 

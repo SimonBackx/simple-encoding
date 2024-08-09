@@ -1,10 +1,11 @@
+import { SimpleError } from "@simonbackx/simple-errors";
 import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
 import { Cloneable, cloneObject } from "./Cloneable";
 import { Data } from "./Data";
 import { Decoder } from "./Decoder";
 import { Encodeable, encodeObject, PlainObject } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
-import { getId, getOptionalId } from "./Identifiable";
+import { getId, getOptionalId, hasId } from "./Identifiable";
 import { AutoEncoderPatchType,isPatchable, isPatchableArray, isPatchMap, PartialWithoutMethods, Patchable, PatchMap, patchObject } from "./Patchable";
 
 //export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
@@ -418,6 +419,50 @@ export class AutoEncoder implements Encodeable, Cloneable {
     }
 
     encode(context: EncodeContext): PlainObject {
+        if (hasId(this) && !this.static.isPatch && false) {
+            if (context.references === undefined) {
+                context.references = new Map();
+            }
+
+            let classReferences = context.references.get(this.static)
+            if (classReferences)  {
+                // Dramatically reduce size of encoding when lots of relations are returned with the same id
+                const id = getId(this);
+                const existing = classReferences.get(id)
+
+                // We already returned this same object
+                if (existing) {
+                    // For optimizations we could skip this step, but for now we keep it
+                    if (existing === this) {
+                        return {
+                            _ref: id,
+                        }
+                    } else {
+                        const a = existing.encode({version: context.version})
+                        const b = this.encode({version: context.version})
+
+                        if (JSON.stringify(a) === JSON.stringify(b)) {
+                            return {
+                                _ref: id,
+                            }
+                        }
+                        console.warn('Same id, but different objects in the encode result. This should not happen and reduces the ability to use references in encoded data.', id)
+                    }
+                } 
+            }
+
+            // Add self
+            if (!classReferences) {
+                classReferences = new Map()
+                context.references.set(this.static, classReferences);
+            }
+            const idField = this.static.latestFields.find(f => f.property === "id")
+            if (idField) {
+                classReferences.set(getId(this), this);
+            }
+        }
+
+
         const object = {};
         const source = this.static.downgrade(context.version, this);
 
@@ -457,6 +502,41 @@ export class AutoEncoder implements Encodeable, Cloneable {
     }
 
     static decode<T extends typeof AutoEncoder>(this: T, data: Data): InstanceType<T> {
+        const isRef = data.optionalField('_ref')
+        if (isRef) {
+            const idField = this.latestFields.find(f => f.property === "id")
+
+            if (!idField) {
+                throw new SimpleError({
+                    code: 'invalid_data',
+                    message: 'No id field found in class ' + this.name,
+                    field: data.addToCurrentField('_ref')
+                })
+            }
+
+            const stringOrNumber = isRef.decode(idField.decoder) as string | number
+            const classReferences = data.context.references?.get(this)
+
+            if (!classReferences) {
+                throw new SimpleError({
+                    code: 'invalid_reference',
+                    message: 'Invalid usage of references: the _ref field can only be used when the same object is encoded earlier, but no reference found for ' + stringOrNumber,
+                    field: data.addToCurrentField('_ref')
+                })
+            }
+
+            const reference = classReferences.get(stringOrNumber)
+            if (!reference) {
+                throw new SimpleError({
+                    code: 'invalid_reference',
+                    message: 'Reference not found with ID ' + stringOrNumber,
+                    field: data.addToCurrentField('_ref')
+                })
+            }
+
+            return reference as InstanceType<T>
+        }
+
         const model = new this() as InstanceType<T>;
 
         const appliedProperties = {};
@@ -488,6 +568,23 @@ export class AutoEncoder implements Encodeable, Cloneable {
 
         // Run upgrade / downgrade migrations to convert changes in fields
         this.upgrade(data.context.version, model);
+
+        if (!this.isPatch) {
+            if (data.context.references === undefined) {
+                data.context.references = new Map();
+            }
+
+            let classReferences = data.context.references.get(this)
+
+            if (!classReferences) {
+                classReferences = new Map()
+                data.context.references.set(this, classReferences);
+            }
+
+            if (classReferences && hasId(model)) {
+                classReferences.set(getId(model), model)
+            }
+        }
 
         return model;
     }

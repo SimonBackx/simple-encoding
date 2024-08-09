@@ -1,10 +1,9 @@
-import { Cloneable } from "@simonbackx/simple-encoding";
 import { PatchableArray } from "../structs/PatchableArray";
 import { AutoEncoder, isAutoEncoder } from "./AutoEncoder";
 import { Encodeable } from "./Encodeable";
 import { EncodeContext } from "./EncodeContext";
 import { NonScalarIdentifiable } from "./Identifiable";
-import { cloneObject } from "./Cloneable";
+import { Cloneable, cloneObject } from "./Cloneable";
 
 export interface StrictPatch { }
 export interface Patchable<P> {

@@ -419,7 +419,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
     }
 
     encode(context: EncodeContext): PlainObject {
-        if (hasId(this) && !this.static.isPatch && false) {
+        if (hasId(this) && !this.static.isPatch && (false as any)) {
             if (context.references === undefined) {
                 context.references = new Map();
             }

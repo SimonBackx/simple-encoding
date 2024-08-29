@@ -42,6 +42,11 @@ export class PatchOrPutDecoder<Put extends Patchable<Patch>, Patch> implements D
 }
 
 export function deepSetArray(oldArr: any[], newArray: any[], options?: { keepMissing?: boolean}) {
+    if (oldArr === newArray) {
+        // Same reference: nothing to do
+        return;
+    }
+
     const oldArray = (oldArr as any[]).slice()
     
     // Loop old array
@@ -394,6 +399,11 @@ export class AutoEncoder implements Encodeable, Cloneable {
      * Maintaining references to objects
      */
     deepSet<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T>|T) {
+        if (object === this) {
+            // Nothing to do (waste of resources)
+            return;
+        }
+
         for (const key in object) {
             if (object.hasOwnProperty(key) && typeof object[key] !== "function") {
                 if (this.static.doesPropertyExist(key)) {

@@ -499,7 +499,11 @@ export class AutoEncoder implements Encodeable, Cloneable {
                     }
                 }
 
-                object[field.field] = encodeObject(source[field.property], context);
+                if (field.decoder && typeof field.decoder === 'object' && field.decoder !== null && 'encode' in field.decoder && typeof field.decoder.encode === 'function') {
+                    object[field.field] = field.decoder.encode(source[field.property], context);
+                } else {
+                    object[field.field] = encodeObject(source[field.property], context);
+                }
             }
         }
 

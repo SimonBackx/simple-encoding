@@ -3,7 +3,7 @@
     "main": "./dist/index.js",
     "module": "./esm/dist/index.js",
     "types": "./dist/index.d.ts",
-    "version": "2.16.3",
+    "version": "2.16.4",
     "sideEffects": false,
     "type": "commonjs",
     "exports": {

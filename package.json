@@ -3,8 +3,15 @@
     "main": "./dist/index.js",
     "module": "./esm/dist/index.js",
     "types": "./dist/index.d.ts",
-    "version": "2.16.1",
+    "version": "2.16.2",
     "sideEffects": false,
+    "type": "commonjs",
+    "exports": {
+        ".": {
+            "import": "./esm/dist/index.js",
+            "require": "./dist/index.js"
+        }
+    },
     "scripts": {
         "build": "yarn build-cjs && yarn build-esm",
         "build-cjs": "tsc -p . --declaration",

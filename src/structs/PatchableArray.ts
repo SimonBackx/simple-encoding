@@ -1,12 +1,12 @@
 import { SimpleError } from "@simonbackx/simple-errors";
 
-import { Cloneable, cloneObject } from "../classes/Cloneable";
-import { Data } from "../classes/Data";
-import { Decoder } from "../classes/Decoder";
-import { Encodeable, encodeObject, PlainObject } from "../classes/Encodeable";
-import { EncodeContext } from "../classes/EncodeContext";
-import { getId, Identifiable } from "../classes/Identifiable";
-import { isPatchable,Patchable } from "../classes/Patchable";
+import { Cloneable, cloneObject } from "../classes/Cloneable.js";
+import { Data } from "../classes/Data.js";
+import { Decoder } from "../classes/Decoder.js";
+import { Encodeable, encodeObject, PlainObject } from "../classes/Encodeable.js";
+import { EncodeContext } from "../classes/EncodeContext.js";
+import { getId, Identifiable } from "../classes/Identifiable.js";
+import { isPatchable,Patchable } from "../classes/Patchable.js";
 
 type PutAfter<Id, Put> = { afterId?: Id | null; put: Put };
 type MoveAfter<Id> = { afterId: Id | null; move: Id };

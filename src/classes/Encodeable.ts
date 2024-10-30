@@ -1,5 +1,5 @@
-import { EncodeContext } from "./EncodeContext";
-import { isPatchMap } from "./Patchable";
+import { EncodeContext } from "./EncodeContext.js";
+import { isPatchMap } from "./Patchable.js";
 
 export type PlainObject = string | number | { [key: string]: PlainObject } | boolean | PlainObject[] | undefined | null;
 

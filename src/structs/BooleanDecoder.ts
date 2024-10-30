@@ -1,7 +1,7 @@
 import { SimpleError } from "@simonbackx/simple-errors";
 
-import { Data } from "../classes/Data";
-import { Decoder } from "../classes/Decoder";
+import { Data } from "../classes/Data.js";
+import { Decoder } from "../classes/Decoder.js";
 
 class BooleanDecoder implements Decoder<boolean> {
     decode(data: Data): boolean {

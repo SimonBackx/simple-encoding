@@ -1,5 +1,5 @@
-import { Decoder } from "./Decoder";
-import { EncodeContext } from "./EncodeContext";
+import { Decoder } from "./Decoder.js";
+import { EncodeContext } from "./EncodeContext.js";
 
 /// Decode data that is structured in maps and arrays
 export interface Data {

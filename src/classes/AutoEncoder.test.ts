@@ -1,18 +1,18 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { Decoder } from './Decoder';
+import { Decoder } from './Decoder.js';
 
-import { field } from "../decorators/Field";
-import { ArrayDecoder } from "../structs/ArrayDecoder";
-import { EnumDecoder } from '../structs/EnumDecoder';
-import IntegerDecoder from "../structs/IntegerDecoder";
-import { PatchableArray } from '../structs/PatchableArray';
-import StringDecoder from "../structs/StringDecoder";
-import { AutoEncoder } from "./AutoEncoder";
-import { Data } from './Data';
-import { Encodeable } from './Encodeable';
-import { EncodeContext } from './EncodeContext';
-import { ObjectData } from "./ObjectData";
-import { PartialWithoutMethods, PatchableArrayAutoEncoder, PatchType } from './Patchable';
+import { field } from "../decorators/Field.js";
+import { ArrayDecoder } from "../structs/ArrayDecoder.js";
+import { EnumDecoder } from '../structs/EnumDecoder.js';
+import IntegerDecoder from "../structs/IntegerDecoder.js";
+import { PatchableArray } from '../structs/PatchableArray.js';
+import StringDecoder from "../structs/StringDecoder.js";
+import { AutoEncoder } from "./AutoEncoder.js";
+import { Data } from './Data.js';
+import { Encodeable } from './Encodeable.js';
+import { EncodeContext } from './EncodeContext.js';
+import { ObjectData } from "./ObjectData.js";
+import { PartialWithoutMethods, PatchableArrayAutoEncoder, PatchType } from './Patchable.js';
 
 enum PaymentMethod {
     PointOfSale = "PointOfSale",

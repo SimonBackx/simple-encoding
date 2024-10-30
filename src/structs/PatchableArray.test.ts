@@ -1,8 +1,8 @@
-import { Data } from "../classes/Data";
-import { ObjectData } from "../classes/ObjectData";
-import { Patchable } from "../classes/Patchable";
-import { PatchableArray, PatchableArrayDecoder } from "./PatchableArray";
-import StringDecoder from "./StringDecoder";
+import { Data } from "../classes/Data.js";
+import { ObjectData } from "../classes/ObjectData.js";
+import { Patchable } from "../classes/Patchable.js";
+import { PatchableArray, PatchableArrayDecoder } from "./PatchableArray.js";
+import StringDecoder from "./StringDecoder.js";
 
 class Patch implements Patchable<Patch> {
     id: string;

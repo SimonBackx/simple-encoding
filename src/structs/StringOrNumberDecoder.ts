@@ -1,7 +1,7 @@
 import { SimpleError } from "@simonbackx/simple-errors";
 
-import { Data } from "../classes/Data";
-import { Decoder } from "../classes/Decoder";
+import { Data } from "../classes/Data.js";
+import { Decoder } from "../classes/Decoder.js";
 
 class StringOrNumberDecoder implements Decoder<string | number> {
     decode(data: Data): string | number {

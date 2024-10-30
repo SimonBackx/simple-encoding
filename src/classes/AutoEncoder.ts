@@ -1,12 +1,12 @@
 import { SimpleError } from "@simonbackx/simple-errors";
-import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray";
-import { Cloneable, cloneObject } from "./Cloneable";
-import { Data } from "./Data";
-import { Decoder } from "./Decoder";
-import { Encodeable, encodeObject, PlainObject } from "./Encodeable";
-import { EncodeContext } from "./EncodeContext";
-import { getId, getOptionalId, hasId } from "./Identifiable";
-import { AutoEncoderPatchType,isPatchable, isPatchableArray, isPatchMap, PartialWithoutMethods, Patchable, PatchMap, patchObject } from "./Patchable";
+import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray.js";
+import { Cloneable, cloneObject } from "./Cloneable.js";
+import { Data } from "./Data.js";
+import { Decoder } from "./Decoder.js";
+import { Encodeable, encodeObject, PlainObject } from "./Encodeable.js";
+import { EncodeContext } from "./EncodeContext.js";
+import { getId, getOptionalId, hasId } from "./Identifiable.js";
+import { AutoEncoderPatchType,isPatchable, isPatchableArray, isPatchMap, PartialWithoutMethods, Patchable, PatchMap, patchObject } from "./Patchable.js";
 
 //export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
 export type PatchableDecoder<T> = Decoder<T> & (
@@ -15,7 +15,7 @@ export type PatchableDecoder<T> = Decoder<T> & (
         T extends Patchable<infer P> ? 
         { 
             patchType: () => PatchableDecoder<P>
-            atchIdentifier: () => Decoder<string | number>  // when patchType is a custom decoder, we also need the decoder for the identifier
+            patchIdentifier: () => Decoder<string | number>  // when patchType is a custom decoder, we also need the decoder for the identifier
         } : {}
     )
 )
@@ -499,7 +499,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
                     }
                 }
 
-                if (field.decoder && typeof field.decoder === 'object' && field.decoder !== null && 'encode' in field.decoder && typeof field.decoder.encode === 'function') {
+                if (field.decoder && field.decoder.encode) {
                     object[field.field] = field.decoder.encode(source[field.property], context);
                 } else {
                     object[field.field] = encodeObject(source[field.property], context);

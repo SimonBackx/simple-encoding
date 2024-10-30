@@ -1,7 +1,7 @@
-import { ObjectData } from "../classes/ObjectData";
-import { EnumDecoder } from "./EnumDecoder";
-import { RecordDecoder } from "./RecordDecoder";
-import StringDecoder from "./StringDecoder";
+import { ObjectData } from "../classes/ObjectData.js";
+import { EnumDecoder } from "./EnumDecoder.js";
+import { RecordDecoder } from "./RecordDecoder.js";
+import StringDecoder from "./StringDecoder.js";
 
 enum Keys {
     A = "A",

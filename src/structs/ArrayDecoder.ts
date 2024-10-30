@@ -1,10 +1,10 @@
 import { SimpleError } from "@simonbackx/simple-errors";
 
-import { AutoEncoder } from "../classes/AutoEncoder";
-import { Data } from "../classes/Data";
-import { Decoder } from "../classes/Decoder";
-import { PatchableArray, PatchableArrayDecoder } from "./PatchableArray";
-import StringOrNumberDecoder from "./StringOrNumberDecoder";
+import { AutoEncoder } from "../classes/AutoEncoder.js";
+import { Data } from "../classes/Data.js";
+import { Decoder } from "../classes/Decoder.js";
+import { PatchableArray, PatchableArrayDecoder } from "./PatchableArray.js";
+import StringOrNumberDecoder from "./StringOrNumberDecoder.js";
 
 export class ArrayDecoder<T> implements Decoder<T[]> {
     decoder: Decoder<T>;

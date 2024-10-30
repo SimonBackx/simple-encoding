@@ -1,15 +1,15 @@
 import { SimpleError } from "@simonbackx/simple-errors";
 
-import { ArrayDecoder } from "../structs/ArrayDecoder";
-import BooleanDecoder from "../structs/BooleanDecoder";
-import { EnumDecoder } from "../structs/EnumDecoder";
-import IntegerDecoder from "../structs/IntegerDecoder";
-import { NullableDecoder } from "../structs/NullableDecoder";
-import NumberDecoder from "../structs/NumberDecoder";
-import StringDecoder from "../structs/StringDecoder";
-import { Data } from "./Data";
-import { Decoder } from "./Decoder";
-import { EncodeContext } from "./EncodeContext";
+import { ArrayDecoder } from "../structs/ArrayDecoder.js";
+import BooleanDecoder from "../structs/BooleanDecoder.js";
+import { EnumDecoder } from "../structs/EnumDecoder.js";
+import IntegerDecoder from "../structs/IntegerDecoder.js";
+import { NullableDecoder } from "../structs/NullableDecoder.js";
+import NumberDecoder from "../structs/NumberDecoder.js";
+import StringDecoder from "../structs/StringDecoder.js";
+import { Data } from "./Data.js";
+import { Decoder } from "./Decoder.js";
+import { EncodeContext } from "./EncodeContext.js";
 
 /// Implementation of Data that reads an already existing tree of data.
 export class ObjectData implements Data {

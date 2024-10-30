@@ -1,9 +1,9 @@
-import { AutoEncoder } from "../classes/AutoEncoder";
-import { ObjectData } from "../classes/ObjectData";
-import { AutoEncoderPatchType, PatchMap } from "../classes/Patchable";
-import { field } from "../decorators/Field";
-import { MapDecoder } from "./MapDecoder";
-import StringDecoder from "./StringDecoder";
+import { AutoEncoder } from "../classes/AutoEncoder.js";
+import { ObjectData } from "../classes/ObjectData.js";
+import { AutoEncoderPatchType, PatchMap } from "../classes/Patchable.js";
+import { field } from "../decorators/Field.js";
+import { MapDecoder } from "./MapDecoder.js";
+import StringDecoder from "./StringDecoder.js";
 
 class Cat extends AutoEncoder {
     @field({decoder: StringDecoder})

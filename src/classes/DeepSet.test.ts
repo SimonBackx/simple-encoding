@@ -1,7 +1,7 @@
-import { field } from "../decorators/Field";
-import { ArrayDecoder } from "../structs/ArrayDecoder";
-import StringDecoder from "../structs/StringDecoder";
-import { AutoEncoder } from "./AutoEncoder";
+import { field } from "../decorators/Field.js";
+import { ArrayDecoder } from "../structs/ArrayDecoder.js";
+import StringDecoder from "../structs/StringDecoder.js";
+import { AutoEncoder } from "./AutoEncoder.js";
 
 class Dog extends AutoEncoder {
     @field({ decoder: StringDecoder })

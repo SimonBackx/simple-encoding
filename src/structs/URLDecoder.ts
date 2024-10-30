@@ -1,7 +1,7 @@
 import { isSimpleError, isSimpleErrors, SimpleError } from "@simonbackx/simple-errors";
-import { Data } from "../classes/Data";
-import { Decoder } from "../classes/Decoder";
-import { EncodeContext } from "../classes/EncodeContext";
+import { Data } from "../classes/Data.js";
+import { Decoder } from "../classes/Decoder.js";
+import { EncodeContext } from "../classes/EncodeContext.js";
 
 export class URLDecoder implements Decoder<URL> {
     allowedProtocols = ['https:'];

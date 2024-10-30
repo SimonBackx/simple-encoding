@@ -1,5 +1,5 @@
-import { Data } from "../classes/Data";
-import { Decoder } from "../classes/Decoder";
+import { Data } from "../classes/Data.js";
+import { Decoder } from "../classes/Decoder.js";
 
 export class NullableDecoder<T> implements Decoder<T | null> {
     decoder: Decoder<T>;

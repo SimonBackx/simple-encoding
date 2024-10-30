@@ -1,10 +1,10 @@
 import { SimpleError } from "@simonbackx/simple-errors";
 
-import { Data } from "../classes/Data";
-import { Decoder } from "../classes/Decoder";
-import { NullableDecoder } from "./NullableDecoder";
-import { PatchMap } from "../classes/Patchable";
-import { PatchOrPutDecoder } from "../classes/AutoEncoder";
+import { Data } from "../classes/Data.js";
+import { Decoder } from "../classes/Decoder.js";
+import { NullableDecoder } from "./NullableDecoder.js";
+import { PatchMap } from "../classes/Patchable.js";
+import { PatchOrPutDecoder } from "../classes/AutoEncoder.js";
 
 export class MapDecoder<A, B> implements Decoder<Map<A, B>> {
     keyDecoder: Decoder<A>;

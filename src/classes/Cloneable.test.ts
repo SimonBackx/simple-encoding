@@ -1,9 +1,9 @@
-import { field } from "../decorators/Field";
-import { ArrayDecoder } from "../structs/ArrayDecoder";
-import IntegerDecoder from "../structs/IntegerDecoder";
-import StringDecoder from "../structs/StringDecoder";
-import { AutoEncoder } from "./AutoEncoder";
-import { Cloneable, cloneObject } from "./Cloneable";
+import { field } from "../decorators/Field.js";
+import { ArrayDecoder } from "../structs/ArrayDecoder.js";
+import IntegerDecoder from "../structs/IntegerDecoder.js";
+import StringDecoder from "../structs/StringDecoder.js";
+import { AutoEncoder } from "./AutoEncoder.js";
+import { Cloneable, cloneObject } from "./Cloneable.js";
 
 class Dog extends AutoEncoder {
     @field({ decoder: IntegerDecoder })

@@ -1,9 +1,9 @@
-import { PatchableArray } from "../structs/PatchableArray";
-import { AutoEncoder, isAutoEncoder } from "./AutoEncoder";
-import { Encodeable } from "./Encodeable";
-import { EncodeContext } from "./EncodeContext";
-import { NonScalarIdentifiable } from "./Identifiable";
-import { Cloneable, cloneObject } from "./Cloneable";
+import { PatchableArray } from "../structs/PatchableArray.js";
+import { AutoEncoder, isAutoEncoder } from "./AutoEncoder.js";
+import { Encodeable } from "./Encodeable.js";
+import { EncodeContext } from "./EncodeContext.js";
+import { NonScalarIdentifiable } from "./Identifiable.js";
+import { Cloneable, cloneObject } from "./Cloneable.js";
 
 export interface StrictPatch { }
 export interface Patchable<P> {

@@ -1,7 +1,7 @@
-import { Data } from '../classes/Data';
-import { Decoder } from '../classes/Decoder';
-import { EncodableObject, Encodeable, encodeObject } from '../classes/Encodeable';
-import { EncodeContext } from '../classes/EncodeContext';
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
+import { EncodableObject, Encodeable, encodeObject } from '../classes/Encodeable.js';
+import { EncodeContext } from '../classes/EncodeContext.js';
 
 /**
  * When you need to store data for a long period, a VersionBox can be very usefull. It saves the version of the data in it's encoding.

@@ -1,6 +1,6 @@
-import { Data } from "./Data";
-import { PlainObject } from "./Encodeable";
-import { EncodeContext } from "./EncodeContext";
+import { Data } from "./Data.js";
+import { PlainObject } from "./Encodeable.js";
+import { EncodeContext } from "./EncodeContext.js";
 
 export interface Decoder<T> {
     decode(data: Data): T;

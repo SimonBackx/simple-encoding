@@ -3,7 +3,7 @@
     "main": "./dist/index.js",
     "module": "./esm/dist/index.js",
     "types": "./dist/index.d.ts",
-    "version": "2.16.4",
+    "version": "2.16.5",
     "sideEffects": false,
     "type": "commonjs",
     "exports": {
@@ -20,7 +20,8 @@
     },
     "files": [
         "dist",
-        "esm/dist"
+        "esm/dist",
+        "esm/package.json"
     ],
     "peerDependencies": {
         "@simonbackx/simple-errors": "^1.4.0"

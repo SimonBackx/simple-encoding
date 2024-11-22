@@ -29,6 +29,16 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
         return obj.encode(context);
     }
 
+    if (typeof obj === 'symbol') {
+        const key = Symbol.keyFor(obj);
+
+        if (key) {
+            return {
+                $symbol: key
+            };
+        }
+    }
+
     if (Array.isArray(obj)) {
         return (obj as (EncodableObject | PlainObject)[]).map((e) => {
             return encodeObject(e, context)

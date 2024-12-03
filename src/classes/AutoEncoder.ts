@@ -3,7 +3,7 @@ import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray
 import { Cloneable, cloneObject } from "./Cloneable.js";
 import { Data } from "./Data.js";
 import { Decoder } from "./Decoder.js";
-import { Encodeable, encodeObject, PlainObject } from "./Encodeable.js";
+import { Encodeable, encodeObject, PlainObject, sortObjectKeysForEncoding } from "./Encodeable.js";
 import { EncodeContext } from "./EncodeContext.js";
 import { getId, getOptionalId, hasId } from "./Identifiable.js";
 import { AutoEncoderPatchType,isPatchable, isPatchableArray, isPatchMap, PartialWithoutMethods, Patchable, PatchMap, patchObject } from "./Patchable.js";
@@ -325,21 +325,68 @@ export class AutoEncoder implements Encodeable, Cloneable {
                 return 1;
             }
 
-            // sort by property name
-            return a.property.localeCompare(b.property);
+            return 0;
         }
         this.fields.sort(compare);
     }
 
+    static _cachedLatestFields?: {fields: Field<any>[], totalFieldsCount: number} | null;
+    static _cachedFieldsForVersion?: Map<number, Field<any>[]>;
+
     static get latestFields(): Field<any>[] {
-        const latestFields = {};
+        // We need to clear if we detect taht the _cachedLatestFields is defined on a superclass, but not on this class itself
+        if (!Object.hasOwnProperty.call(this, "_cachedLatestFields") && this._cachedLatestFields) {
+            this._cachedLatestFields = null; // Explicitly set to null to avoid confusion
+        }
+
+        if (this._cachedLatestFields && this._cachedLatestFields.totalFieldsCount === this.fields.length) {
+            return this._cachedLatestFields.fields;
+        }
+
+        const latestFields: Record<string, Field<any>> = {};
         for (let i = this.fields.length - 1; i >= 0; i--) {
             const field = this.fields[i];
             if (!latestFields[field.property]) {
                 latestFields[field.property] = field;
             }
         }
-        return Object.values(latestFields);
+        const fields = Object.values(latestFields);
+        // Sort fields for stable encodings
+        fields.sort((a, b) => sortObjectKeysForEncoding(a.property, b.property));
+
+        this._cachedLatestFields = {fields, totalFieldsCount: this.fields.length};
+        return fields;
+    }
+
+    static fieldsForVersion(version: number): Field<any>[] {
+        // We need to clear if we detect taht the _cachedLatestFields is defined on a superclass, but not on this class itself
+        if (!Object.hasOwnProperty.call(this, "_cachedFieldsForVersion") && this._cachedFieldsForVersion) {
+            this._cachedFieldsForVersion = new Map();
+        }
+
+        if (!this._cachedFieldsForVersion) {
+            this._cachedFieldsForVersion = new Map();
+        }
+
+        if (this._cachedFieldsForVersion.has(version)) {
+            return this._cachedFieldsForVersion.get(version)!;
+        }
+
+        const latestFields: Record<string, Field<any>> = {};
+        for (let i = this.fields.length - 1; i >= 0; i--) {
+            const field = this.fields[i];
+            if (field.version <= version && !latestFields[field.property]) {
+                latestFields[field.property] = field;
+            }
+        }
+
+        const fields = Object.values(latestFields);
+
+        // Sort fields for stable encodings
+        fields.sort((a, b) => sortObjectKeysForEncoding(a.property, b.property));
+
+        this._cachedFieldsForVersion.set(version, fields);
+        return fields;
     }
 
     static doesPropertyExist(property: string): boolean {
@@ -477,34 +524,29 @@ export class AutoEncoder implements Encodeable, Cloneable {
         const object = {};
         const source = this.static.downgrade(context.version, this);
 
-        const appliedProperties = {};
-        for (let i = this.static.fields.length - 1; i >= 0; i--) {
-            const field = this.static.fields[i];
-            if (field.version <= context.version && !appliedProperties[field.property]) {
-                if (source[field.property] === undefined) {
-                    if (!field.optional) {
-                        throw new Error("Value for property " + field.property + " is not set, but is required!");
-                    }
+        for (const field of this.static.fieldsForVersion(context.version)) {
+            if (source[field.property] === undefined) {
+                if (!field.optional) {
+                    throw new Error("Value for property " + field.property + " is not set, but is required!");
+                }
+                continue;
+            }
+
+            if (this.static.isPatch) {
+                // Don't send certain values to minimize data
+                if (isPatchableArray(source[field.property]) && source[field.property].changes.length === 0) {
                     continue;
                 }
-                appliedProperties[field.property] = true;
 
-                if (this.static.isPatch) {
-                    // Don't send certain values to minimize data
-                    if (isPatchableArray(source[field.property]) && source[field.property].changes.length === 0) {
-                        continue;
-                    }
-
-                    if (isPatchMap(source[field.property]) && source[field.property].size === 0) {
-                        continue;
-                    }
+                if (isPatchMap(source[field.property]) && source[field.property].size === 0) {
+                    continue;
                 }
+            }
 
-                if (field.decoder && field.decoder.encode) {
-                    object[field.field] = field.decoder.encode(source[field.property], context);
-                } else {
-                    object[field.field] = encodeObject(source[field.property], context);
-                }
+            if (field.decoder && field.decoder.encode) {
+                object[field.field] = field.decoder.encode(source[field.property], context);
+            } else {
+                object[field.field] = encodeObject(source[field.property], context);
             }
         }
 

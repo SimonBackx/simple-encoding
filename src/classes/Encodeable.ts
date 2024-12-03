@@ -74,9 +74,7 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
 
         // Sort queue by key to have reliable encoding
         const encodedObj = {};
-        queue.sort((a, b) => {
-            return a.key.localeCompare(b.key)
-        })
+        queue.sort((a, b) => sortObjectKeysForEncoding(a.key, b.key))
 
         for (const {key, value} of queue) {
             encodedObj[key] = value
@@ -97,7 +95,7 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
 
     if (typeof obj === 'object') {
         // Sort keys
-        const keys = Object.keys(obj).sort()
+        const keys = Object.keys(obj).sort(sortObjectKeysForEncoding)
         const encodedObj = {}
         for (const key of keys) {
             encodedObj[key] = encodeObject(obj[key], context)
@@ -107,4 +105,38 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
     
     // Failed to decode
     return obj;
+}
+
+export function sortObjectKeysForEncoding(a: string, b: string) {
+    // Always have a fixed order for certain keys, and follow with alphabetical order
+    // id, name, description, ...remaining
+    if (a === b) {
+        return 0;
+    }
+
+    if (a === 'id') {
+        return -1
+    }
+
+    if (b === 'id') {
+        return 1
+    }
+
+    if (a === 'name') {
+        return -1
+    }
+
+    if (b === 'name') {
+        return 1
+    }
+
+    if (a === 'description') {
+        return -1
+    }
+
+    if (b === 'description') {
+        return 1
+    }
+
+    return a.localeCompare(b)
 }

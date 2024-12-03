@@ -15,11 +15,10 @@ export function isEncodeable(object: any): object is Encodeable {
     if (typeof object !== "object" || object === null) {
         return false;
     }
-    return !!object.encode;
+    return typeof object.encode === 'function';
 }
 
 export type EncodableObject = Encodeable | EncodableObject[] | Map<EncodableObject & keyof any, EncodableObject> | PlainObject
-
 
 /**
  * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
@@ -55,6 +54,7 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
         }
 
         return {
+            // No need to sort the keys of patches
             _isPatch: true,
             changes: encodedObj
         }
@@ -62,11 +62,24 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
 
     if (obj instanceof Map) {
         // Transform into a normal object to conform to MapDecoders expected format
-        const encodedObj = {}
+        const queue: {key: string, value: PlainObject}[] = []
 
         for (const [key, value] of obj) {
-            const k: EncodableObject & keyof any = encodeObject(key, context) as any
-            encodedObj[k] = encodeObject(value, context)
+            const k = encodeObject(key, context)
+            if (typeof k !== 'string' && typeof k !== 'number') {
+                throw new Error(`Map keys must be strings or numbers. Got ${k}`)
+            }
+            queue.push({key: k.toString(), value: encodeObject(value, context)})
+        }
+
+        // Sort queue by key to have reliable encoding
+        const encodedObj = {};
+        queue.sort((a, b) => {
+            return a.key.localeCompare(b.key)
+        })
+
+        for (const {key, value} of queue) {
+            encodedObj[key] = value
         }
 
         if ((obj as any)._isPatch) {
@@ -74,6 +87,20 @@ export function encodeObject(obj: EncodableObject, context: EncodeContext): Plai
                 _isPatch: true,
                 changes: encodedObj
             }
+        }
+        return encodedObj
+    }
+
+    if (obj === null || obj === undefined) {
+        return obj;
+    }
+
+    if (typeof obj === 'object') {
+        // Sort keys
+        const keys = Object.keys(obj).sort()
+        const encodedObj = {}
+        for (const key of keys) {
+            encodedObj[key] = encodeObject(obj[key], context)
         }
         return encodedObj
     }

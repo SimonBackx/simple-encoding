@@ -324,8 +324,9 @@ export class AutoEncoder implements Encodeable, Cloneable {
             if (a.version > b.version) {
                 return 1;
             }
-            // a must be equal to b
-            return 0;
+
+            // sort by property name
+            return a.property.localeCompare(b.property);
         }
         this.fields.sort(compare);
     }
@@ -622,14 +623,23 @@ export class AutoEncoder implements Encodeable, Cloneable {
      * Downgrade property values to a new object
      */
     static downgrade(to: number, object: any): object {
-        const older: object = Object.assign({}, object);
+        let didCopy = false;
+        const older = {}
+
         for (let i = this.fields.length - 1; i >= 0; i--) {
             const field = this.fields[i];
             if (field.version > to) {
                 if (field.downgrade) {
+                    if (!didCopy) {
+                        didCopy = true;
+                        Object.assign(older, object);
+                    }
                     older[field.property] = field.downgrade.call(object, older[field.property]);
                 }
             }
+        }
+        if (!didCopy) {
+            return object;
         }
         return older;
     }

@@ -411,4 +411,12 @@ export class PatchableArrayDecoder<
         const changes = data.field("changes").array(new PatchableArrayItemDecoder(this.putDecoder, this.patchDecoder, this.idDecoder))
         return new PatchableArray<Id, Put, Patch>(changes);
     }
+
+    isDefaultValue(value: unknown): boolean {
+        return value instanceof PatchableArray && value.changes.length === 0;
+    }
+
+    getDefaultValue(): PatchableArray<Id, Put, Patch> {
+        return new PatchableArray();
+    }
 }

@@ -112,4 +112,12 @@ export class ArrayDecoder<T> implements Decoder<T[]> {
         }
         return new PatchableArray<any, any, any>()
     }
+
+    isDefaultValue(value: unknown): boolean {
+        return Array.isArray(value) && value.length === 0
+    }
+
+    getDefaultValue(): T[] {
+        return []
+    }
 }

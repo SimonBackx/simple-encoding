@@ -85,6 +85,16 @@ export function deepSetArray(oldArr: any[], newArray: any[], options?: { keepMis
     }
 }
 
+export function coalesceUndefined<T>(...values: (T)[]): T|undefined {
+    // Return first non-undefined value
+    for (const value of values) {
+        if (value !== undefined) {
+            return value;
+        }
+    }
+    return undefined;
+}
+
 export class Field<T> {
     optional: boolean;
     nullable: boolean;
@@ -232,6 +242,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
     private static cachedPatchType?: typeof AutoEncoder;
 
     static isPatch = false
+    static skipDefaultValues = false
 
     /// Create a patch for this instance (of reuse if already created)
     static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new () => AutoEncoderPatchType<InstanceType<T>>) {
@@ -543,6 +554,18 @@ export class AutoEncoder implements Encodeable, Cloneable {
                 }
             }
 
+            if (AutoEncoder.skipDefaultValues && !this.static.isPatch) {
+                if (field.nullable && !field.optional && source[field.property] === null) {
+                    // Don't send null values - will be handled as null automatically on the receiving side
+                    continue;
+                }
+
+                if (field.decoder.isDefaultValue && field.decoder.isDefaultValue(source[field.property])) {
+                    // Skip
+                    continue;
+                }
+            }
+
             if (field.decoder && field.decoder.encode) {
                 object[field.field] = field.decoder.encode(source[field.property], context);
             } else {
@@ -603,17 +626,40 @@ export class AutoEncoder implements Encodeable, Cloneable {
             const field = this.fields[i];
 
             if (field.version <= data.context.version && !appliedProperties[field.property]) {
-                if (field.optional) {
-                    if (field.nullable) {
-                        model[field.property] = data.undefinedField(field.field)?.nullable(field.decoder);
+                const fieldData = data.undefinedField(field.field);
+
+                if (!fieldData && !field.optional && field.nullable) {
+                    // Special case because we are not using the Nullable Decoder directly
+                    model[field.property] = null;
+                } else if (!fieldData && !field.optional && field.decoder.getDefaultValue) {
+                    // Property has not been set. Set it to the default value of the decoder
+                    model[field.property] = field.decoder.getDefaultValue();
+                } else if (field.optional) {
+                    if (!this.isPatch) {
+                        // Optional fields always have a dedicated default value set
+                        if (field.nullable) {
+                            // When null, set the property to null and don't default to default values
+                            model[field.property] = coalesceUndefined(fieldData?.nullable(field.decoder), model[field.property], (field.decoder.getDefaultValue ? field.decoder.getDefaultValue() : undefined));
+                        } else {
+                            // When null, still set the default values
+                            model[field.property] = data.optionalField(field.field)?.decode(field.decoder) ?? model[field.property] ?? (field.decoder.getDefaultValue ? field.decoder.getDefaultValue() : undefined) ?? undefined;
+                        }
                     } else {
-                        model[field.property] = data.optionalField(field.field)?.decode(field.decoder) ?? model[field.property] ?? undefined;
+                        // Never use default values
+                        // Do use the default value from the object itself (will be an empty patchabel array or map)
+                        if (field.nullable) {
+                            model[field.property] = coalesceUndefined(fieldData?.nullable(field.decoder), model[field.property]);
+                        } else {
+                            // When null, still set the default values
+                            model[field.property] = data.optionalField(field.field)?.decode(field.decoder) ?? model[field.property] ?? undefined;
+                        }
                     }
+                    
                 } else {
                     if (field.nullable) {
-                        model[field.property] = data.field(field.field)?.nullable(field.decoder);
+                        model[field.property] = data.field(field.field).nullable(field.decoder);
                     } else {
-                        model[field.property] = data.field(field.field)?.decode(field.decoder);
+                        model[field.property] = data.field(field.field).decode(field.decoder);
                     }
                 }
 

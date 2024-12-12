@@ -15,4 +15,12 @@ export class NullableDecoder<T> implements Decoder<T | null> {
 
         return data.decode(this.decoder);
     }
+
+    isDefaultValue(value: unknown): boolean {
+        return value === null;
+    }
+
+    getDefaultValue(): T | null {
+        return null
+    }
 }

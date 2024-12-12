@@ -50,6 +50,14 @@ export class MapDecoder<A, B> implements Decoder<Map<A, B>> {
             field: data.currentField,
         });
     }
+
+    isDefaultValue(value: unknown): boolean {
+        return value instanceof Map && value.size === 0
+    }
+
+    getDefaultValue(): Map<A, B> {
+        return new Map()
+    }
 }
 
 export class PatchMapDecoder<A, B> implements Decoder<PatchMap<A, B>> {
@@ -83,5 +91,13 @@ export class PatchMapDecoder<A, B> implements Decoder<PatchMap<A, B>> {
             message: `Expected an object at ${data.currentField}`,
             field: data.currentField,
         });
+    }
+
+    isDefaultValue(value: unknown): boolean {
+        return value instanceof PatchMap && value.size === 0
+    }
+
+    getDefaultValue(): PatchMap<A, B> {
+        return new PatchMap()
     }
 }

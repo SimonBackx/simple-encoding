@@ -14,6 +14,14 @@ class StringDecoder implements Decoder<string> {
             field: data.currentField
         });
     }
+
+    isDefaultValue(value: unknown): boolean {
+        return value === "";
+    }
+
+    getDefaultValue(): string {
+        return "";
+    }
 }
 
 // We export an instance to prevent creating a new instance every time we need to decode a number

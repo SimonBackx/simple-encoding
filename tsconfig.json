@@ -12,12 +12,18 @@
         "strictNullChecks": true,
         "outDir": "dist/",
         "lib": ["esnext", "dom", "dom.iterable", "scripthost"],
-        "types": ["node", "jest"]
+        "types": ["node", "jest"],
+        "skipLibCheck": true // Required because we self-reference our own package and that causes issues with duplicate types
     },
     "include": [
         "index.ts",
         "src/**/*.ts",
         "*.d.ts" // Include vue type definition for webpack
     ],
-    "exclude": ["node_modules"]
+    "exclude": [
+        "node_modules",
+        "dist",
+        "esm/dist",
+        "dist/**/*"
+    ]
 }

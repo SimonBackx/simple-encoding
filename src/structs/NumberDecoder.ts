@@ -1,18 +1,18 @@
-import { SimpleError } from "@simonbackx/simple-errors";
+import { SimpleError } from '@simonbackx/simple-errors';
 
-import { Data } from "../classes/Data.js";
-import { Decoder } from "../classes/Decoder.js";
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
 
 class NumberDecoder implements Decoder<number> {
     decode(data: Data): number {
-        if (typeof data.value == "number" && !Number.isNaN(data.value) && Number.isFinite(data.value)) {
+        if (typeof data.value === 'number' && !Number.isNaN(data.value) && Number.isFinite(data.value)) {
             return data.value;
         }
 
         throw new SimpleError({
-            code: "invalid_field",
+            code: 'invalid_field',
             message: `Expected a number at ${data.currentField}`,
-            field: data.currentField
+            field: data.currentField,
         });
     }
 }

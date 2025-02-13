@@ -1,5 +1,5 @@
-import { Decoder } from "./Decoder.js";
-import { EncodeContext } from "./EncodeContext.js";
+import { Decoder } from './Decoder.js';
+import { EncodeContext } from './EncodeContext.js';
 
 /// Decode data that is structured in maps and arrays
 export interface Data {
@@ -26,7 +26,7 @@ export interface Data {
     enum<E extends { [key: number]: string | number }>(e: E): E[keyof E];
 
     /**
-     * Use this method to create a new instance of the same type, but with different field and data. 
+     * Use this method to create a new instance of the same type, but with different field and data.
      */
     clone(set: { data: any; context: EncodeContext; field: string }): Data;
 }

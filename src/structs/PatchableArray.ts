@@ -1,12 +1,12 @@
-import { SimpleError } from "@simonbackx/simple-errors";
+import { SimpleError } from '@simonbackx/simple-errors';
 
-import { Cloneable, cloneObject } from "../classes/Cloneable.js";
-import { Data } from "../classes/Data.js";
-import { Decoder } from "../classes/Decoder.js";
-import { Encodeable, encodeObject, PlainObject } from "../classes/Encodeable.js";
-import { EncodeContext } from "../classes/EncodeContext.js";
-import { getId, Identifiable } from "../classes/Identifiable.js";
-import { isPatchable,Patchable } from "../classes/Patchable.js";
+import { Cloneable, cloneObject } from '../classes/Cloneable.js';
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
+import { Encodeable, encodeObject, PlainObject } from '../classes/Encodeable.js';
+import { EncodeContext } from '../classes/EncodeContext.js';
+import { getId, Identifiable } from '../classes/Identifiable.js';
+import { isPatchable, Patchable } from '../classes/Patchable.js';
 
 type PutAfter<Id, Put> = { afterId?: Id | null; put: Put };
 type MoveAfter<Id> = { afterId: Id | null; move: Id };
@@ -37,7 +37,7 @@ function isPatch(val: Change<any, any, any>): val is PatchItem<any> {
 export class PatchableArray<
     Id extends string | number,
     Put extends (Identifiable<Id> & Encodeable & Patchable<Patch>) | Id,
-    Patch extends (Identifiable<Id> & Encodeable) | Put
+    Patch extends (Identifiable<Id> & Encodeable) | Put,
 > implements Encodeable, Patchable<PatchableArray<Id, Put, Patch>>, Cloneable {
     _isPatchableArray = true;
     changes: Change<Id, Put, Patch>[];
@@ -64,7 +64,7 @@ export class PatchableArray<
     patch(patch: PatchableArray<Id, Put, Patch> | Put[]): this {
         if (Array.isArray(patch)) {
             // Transform itself into a normal array. Override all existing patches
-            return patch.slice() as any
+            return patch.slice() as any;
         }
         // Deep clone self
         const cloned = this.clone();
@@ -73,14 +73,18 @@ export class PatchableArray<
             // Apply this change
             if (isMove(change)) {
                 cloned.addMove(change.move, change.afterId);
-            } else if (isPut(change)) {
+            }
+            else if (isPut(change)) {
                 cloned.addPut(change.put, change.afterId);
-            } else if (isDelete(change)) {
+            }
+            else if (isDelete(change)) {
                 cloned.addDelete(change.delete);
-            } else if (isPatch(change)) {
+            }
+            else if (isPatch(change)) {
                 cloned.addPatch(change.patch);
-            } else {
-                throw new Error("Invalid change: " + JSON.stringify(change));
+            }
+            else {
+                throw new Error('Invalid change: ' + JSON.stringify(change));
             }
         }
 
@@ -99,20 +103,24 @@ export class PatchableArray<
         for (const change of this.changes) {
             if (isMove(change)) {
                 // ok
-            } else if (isPut(change)) {
+            }
+            else if (isPut(change)) {
                 if (getId(change.put) == item) {
                     return true;
                 }
-            } else if (isDelete(change)) {
+            }
+            else if (isDelete(change)) {
                 if (change.delete == item) {
                     return true;
                 }
-            } else if (isPatch(change)) {
+            }
+            else if (isPatch(change)) {
                 if (getId(change.patch) == item) {
                     return true;
                 }
-            } else {
-                throw new Error("Invalid change: " + JSON.stringify(change));
+            }
+            else {
+                throw new Error('Invalid change: ' + JSON.stringify(change));
             }
         }
         return false;
@@ -127,26 +135,33 @@ export class PatchableArray<
         for (const change of this.changes) {
             if (isMove(change)) {
                 newCurrentChanges.push(change);
-            } else if (isPut(change)) {
+            }
+            else if (isPut(change)) {
                 if (getId(change.put) == item) {
                     n.changes.push(change);
-                } else {
+                }
+                else {
                     newCurrentChanges.push(change);
                 }
-            } else if (isDelete(change)) {
+            }
+            else if (isDelete(change)) {
                 if (change.delete == item) {
                     n.changes.push(change);
-                } else {
+                }
+                else {
                     newCurrentChanges.push(change);
                 }
-            } else if (isPatch(change)) {
+            }
+            else if (isPatch(change)) {
                 if (getId(change.patch) == item) {
                     n.changes.push(change);
-                } else {
+                }
+                else {
                     newCurrentChanges.push(change);
                 }
-            } else {
-                throw new Error("Invalid change: " + JSON.stringify(change));
+            }
+            else {
+                throw new Error('Invalid change: ' + JSON.stringify(change));
             }
         }
 
@@ -156,7 +171,7 @@ export class PatchableArray<
 
     addPatch(value: Patch) {
         const id = getId(value);
-        const otherPut = this.changes.findIndex((e) => isPut(e) && getId(e.put) == id);
+        const otherPut = this.changes.findIndex(e => isPut(e) && getId(e.put) == id);
         if (otherPut !== -1) {
             const other: PutAfter<Id, Put> = this.changes[otherPut] as any;
 
@@ -165,7 +180,8 @@ export class PatchableArray<
                     put: other.put.patch(value as any),
                     afterId: other.afterId,
                 });
-            } else {
+            }
+            else {
                 this.changes.splice(otherPut, 1, {
                     put: value as Put,
                     afterId: other.afterId,
@@ -174,7 +190,7 @@ export class PatchableArray<
             return;
         }
 
-        const otherPatch = this.changes.findIndex((e) => isPatch(e) && getId(e.patch) == id);
+        const otherPatch = this.changes.findIndex(e => isPatch(e) && getId(e.patch) == id);
         if (otherPatch !== -1) {
             const other: PatchItem<Patch> = this.changes[otherPatch] as any;
 
@@ -182,7 +198,8 @@ export class PatchableArray<
                 this.changes.splice(otherPatch, 1, {
                     patch: other.patch.patch(value as any),
                 });
-            } else {
+            }
+            else {
                 this.changes.splice(otherPatch, 1, {
                     patch: value,
                 });
@@ -195,13 +212,14 @@ export class PatchableArray<
 
     addDelete(id: Id) {
         // Remove all puts, patches and moves
-        const otherPut = this.changes.findIndex((e) => isPut(e) && getId(e.put) == id);
+        const otherPut = this.changes.findIndex(e => isPut(e) && getId(e.put) == id);
         if (otherPut !== -1) {
             // if it had a put, remove the put but don't add a delete
             this.changes.splice(otherPut, 1);
             return;
-        } else {
-            const otherPatch = this.changes.findIndex((e) => isPatch(e) && getId(e.patch) == id);
+        }
+        else {
+            const otherPatch = this.changes.findIndex(e => isPatch(e) && getId(e.patch) == id);
             if (otherPatch !== -1) {
                 this.changes.splice(otherPatch, 1);
             }
@@ -218,7 +236,7 @@ export class PatchableArray<
             // Apply this change
             if (isMove(change)) {
                 // First do a delete of this value
-                const index = newArray.findIndex((e) => getId(e) == change.move);
+                const index = newArray.findIndex(e => getId(e) == change.move);
 
                 if (index != -1) {
                     const value = newArray[index];
@@ -229,22 +247,24 @@ export class PatchableArray<
                     // not found = inserting at the end
                     let afterIndex = -1;
                     if (change.afterId !== null) {
-                        afterIndex = newArray.findIndex((e) => getId(e) == change.afterId);
+                        afterIndex = newArray.findIndex(e => getId(e) == change.afterId);
                         if (afterIndex == -1) {
                             afterIndex = newArray.length - 1;
                         }
                     }
                     newArray.splice(afterIndex + 1, 0, value);
-                } else {
-                    // maybe throw here?
-                    console.warn("Could not find element with id " + change.move);
                 }
-            } else if (isPut(change)) {
+                else {
+                    // maybe throw here?
+                    console.warn('Could not find element with id ' + change.move);
+                }
+            }
+            else if (isPut(change)) {
                 // null = inserting at the beginning
                 // not found = inserting at the end
                 let afterIndex = -1;
                 if (change.afterId !== null) {
-                    afterIndex = newArray.findIndex((e) => getId(e) == change.afterId);
+                    afterIndex = newArray.findIndex(e => getId(e) == change.afterId);
                     if (afterIndex == -1) {
                         afterIndex = newArray.length - 1;
                     }
@@ -253,29 +273,34 @@ export class PatchableArray<
                     afterIndex = newArray.length - 1;
                 }
                 newArray.splice(afterIndex + 1, 0, change.put);
-            } else if (isDelete(change)) {
+            }
+            else if (isDelete(change)) {
                 // First do a delete of this value
-                const index = newArray.findIndex((e) => getId(e) == change.delete);
+                const index = newArray.findIndex(e => getId(e) == change.delete);
                 if (index != -1) {
                     newArray.splice(index, 1);
-                } else {
-                    console.warn("Could not find element with id " + change.delete);
                 }
-            } else if (isPatch(change)) {
+                else {
+                    console.warn('Could not find element with id ' + change.delete);
+                }
+            }
+            else if (isPatch(change)) {
                 // First do a delete of this value
-                const index = newArray.findIndex((e) => getId(e) == getId(change.patch));
+                const index = newArray.findIndex(e => getId(e) == getId(change.patch));
 
                 if (index != -1) {
                     // Patch!
                     const value = newArray[index];
                     if (isPatchable(value)) {
                         newArray.splice(index, 1, value.patch(change.patch as any));
-                    } else {
+                    }
+                    else {
                         newArray.splice(index, 1, change.patch as Put);
                     }
                 }
-            } else {
-                throw new Error("Invalid change: " + JSON.stringify(change));
+            }
+            else {
+                throw new Error('Invalid change: ' + JSON.stringify(change));
             }
         }
 
@@ -293,48 +318,51 @@ export class PatchableArray<
                             afterId: change.afterId,
                             move: encodeObject(change.move, context),
                         };
-                    } else if (isPut(change)) {
+                    }
+                    else if (isPut(change)) {
                         // First do a delete of this value
                         return {
                             afterId: change.afterId,
                             put: encodeObject(change.put, context),
                         };
-                    } else if (isDelete(change)) {
+                    }
+                    else if (isDelete(change)) {
                         return {
                             delete: change.delete,
                         };
-                    } else if (isPatch(change)) {
+                    }
+                    else if (isPatch(change)) {
                         // First do a delete of this value
                         return {
                             patch: encodeObject(change.patch, context),
                         };
                     }
-                }
-            )
-        }
+                },
+            ),
+        };
     }
 
     getPuts(): PutAfter<Id, Put>[] {
-        return this.changes.filter((change) => isPut(change)) as PutAfter<Id, Put>[];
+        return this.changes.filter(change => isPut(change)) as PutAfter<Id, Put>[];
     }
 
     getPatches(): Patch[] {
-        return this.changes.filter((change) => isPatch(change)).map((p: PatchItem<Patch>) => p.patch);
+        return this.changes.filter(change => isPatch(change)).map((p: PatchItem<Patch>) => p.patch);
     }
 
     getDeletes(): Id[] {
-        return this.changes.filter((change) => isDelete(change)).map((p: DeleteItem<Id>) => p.delete);
+        return this.changes.filter(change => isDelete(change)).map((p: DeleteItem<Id>) => p.delete);
     }
 
     getMoves(): MoveAfter<Id>[] {
-        return this.changes.filter((change) => isMove(change)) as MoveAfter<Id>[];
+        return this.changes.filter(change => isMove(change)) as MoveAfter<Id>[];
     }
 }
 
 export class PatchableArrayItemDecoder<
     Id extends string | number,
     Put extends (Identifiable<Id> & Encodeable & Patchable<Patch>) | Id,
-    Patch extends (Identifiable<Id> & Encodeable) | Put
+    Patch extends (Identifiable<Id> & Encodeable) | Put,
 > implements Decoder<Change<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;
@@ -345,32 +373,33 @@ export class PatchableArrayItemDecoder<
         this.patchDecoder = patchDecoder;
         this.idDecoder = idDecoder;
     }
+
     decode(data: Data): Change<Id, Put, Patch> {
-        const put = data.optionalField("put");
+        const put = data.optionalField('put');
         if (put !== undefined) {
             // throw decoding errors from putDecoder and idDecoder
             return {
                 put: put.decode(this.putDecoder),
-                afterId: data.undefinedField("afterId")?.nullable(this.idDecoder),
+                afterId: data.undefinedField('afterId')?.nullable(this.idDecoder),
             };
         }
 
-        const move = data.optionalField("move");
+        const move = data.optionalField('move');
         if (move !== undefined) {
             return {
                 move: move.decode(this.idDecoder),
-                afterId: data.field("afterId").nullable(this.idDecoder),
+                afterId: data.field('afterId').nullable(this.idDecoder),
             };
         }
 
-        const d = data.optionalField("delete");
+        const d = data.optionalField('delete');
         if (d !== undefined) {
             return {
                 delete: d.decode(this.idDecoder),
             };
         }
 
-        const patch = data.optionalField("patch");
+        const patch = data.optionalField('patch');
         if (patch !== undefined) {
             return {
                 patch: patch.decode(this.patchDecoder),
@@ -378,8 +407,8 @@ export class PatchableArrayItemDecoder<
         }
 
         throw new SimpleError({
-            code: "invalid_field",
-            message: "Expected put, move, patch or delete",
+            code: 'invalid_field',
+            message: 'Expected put, move, patch or delete',
             field: data.currentField,
         });
     }
@@ -388,7 +417,7 @@ export class PatchableArrayItemDecoder<
 export class PatchableArrayDecoder<
     Id extends string | number,
     Put extends (Identifiable<Id> & Encodeable & Patchable<Patch>) | Id,
-    Patch extends (Identifiable<Id> & Encodeable) | Put
+    Patch extends (Identifiable<Id> & Encodeable) | Put,
 > implements Decoder<PatchableArray<Id, Put, Patch>> {
     putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;
@@ -402,13 +431,13 @@ export class PatchableArrayDecoder<
 
     decode(data: Data): PatchableArray<Id, Put, Patch> {
         if (Array.isArray(data.value)) {
-            console.warn("Found legacy patchable array. Make sure to use the new patchable array encoding, as this will get removed and replaced with a PUT in future versions.")
+            console.warn('Found legacy patchable array. Make sure to use the new patchable array encoding, as this will get removed and replaced with a PUT in future versions.');
             // Legacy encode version
             // This will remain supported for a period
             // but is deprecated
             return new PatchableArray<Id, Put, Patch>(data.array(new PatchableArrayItemDecoder(this.putDecoder, this.patchDecoder, this.idDecoder)));
         }
-        const changes = data.field("changes").array(new PatchableArrayItemDecoder(this.putDecoder, this.patchDecoder, this.idDecoder))
+        const changes = data.field('changes').array(new PatchableArrayItemDecoder(this.putDecoder, this.patchDecoder, this.idDecoder));
         return new PatchableArray<Id, Put, Patch>(changes);
     }
 

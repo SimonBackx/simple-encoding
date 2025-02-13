@@ -1,15 +1,15 @@
-import { SimpleError } from "@simonbackx/simple-errors";
+import { SimpleError } from '@simonbackx/simple-errors';
 
-import { Data } from "../classes/Data.js";
-import { Decoder } from "../classes/Decoder.js";
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
 
 class IntegerDecoder implements Decoder<number> {
     decode(data: Data): number {
-        if (typeof data.value == "number" && Number.isSafeInteger(data.value)) {
+        if (typeof data.value === 'number' && Number.isSafeInteger(data.value)) {
             return data.value;
         }
 
-        if (typeof data.value == "string") {
+        if (typeof data.value === 'string') {
             const parsed = Number.parseInt(data.value);
             if (!isNaN(parsed)) {
                 return parsed;
@@ -17,7 +17,7 @@ class IntegerDecoder implements Decoder<number> {
         }
 
         throw new SimpleError({
-            code: "invalid_field",
+            code: 'invalid_field',
             message: `Expected an integer at ${data.currentField}`,
             field: data.currentField,
         });

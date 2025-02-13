@@ -1,8 +1,8 @@
-import { SimpleError } from "@simonbackx/simple-errors";
-import { Data } from "../classes/Data";
-import { Decoder } from "../classes/Decoder";
+import { SimpleError } from '@simonbackx/simple-errors';
+import { Data } from '../classes/Data';
+import { Decoder } from '../classes/Decoder';
 
-export class SymbolDecoder<T, E extends symbol> implements Decoder<T|E> {
+export class SymbolDecoder<T, E extends symbol> implements Decoder<T | E> {
     symbol: E;
     decoder: Decoder<T>;
 
@@ -19,7 +19,7 @@ export class SymbolDecoder<T, E extends symbol> implements Decoder<T|E> {
         this.key = k;
     }
 
-    decode(data: Data): T|E {
+    decode(data: Data): T | E {
         const field = data.optionalField('$symbol');
 
         if (!field) {

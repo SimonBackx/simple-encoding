@@ -1,16 +1,16 @@
-import { PatchableArray } from "../structs/PatchableArray.js";
-import { AutoEncoder, isAutoEncoder } from "./AutoEncoder.js";
-import { Encodeable } from "./Encodeable.js";
-import { EncodeContext } from "./EncodeContext.js";
-import { NonScalarIdentifiable } from "./Identifiable.js";
-import { Cloneable, cloneObject } from "./Cloneable.js";
+import { PatchableArray } from '../structs/PatchableArray.js';
+import { AutoEncoder, isAutoEncoder } from './AutoEncoder.js';
+import { Encodeable } from './Encodeable.js';
+import { EncodeContext } from './EncodeContext.js';
+import { NonScalarIdentifiable } from './Identifiable.js';
+import { Cloneable, cloneObject } from './Cloneable.js';
 
 export interface StrictPatch { }
 export interface Patchable<P> {
     patch(patch: P): this;
 }
 
-export type PatchType<T> = T extends Patchable<infer P> ? P : (T | undefined)
+export type PatchType<T> = T extends Patchable<infer P> ? P : (T | undefined);
 
 export function isPatchable<T>(object: T): object is T & Patchable<any> {
     if (!object) {
@@ -27,28 +27,28 @@ export function patchContainsChanges<B extends Encodeable & Patchable<B>, A exte
 export type ConvertArrayToPatchableArray<T> =
     T extends AutoEncoder ?
         T | AutoEncoderPatchType<T> | undefined // This is needed to help Typescript Understand to keep T instead of just generalizing to AutoEncoderPatchType<AutoEncoder>
-    : T extends PatchableArray<any, any, any>
-    ? T :
-    (T extends Array<infer P>
-        ? (P extends string
-        ? PatchableArray<string, string, string>
-        : P extends number
-        ? PatchableArray<number, number, number>
-        : P extends AutoEncoder
-        ? PatchableArrayAutoEncoder<P>
-        : T | undefined)
-        : (
-            T extends Map<infer T, infer P> ?
-                (/*Map<T, P> |*/ PatchMap<T, P|ConvertArrayToPatchableArray<P>|null>)
-            : PatchType<T> | undefined
-        ))
+        : T extends PatchableArray<any, any, any>
+            ? T :
+                (T extends Array<infer P>
+                    ? (P extends string
+                            ? PatchableArray<string, string, string>
+                            : P extends number
+                                ? PatchableArray<number, number, number>
+                                : P extends AutoEncoder
+                                    ? PatchableArrayAutoEncoder<P>
+                                    : T | undefined)
+                    : (
+                            T extends Map<infer T, infer P> ?
+                                    (/* Map<T, P> | */ PatchMap<T, P | ConvertArrayToPatchableArray<P> | null>)
+                                : PatchType<T> | undefined
+                        ))
     ;
 
 type NonMethodKeys<T> = {
     [K in keyof T]: T[K] extends Function ? never : K
-}[keyof T]
+}[keyof T];
 
-export type PartialWithoutMethods<Base> = Partial<Pick<Base, NonMethodKeys<Base>>>
+export type PartialWithoutMethods<Base> = Partial<Pick<Base, NonMethodKeys<Base>>>;
 
 type GetOptionalPropertiesOfHelper<Base> = {
     [Key in keyof Base]: Base[Key] extends string | number | Array<any> | Function | boolean | Record<string, any> ? never : Key;
@@ -58,9 +58,9 @@ type GetOptionalPropertiesOf<Base> = Exclude<GetOptionalPropertiesOfHelper<Base>
 type MakeOptionalRealOptionalHelper<Base> = {
     [Key in GetOptionalPropertiesOf<Base>]?: Base[Key];
 } &
-    {
-        [Key in Exclude<keyof Base, GetOptionalPropertiesOf<Base>>]: Base[Key];
-    };
+{
+    [Key in Exclude<keyof Base, GetOptionalPropertiesOf<Base>>]: Base[Key];
+};
 type MakeOptionalRealOptional<Base> = {
     [Key in keyof MakeOptionalRealOptionalHelper<Base>]: Base[Key];
 };
@@ -75,23 +75,22 @@ type MakeOptionalRealOptional<Base> = {
 export type AutoEncoderPatchType<T extends AutoEncoder> =
     AutoEncoder & (
         {
-            [P in Exclude<Exclude<keyof T, "id">, keyof AutoEncoder>]: T[P] extends Function ? never : ConvertArrayToPatchableArray<T[P]>;
+            [P in Exclude<Exclude<keyof T, 'id'>, keyof AutoEncoder>]: T[P] extends Function ? never : ConvertArrayToPatchableArray<T[P]>;
         } & (T extends NonScalarIdentifiable<infer Id> ? NonScalarIdentifiable<Id> : {})
     );
-
 
 /**
  * Helper type to fix TypeScript circular dependency by making a synonym for a patchable array for an autoencoder
  */
-export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends AutoEncoder & NonScalarIdentifiable<infer Id> ? 
-    (
-        PatchableArray<Id, P, AutoEncoderPatchType<P> & NonScalarIdentifiable<Id>> 
-    ) 
-: P[]
+export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends AutoEncoder & NonScalarIdentifiable<infer Id> ?
+        (
+            PatchableArray<Id, P, AutoEncoderPatchType<P> & NonScalarIdentifiable<Id>>
+        )
+    : P[];
 
 export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
-    _isPatch = true
-    _isPatchMap = true
+    _isPatch = true;
+    _isPatchMap = true;
 
     applyTo(obj: Map<any, any>) {
         if (isPatchMap(obj)) {
@@ -100,7 +99,7 @@ export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
 
             for (const [key, value] of this.entries()) {
                 if (value === null) {
-                    clone.set(key, null)
+                    clone.set(key, null);
                     continue;
                 }
 
@@ -109,22 +108,22 @@ export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
                 }
 
                 const original = obj.get(key);
-                
+
                 if (original === null) {
                     // Has been deleted higher up
                     if (isPatch(value)) {
                         continue;
                     }
                     clone.set(key, value);
-                    continue
+                    continue;
                 }
 
                 if (original === undefined) {
                     clone.set(key, value);
-                    continue
+                    continue;
                 }
 
-                clone.set(key, patchObject(original, value))
+                clone.set(key, patchObject(original, value));
             }
             return clone;
         }
@@ -140,7 +139,7 @@ export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
             if (value === undefined) {
                 continue;
             }
-            
+
             const original = obj.get(key);
             const patched = patchObject(original, value);
 
@@ -148,7 +147,7 @@ export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
                 // Don't copy it: this is an empty patch to an item that does not exist
                 continue;
             }
-            clone.set(key, patched)
+            clone.set(key, patched);
         }
         return clone;
     }
@@ -157,18 +156,18 @@ export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
         // Deep clone self
         const clone = new PatchMap<K, V>() as this;
         for (const [key, value] of this.entries()) {
-            clone.set(key, cloneObject(value as any))
+            clone.set(key, cloneObject(value as any));
         }
         return clone;
     }
 }
 
-export function isPatchMap(obj: unknown): obj is PatchMap<any, any>{
-    return (obj instanceof PatchMap)
+export function isPatchMap(obj: unknown): obj is PatchMap<any, any> {
+    return (obj instanceof PatchMap);
 }
 
-export function isPatchableArray(obj: unknown): obj is PatchableArray<any, any, any>{
-    return (obj instanceof PatchableArray)
+export function isPatchableArray(obj: unknown): obj is PatchableArray<any, any, any> {
+    return (obj instanceof PatchableArray);
 }
 
 export function isPatch(obj: unknown) {
@@ -201,31 +200,35 @@ export function patchObject(obj: unknown, patch: unknown): any {
     if (isPatchable(obj)) {
         if (patch == null) {
             return null;
-        } else {
+        }
+        else {
             if (isAutoEncoder(patch) && patch.isPut()) {
                 // Instance type could be different
                 return patch;
-            } else {
+            }
+            else {
                 return obj.patch(patch);
             }
         }
-
-    } else {
+    }
+    else {
         if (obj instanceof Map && isPatchMap(patch)) {
-            return patch.applyTo(obj)
-        } else if (Array.isArray(obj)) {
+            return patch.applyTo(obj);
+        }
+        else if (Array.isArray(obj)) {
             // Check if patch is a patchable array
             if (isPatchableArray(patch)) {
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                 return patch.applyTo(obj);
-            } else {
+            }
+            else {
                 // What happens when an array field is set?
                 // This can only happen when the autocoder is not identifieable, but
                 // technically also in other cases if typescript doesn't check types
                 // we just take over the new values and 'remove' all old elements
                 return patch;
             }
-        } else {
+        }
+        else {
             if ((obj === undefined || obj === null) && isPatchableArray(patch)) {
                 // Patch on optional array: ignore if empty patch, else fake empty array patch
                 if (patch.changes.length === 0) {
@@ -236,9 +239,10 @@ export function patchObject(obj: unknown, patch: unknown): any {
                     // Nothing changed, keep it undefined or null
                     return obj;
                 }
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
                 return patched;
-            } else if ((obj === undefined || obj === null) && isPatchMap(patch)) {
+            }
+            else if ((obj === undefined || obj === null) && isPatchMap(patch)) {
                 // Patch on optional array: ignore if empty patch, else fake empty array patch
                 if (patch.size === 0) {
                     return obj;
@@ -248,9 +252,10 @@ export function patchObject(obj: unknown, patch: unknown): any {
                     // Nothing changed, keep it undefined or null
                     return obj;
                 }
-                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+
                 return patched;
-            } else {
+            }
+            else {
                 return patch;
             }
         }

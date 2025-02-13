@@ -1,5 +1,5 @@
-import { AutoEncoder, Field, PatchableDecoder } from "../classes/AutoEncoder.js";
-import { Decoder } from "../classes/Decoder.js";
+import { AutoEncoder, Field, PatchableDecoder } from '../classes/AutoEncoder.js';
+import { Decoder } from '../classes/Decoder.js';
 
 export function field<T>(settings: {
     optional?: boolean;
@@ -28,7 +28,8 @@ export function field<T>(settings: {
         if (!target.constructor.fields) {
             target.constructor.fields = [];
             target.constructor.fields.createdFor = target.constructor;
-        } else {
+        }
+        else {
             if (target.constructor.fields.createdFor && target.constructor.fields.createdFor !== target.constructor) {
                 // need to clone instead of creating a new reference
                 target.constructor.fields = target.constructor.fields.slice(0);

@@ -1,5 +1,5 @@
-import { Data } from "../classes/Data.js";
-import { Decoder } from "../classes/Decoder.js";
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
 
 export class NullableDecoder<T> implements Decoder<T | null> {
     decoder: Decoder<T>;
@@ -21,6 +21,6 @@ export class NullableDecoder<T> implements Decoder<T | null> {
     }
 
     getDefaultValue(): T | null {
-        return null
+        return null;
     }
 }

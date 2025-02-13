@@ -1,7 +1,7 @@
-import { SimpleError } from "@simonbackx/simple-errors";
+import { SimpleError } from '@simonbackx/simple-errors';
 
-import { Data } from "../classes/Data.js";
-import { Decoder } from "../classes/Decoder.js";
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
 
 class EmailDecoderStatic implements Decoder<string> {
     decode(data: Data): string {
@@ -10,9 +10,9 @@ class EmailDecoderStatic implements Decoder<string> {
 
         if (!regex.test(str)) {
             throw new SimpleError({
-                code: "invalid_field",
-                message: "Received an invalid email address",
-                human: "Dit e-mailadres is ongeldig, kijk je het na?",
+                code: 'invalid_field',
+                message: 'Received an invalid email address',
+                human: 'Dit e-mailadres is ongeldig, kijk je het na?',
                 field: data.currentField,
             });
         }

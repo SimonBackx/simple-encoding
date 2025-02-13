@@ -3,7 +3,7 @@ export interface Cloneable {
 }
 
 export function isCloneable(object: any): object is Cloneable {
-    if (typeof object !== "object" || object === null) {
+    if (typeof object !== 'object' || object === null) {
         return false;
     }
     return !!object.clone;
@@ -21,29 +21,29 @@ export function cloneObject<T extends CloneableObject>(obj: T): T {
 
     if (Array.isArray(obj)) {
         return (obj).map((e) => {
-            return cloneObject(e)
+            return cloneObject(e);
         }) as (T & any[]);
     }
-    
+
     if (obj instanceof Map) {
         // Transform into a normal object to conform to MapDecoders expected format
-        const encodedObj = new Map() as Map<CloneableObject, CloneableObject>
+        const encodedObj = new Map() as Map<CloneableObject, CloneableObject>;
 
         for (const [key, value] of obj as Map<CloneableObject, CloneableObject>) {
-            const k = cloneObject(key)
-            encodedObj.set(k, cloneObject(value))
+            const k = cloneObject(key);
+            encodedObj.set(k, cloneObject(value));
         }
-        return encodedObj as Map<CloneableObject & keyof any, CloneableObject> & T
+        return encodedObj as Map<CloneableObject & keyof any, CloneableObject> & T;
     }
 
     if (obj instanceof Date) {
-        return new Date(obj) as T
+        return new Date(obj) as T;
     }
 
-    if (typeof obj === "object" && obj !== null) {
-        return Object.assign(Object.create(obj.constructor.prototype), obj)
+    if (typeof obj === 'object' && obj !== null) {
+        return Object.assign(Object.create(obj.constructor.prototype), obj);
     }
-    
+
     // Singular value
     return obj;
 }

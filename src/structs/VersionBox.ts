@@ -11,14 +11,14 @@ export class VersionBox<T extends EncodableObject> implements Encodeable {
     data: T;
 
     constructor(data: T) {
-        this.data = data
+        this.data = data;
     }
 
     encode(context: EncodeContext) {
         return {
             data: encodeObject(this.data, context),
-            version: context.version
-        }
+            version: context.version,
+        };
     }
 }
 
@@ -31,9 +31,9 @@ export class VersionBoxDecoder<T extends EncodableObject> implements Decoder<Ver
 
     decode(data: Data): VersionBox<T> {
         // Set the version of the decoding context of "data"
-        const context = data.field("data")
-        context.context.version = data.field("version").integer
+        const context = data.field('data');
+        context.context.version = data.field('version').integer;
 
-        return new VersionBox<T>(context.decode(this.decoder))
+        return new VersionBox<T>(context.decode(this.decoder));
     }
 }

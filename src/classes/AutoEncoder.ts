@@ -1,54 +1,54 @@
-import { SimpleError } from "@simonbackx/simple-errors";
-import { PatchableArray, PatchableArrayDecoder } from "../structs/PatchableArray.js";
-import { Cloneable, cloneObject } from "./Cloneable.js";
-import { Data } from "./Data.js";
-import { Decoder } from "./Decoder.js";
-import { Encodeable, encodeObject, PlainObject, sortObjectKeysForEncoding } from "./Encodeable.js";
-import { EncodeContext } from "./EncodeContext.js";
-import { getId, getOptionalId, hasId } from "./Identifiable.js";
-import { AutoEncoderPatchType,isPatchable, isPatchableArray, isPatchMap, PartialWithoutMethods, Patchable, PatchMap, patchObject } from "./Patchable.js";
+import { SimpleError } from '@simonbackx/simple-errors';
+import { PatchableArray, PatchableArrayDecoder } from '../structs/PatchableArray.js';
+import { Cloneable, cloneObject } from './Cloneable.js';
+import { Data } from './Data.js';
+import { Decoder } from './Decoder.js';
+import { Encodeable, encodeObject, PlainObject, sortObjectKeysForEncoding } from './Encodeable.js';
+import { EncodeContext } from './EncodeContext.js';
+import { getId, getOptionalId, hasId } from './Identifiable.js';
+import { AutoEncoderPatchType, isPatchable, isPatchableArray, isPatchMap, PartialWithoutMethods, Patchable, PatchMap, patchObject } from './Patchable.js';
 
-//export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
+// export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
 export type PatchableDecoder<T> = Decoder<T> & (
-        T extends AutoEncoder ? {} : 
-    (
-        T extends Patchable<infer P> ? 
-        { 
-            patchType: () => PatchableDecoder<P>
-            patchIdentifier: () => Decoder<string | number>  // when patchType is a custom decoder, we also need the decoder for the identifier
-        } : {}
-    )
-)
+        T extends AutoEncoder ? {} :
+                (
+                    T extends Patchable<infer P> ?
+                            {
+                                patchType: () => PatchableDecoder<P>;
+                                patchIdentifier: () => Decoder<string | number>; // when patchType is a custom decoder, we also need the decoder for the identifier
+                            } : {}
+                )
+);
 /**
  * Uses the meta data of AutoEncoder to check if something is a patch or a put
  */
 export class PatchOrPutDecoder<Put extends Patchable<Patch>, Patch> implements Decoder<Patch | Put> {
-    putDecoder:  Decoder<Put>;
+    putDecoder: Decoder<Put>;
     patchDecoder: Decoder<Patch>;
-    
+
     constructor(put: Decoder<Put>, patch: Decoder<Patch>) {
-        this.putDecoder = put
-        this.patchDecoder = patch
+        this.putDecoder = put;
+        this.patchDecoder = patch;
     }
 
     decode(data: Data): Put | Patch {
-        const isPatch = data.optionalField("_isPatch")
+        const isPatch = data.optionalField('_isPatch');
         if (isPatch?.boolean ?? false) {
-            return this.patchDecoder.decode(data)
+            return this.patchDecoder.decode(data);
         }
 
-        return this.putDecoder.decode(data)
+        return this.putDecoder.decode(data);
     }
 }
 
-export function deepSetArray(oldArr: any[], newArray: any[], options?: { keepMissing?: boolean}) {
+export function deepSetArray(oldArr: any[], newArray: any[], options?: { keepMissing?: boolean }) {
     if (oldArr === newArray) {
         // Same reference: nothing to do
         return;
     }
 
-    const oldArray = (oldArr as any[]).slice()
-    
+    const oldArray = (oldArr as any[]).slice();
+
     // Loop old array
     // Keep array reference
     // Delete deleted items
@@ -57,35 +57,37 @@ export function deepSetArray(oldArr: any[], newArray: any[], options?: { keepMis
     // Maintain new order
 
     // Clear out old array
-    oldArr.splice(0, oldArr.length)
+    oldArr.splice(0, oldArr.length);
 
     for (const newItem of newArray) {
         if (isAutoEncoder(newItem)) {
-            const oldItem = oldArray.find(i => getOptionalId(i) === getOptionalId(newItem))
+            const oldItem = oldArray.find(i => getOptionalId(i) === getOptionalId(newItem));
             if (oldItem && isAutoEncoder(oldItem)) {
-                oldItem.deepSet(newItem)
-                oldArr.push(oldItem)
-            } else {
-                oldArr.push(newItem)
+                oldItem.deepSet(newItem);
+                oldArr.push(oldItem);
             }
-        } else {
-            oldArr.push(newItem)
+            else {
+                oldArr.push(newItem);
+            }
+        }
+        else {
+            oldArr.push(newItem);
         }
     }
 
     if (options?.keepMissing) {
         // Readd old missing items
         for (const oldItem of oldArray) {
-            const found = oldArr.find(i => getOptionalId(i) === getOptionalId(oldItem))
+            const found = oldArr.find(i => getOptionalId(i) === getOptionalId(oldItem));
 
             if (!found) {
-                oldArr.push(oldItem)
+                oldArr.push(oldItem);
             }
         }
     }
 }
 
-export function coalesceUndefined<T>(...values: (T)[]): T|undefined {
+export function coalesceUndefined<T>(...values: (T)[]): T | undefined {
     // Return first non-undefined value
     for (const value of values) {
         if (value !== undefined) {
@@ -144,42 +146,44 @@ export class Field<T> {
         field.field = this.field;
 
         if (this.upgrade) {
-            const upg = this.upgrade
-            field.upgrade = (oldValue) => { 
+            const upg = this.upgrade;
+            field.upgrade = (oldValue) => {
                 if (oldValue !== undefined) {
-                    // Value is set, we need an upgrade 
-                    return upg(oldValue) 
-                } else {
+                    // Value is set, we need an upgrade
+                    return upg(oldValue);
+                }
+                else {
                     // No value is set, we don't need an upgrade
-                    return undefined
+                    return undefined;
                 }
             };
         }
 
         if (this.downgrade) {
-            const dwn = this.downgrade
-            field.downgrade = (newValue) => { 
+            const dwn = this.downgrade;
+            field.downgrade = (newValue) => {
                 if (newValue !== undefined) {
-                    // Value is set, we need an upgrade 
-                    return dwn(newValue) 
-                } else {
+                    // Value is set, we need an upgrade
+                    return dwn(newValue);
+                }
+                else {
                     // No value is set, we don't need an upgrade
-                    return undefined
+                    return undefined;
                 }
             };
         }
 
         if (this.upgradePatch) {
-            field.upgrade = this.upgradePatch
+            field.upgrade = this.upgradePatch;
         }
 
         if (this.downgradePatch) {
-            field.downgrade = this.downgradePatch
+            field.downgrade = this.downgradePatch;
         }
 
-        field.upgradePatch = this.upgradePatch
-        field.downgradePatch = this.downgradePatch
-        field.patchDefaultValue = this.patchDefaultValue
+        field.upgradePatch = this.upgradePatch;
+        field.downgradePatch = this.downgradePatch;
+        field.patchDefaultValue = this.patchDefaultValue;
 
         field.defaultValue = undefined; // do not copy default values. Patches never have default values, unless for patchable arrays
 
@@ -187,9 +191,9 @@ export class Field<T> {
 
         // Do we have a custom patch decoder? (this can be configured in the decoder)
         if (aDecoder.patchType) {
-            field.upgrade = this.upgradePatch
-            field.downgrade = this.downgradePatch
-            const patchDecoder = aDecoder.patchType()
+            field.upgrade = this.upgradePatch;
+            field.downgrade = this.downgradePatch;
+            const patchDecoder = aDecoder.patchType();
             field.decoder = new PatchOrPutDecoder(aDecoder, patchDecoder);
         }
 
@@ -197,27 +201,27 @@ export class Field<T> {
             // e.g. for patchable arrays we always set a default value
             field.defaultValue = () => {
                 return aDecoder.patchDefaultValue();
-            }
+            };
         }
 
         if (this.patchDefaultValue) {
-            field.defaultValue = this.patchDefaultValue; 
+            field.defaultValue = this.patchDefaultValue;
         }
 
         return field;
     }
 }
 
-type AutoEncoderConstructorNames<T> = { [K in keyof T]: T[K] extends Function | PatchableArray<any, any, any> ? never : K }[Exclude<keyof T, "latestVersion">];
+type AutoEncoderConstructorNames<T> = { [K in keyof T]: T[K] extends Function | PatchableArray<any, any, any> ? never : K }[Exclude<keyof T, 'latestVersion'>];
 export type AutoEncoderConstructor<T> = Pick<T, AutoEncoderConstructorNames<T>>;
 
 /**
  * Create patchable auto encoder.
  * We are not able to add types here, gets too complex. But we'll add a convenience method with typings
  */
-/*export function createPatchableAutoEncoder(constructor: typeof AutoEncoder): typeof AutoEncoder {
+/* export function createPatchableAutoEncoder(constructor: typeof AutoEncoder): typeof AutoEncoder {
     return constructor as any;
-}*/
+} */
 /*
 class Dog extends AutoEncoder {
     id: string;
@@ -230,8 +234,8 @@ const p = DogPatch.create({id: "test"})
 
 */
 
-export function isAutoEncoder(obj: unknown): obj is AutoEncoder{
-    return obj instanceof AutoEncoder || (typeof obj === "object" && obj !== null && (obj as any)._isAutoEncoder);
+export function isAutoEncoder(obj: unknown): obj is AutoEncoder {
+    return obj instanceof AutoEncoder || (typeof obj === 'object' && obj !== null && (obj as any)._isAutoEncoder);
 }
 
 export class AutoEncoder implements Encodeable, Cloneable {
@@ -241,8 +245,8 @@ export class AutoEncoder implements Encodeable, Cloneable {
     static fields: Field<any>[];
     private static cachedPatchType?: typeof AutoEncoder;
 
-    static isPatch = false
-    static skipDefaultValues = false
+    static isPatch = false;
+    static skipDefaultValues = false;
 
     /// Create a patch for this instance (of reuse if already created)
     static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new () => AutoEncoderPatchType<InstanceType<T>>) {
@@ -263,7 +267,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
             CreatedPatch.fields.push(field.getOptionalClone());
         }
 
-        CreatedPatch.isPatch = true
+        CreatedPatch.isPatch = true;
 
         return CreatedPatch as any;
     }
@@ -280,24 +284,24 @@ export class AutoEncoder implements Encodeable, Cloneable {
         }
     }
 
-    isPatch<T extends AutoEncoder>(this: T | AutoEncoderPatchType<T> ): this is AutoEncoderPatchType<T> {
-        return this.static.isPatch
+    isPatch<T extends AutoEncoder>(this: T | AutoEncoderPatchType<T>): this is AutoEncoderPatchType<T> {
+        return this.static.isPatch;
     }
 
-    isPut<T extends AutoEncoder>(this: T | AutoEncoderPatchType<T> ): this is T {
-        return !this.static.isPatch
+    isPut<T extends AutoEncoder>(this: T | AutoEncoderPatchType<T>): this is T {
+        return !this.static.isPatch;
     }
 
     static patch<T extends typeof AutoEncoder>(this: T, object: PartialWithoutMethods<AutoEncoderPatchType<InstanceType<T>>>): AutoEncoderPatchType<InstanceType<T>> {
-        return this.patchType().create(object)
+        return this.patchType().create(object);
     }
 
     patchOrPut<T extends AutoEncoder>(this: T, patch: AutoEncoderPatchType<T> | T) {
         if (patch.static.isPatch) {
-            this.set(this.patch(patch))
-            return
+            this.set(this.patch(patch));
+            return;
         }
-        this.set(patch as T)
+        this.set(patch as T);
     }
 
     /**
@@ -313,12 +317,12 @@ export class AutoEncoder implements Encodeable, Cloneable {
         return instance;
     }
 
-    patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>>|AutoEncoderPatchType<T>|T|PartialWithoutMethods<T>): this {
+    patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>> | AutoEncoderPatchType<T> | T | PartialWithoutMethods<T>): this {
         const instance = new this.static() as this;
         for (const field of this.static.latestFields) {
             const prop = field.property;
 
-            const patched = patchObject(this[prop], patch[prop])
+            const patched = patchObject(this[prop], patch[prop]);
             if (patched !== undefined) {
                 instance[prop] = patched;
             }
@@ -341,12 +345,12 @@ export class AutoEncoder implements Encodeable, Cloneable {
         this.fields.sort(compare);
     }
 
-    static _cachedLatestFields?: {fields: Field<any>[], totalFieldsCount: number} | null;
+    static _cachedLatestFields?: { fields: Field<any>[]; totalFieldsCount: number } | null;
     static _cachedFieldsForVersion?: Map<number, Field<any>[]>;
 
     static get latestFields(): Field<any>[] {
         // We need to clear if we detect taht the _cachedLatestFields is defined on a superclass, but not on this class itself
-        if (!Object.hasOwnProperty.call(this, "_cachedLatestFields") && this._cachedLatestFields) {
+        if (!Object.hasOwnProperty.call(this, '_cachedLatestFields') && this._cachedLatestFields) {
             this._cachedLatestFields = null; // Explicitly set to null to avoid confusion
         }
 
@@ -365,13 +369,13 @@ export class AutoEncoder implements Encodeable, Cloneable {
         // Sort fields for stable encodings
         fields.sort((a, b) => sortObjectKeysForEncoding(a.property, b.property));
 
-        this._cachedLatestFields = {fields, totalFieldsCount: this.fields.length};
+        this._cachedLatestFields = { fields, totalFieldsCount: this.fields.length };
         return fields;
     }
 
     static fieldsForVersion(version: number): Field<any>[] {
         // We need to clear if we detect taht the _cachedLatestFields is defined on a superclass, but not on this class itself
-        if (!Object.hasOwnProperty.call(this, "_cachedFieldsForVersion") && this._cachedFieldsForVersion) {
+        if (!Object.hasOwnProperty.call(this, '_cachedFieldsForVersion') && this._cachedFieldsForVersion) {
             this._cachedFieldsForVersion = new Map();
         }
 
@@ -416,7 +420,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
         const model = new this() as InstanceType<T>;
         for (const key in object) {
             // eslint-disable-next-line no-prototype-builtins
-            if (object.hasOwnProperty(key) && object[key] !== undefined && typeof object[key] !== "function") {
+            if (object.hasOwnProperty(key) && object[key] !== undefined && typeof object[key] !== 'function') {
                 // Also check this is an allowed field, else skip in favor of allowing downcasts without errors
                 if (this.doesPropertyExist(key)) {
                     model[key] = object[key] as any;
@@ -427,13 +431,13 @@ export class AutoEncoder implements Encodeable, Cloneable {
         for (const field of this.latestFields) {
             if (!field.optional) {
                 if (model[field.property] === undefined) {
-                    throw new Error("Expected required property " + field.property + " when creating " + this.name);
+                    throw new Error('Expected required property ' + field.property + ' when creating ' + this.name);
                 }
             }
 
             if (!field.nullable) {
                 if (model[field.property] === null) {
-                    throw new Error("Expected non null property " + field.property + " when creating " + this.name);
+                    throw new Error('Expected non null property ' + field.property + ' when creating ' + this.name);
                 }
             }
         }
@@ -443,9 +447,9 @@ export class AutoEncoder implements Encodeable, Cloneable {
     /**
      * Create a new one by providing the properties of the object
      */
-    set<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T>|T) {
+    set<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T> | T) {
         for (const key in object) {
-            if (object.hasOwnProperty(key) && typeof object[key] !== "function") {
+            if (object.hasOwnProperty(key) && typeof object[key] !== 'function') {
                 if (this.static.doesPropertyExist(key)) {
                     this[key] = object[key] as any;
                 }
@@ -457,25 +461,27 @@ export class AutoEncoder implements Encodeable, Cloneable {
      * Create a new one by providing the properties of the object.
      * Maintaining references to objects
      */
-    deepSet<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T>|T) {
+    deepSet<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T> | T) {
         if (object === this) {
             // Nothing to do (waste of resources)
             return;
         }
 
         for (const key in object) {
-            if (object.hasOwnProperty(key) && typeof object[key] !== "function") {
+            if (object.hasOwnProperty(key) && typeof object[key] !== 'function') {
                 if (this.static.doesPropertyExist(key)) {
                     if (object[key] === undefined) {
                         // ignore
                         continue;
                     }
 
-                    if (isAutoEncoder(this[key]) && object[key] !== null && typeof object[key] === "object") {
-                        this[key].deepSet(object[key])
-                    } else if (Array.isArray(this[key]) && Array.isArray(object[key])) {
-                        deepSetArray(this[key], object[key])
-                    } else {
+                    if (isAutoEncoder(this[key]) && object[key] !== null && typeof object[key] === 'object') {
+                        this[key].deepSet(object[key]);
+                    }
+                    else if (Array.isArray(this[key]) && Array.isArray(object[key])) {
+                        deepSetArray(this[key], object[key]);
+                    }
+                    else {
                         this[key] = object[key] as any;
                     }
                 }
@@ -493,11 +499,11 @@ export class AutoEncoder implements Encodeable, Cloneable {
                 context.references = new Map();
             }
 
-            let classReferences = context.references.get(this.static)
-            if (classReferences)  {
+            let classReferences = context.references.get(this.static);
+            if (classReferences) {
                 // Dramatically reduce size of encoding when lots of relations are returned with the same id
                 const id = getId(this);
-                const existing = classReferences.get(id)
+                const existing = classReferences.get(id);
 
                 // We already returned this same object
                 if (existing) {
@@ -505,32 +511,32 @@ export class AutoEncoder implements Encodeable, Cloneable {
                     if (existing === this) {
                         return {
                             _ref: id,
-                        }
-                    } else {
-                        const a = existing.encode({version: context.version})
-                        const b = this.encode({version: context.version})
+                        };
+                    }
+                    else {
+                        const a = existing.encode({ version: context.version });
+                        const b = this.encode({ version: context.version });
 
                         if (JSON.stringify(a) === JSON.stringify(b)) {
                             return {
                                 _ref: id,
-                            }
+                            };
                         }
-                        console.warn('Same id, but different objects in the encode result. This should not happen and reduces the ability to use references in encoded data.', id)
+                        console.warn('Same id, but different objects in the encode result. This should not happen and reduces the ability to use references in encoded data.', id);
                     }
-                } 
+                }
             }
 
             // Add self
             if (!classReferences) {
-                classReferences = new Map()
+                classReferences = new Map();
                 context.references.set(this.static, classReferences);
             }
-            const idField = this.static.latestFields.find(f => f.property === "id")
+            const idField = this.static.latestFields.find(f => f.property === 'id');
             if (idField) {
                 classReferences.set(getId(this), this);
             }
         }
-
 
         const object = {};
         const source = this.static.downgrade(context.version, this);
@@ -538,7 +544,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
         for (const field of this.static.fieldsForVersion(context.version)) {
             if (source[field.property] === undefined) {
                 if (!field.optional) {
-                    throw new Error("Value for property " + field.property + " is not set, but is required!");
+                    throw new Error('Value for property ' + field.property + ' is not set, but is required!');
                 }
                 continue;
             }
@@ -568,53 +574,54 @@ export class AutoEncoder implements Encodeable, Cloneable {
 
             if (field.decoder && field.decoder.encode) {
                 object[field.field] = field.decoder.encode(source[field.property], context);
-            } else {
+            }
+            else {
                 object[field.field] = encodeObject(source[field.property], context);
             }
         }
 
         // Add meta data
         if (this.static.isPatch) {
-            object["_isPatch"] = this.static.isPatch
+            object['_isPatch'] = this.static.isPatch;
         }
 
         return object;
     }
 
     static decode<T extends typeof AutoEncoder>(this: T, data: Data): InstanceType<T> {
-        const isRef = data.optionalField('_ref')
+        const isRef = data.optionalField('_ref');
         if (isRef) {
-            const idField = this.latestFields.find(f => f.property === "id")
+            const idField = this.latestFields.find(f => f.property === 'id');
 
             if (!idField) {
                 throw new SimpleError({
                     code: 'invalid_data',
                     message: 'No id field found in class ' + this.name,
-                    field: data.addToCurrentField('_ref')
-                })
+                    field: data.addToCurrentField('_ref'),
+                });
             }
 
-            const stringOrNumber = isRef.decode(idField.decoder) as string | number
-            const classReferences = data.context.references?.get(this)
+            const stringOrNumber = isRef.decode(idField.decoder) as string | number;
+            const classReferences = data.context.references?.get(this);
 
             if (!classReferences) {
                 throw new SimpleError({
                     code: 'invalid_reference',
                     message: 'Invalid usage of references: the _ref field can only be used when the same object is encoded earlier, but no reference found for ' + stringOrNumber,
-                    field: data.addToCurrentField('_ref')
-                })
+                    field: data.addToCurrentField('_ref'),
+                });
             }
 
-            const reference = classReferences.get(stringOrNumber)
+            const reference = classReferences.get(stringOrNumber);
             if (!reference) {
                 throw new SimpleError({
                     code: 'invalid_reference',
                     message: 'Reference not found with ID ' + stringOrNumber,
-                    field: data.addToCurrentField('_ref')
-                })
+                    field: data.addToCurrentField('_ref'),
+                });
             }
 
-            return reference as InstanceType<T>
+            return reference as InstanceType<T>;
         }
 
         const model = new this() as InstanceType<T>;
@@ -631,34 +638,40 @@ export class AutoEncoder implements Encodeable, Cloneable {
                 if (!fieldData && !field.optional && field.nullable) {
                     // Special case because we are not using the Nullable Decoder directly
                     model[field.property] = null;
-                } else if (!fieldData && !field.optional && field.decoder.getDefaultValue) {
+                }
+                else if (!fieldData && !field.optional && field.decoder.getDefaultValue) {
                     // Property has not been set. Set it to the default value of the decoder
                     model[field.property] = field.decoder.getDefaultValue();
-                } else if (field.optional) {
+                }
+                else if (field.optional) {
                     if (!this.isPatch) {
                         // Optional fields always have a dedicated default value set
                         if (field.nullable) {
                             // When null, set the property to null and don't default to default values
                             model[field.property] = coalesceUndefined(fieldData?.nullable(field.decoder), model[field.property], (field.decoder.getDefaultValue ? field.decoder.getDefaultValue() : undefined));
-                        } else {
+                        }
+                        else {
                             // When null, still set the default values
                             model[field.property] = data.optionalField(field.field)?.decode(field.decoder) ?? model[field.property] ?? (field.decoder.getDefaultValue ? field.decoder.getDefaultValue() : undefined) ?? undefined;
                         }
-                    } else {
+                    }
+                    else {
                         // Never use default values
                         // Do use the default value from the object itself (will be an empty patchabel array or map)
                         if (field.nullable) {
                             model[field.property] = coalesceUndefined(fieldData?.nullable(field.decoder), model[field.property]);
-                        } else {
+                        }
+                        else {
                             // When null, still set the default values
                             model[field.property] = data.optionalField(field.field)?.decode(field.decoder) ?? model[field.property] ?? undefined;
                         }
                     }
-                    
-                } else {
+                }
+                else {
                     if (field.nullable) {
                         model[field.property] = data.field(field.field).nullable(field.decoder);
-                    } else {
+                    }
+                    else {
                         model[field.property] = data.field(field.field).decode(field.decoder);
                     }
                 }
@@ -677,15 +690,15 @@ export class AutoEncoder implements Encodeable, Cloneable {
                 data.context.references = new Map();
             }
 
-            let classReferences = data.context.references.get(this)
+            let classReferences = data.context.references.get(this);
 
             if (!classReferences) {
-                classReferences = new Map()
+                classReferences = new Map();
                 data.context.references.set(this, classReferences);
             }
 
             if (classReferences && hasId(model)) {
-                classReferences.set(getId(model), model)
+                classReferences.set(getId(model), model);
             }
         }
 
@@ -712,7 +725,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
      */
     static downgrade(to: number, object: any): object {
         let didCopy = false;
-        const older = {}
+        const older = {};
 
         for (let i = this.fields.length - 1; i >= 0; i--) {
             const field = this.fields[i];

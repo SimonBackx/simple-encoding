@@ -1,6 +1,6 @@
-import { Data } from "./Data.js";
-import { PlainObject } from "./Encodeable.js";
-import { EncodeContext } from "./EncodeContext.js";
+import { Data } from './Data.js';
+import { PlainObject } from './Encodeable.js';
+import { EncodeContext } from './EncodeContext.js';
 
 export interface Decoder<T> {
     decode(data: Data): T;
@@ -8,7 +8,7 @@ export interface Decoder<T> {
     /**
      * Optionanl custom encoder
      */
-    encode?(data: T, context: EncodeContext): PlainObject
+    encode?(data: T, context: EncodeContext): PlainObject;
 
     /**
      * Optiona
@@ -16,4 +16,3 @@ export interface Decoder<T> {
     getDefaultValue?(): T;
     isDefaultValue?(value: unknown): boolean;
 }
-

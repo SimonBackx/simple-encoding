@@ -1,53 +1,51 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { Decoder } from './Decoder.js';
 
-import { field } from "../decorators/Field.js";
-import { ArrayDecoder } from "../structs/ArrayDecoder.js";
+import { field } from '../decorators/Field.js';
+import { ArrayDecoder } from '../structs/ArrayDecoder.js';
 import { EnumDecoder } from '../structs/EnumDecoder.js';
-import IntegerDecoder from "../structs/IntegerDecoder.js";
+import IntegerDecoder from '../structs/IntegerDecoder.js';
 import { PatchableArray } from '../structs/PatchableArray.js';
-import StringDecoder from "../structs/StringDecoder.js";
-import { AutoEncoder } from "./AutoEncoder.js";
+import StringDecoder from '../structs/StringDecoder.js';
+import { AutoEncoder } from './AutoEncoder.js';
 import { Data } from './Data.js';
 import { Encodeable } from './Encodeable.js';
 import { EncodeContext } from './EncodeContext.js';
-import { ObjectData } from "./ObjectData.js";
+import { ObjectData } from './ObjectData.js';
 import { PartialWithoutMethods, PatchableArrayAutoEncoder, PatchType } from './Patchable.js';
 
 enum PaymentMethod {
-    PointOfSale = "PointOfSale",
-    CreditCard = "CreditCard",
-    Bancontact = "Bancontact",
-    Payconiq = "Payconiq",
-    IDeal = "IDeal",
-    ApplePay = "ApplePay"
+    PointOfSale = 'PointOfSale',
+    CreditCard = 'CreditCard',
+    Bancontact = 'Bancontact',
+    Payconiq = 'Payconiq',
+    IDeal = 'IDeal',
+    ApplePay = 'ApplePay',
 }
 
 class NotPatchable implements Encodeable {
-    id = ""
+    id = '';
     constructor(id: string) {
-        this.id = id
+        this.id = id;
     }
 
     encode(encode: EncodeContext) {
         return {
-            id: this.id
-        }
+            id: this.id,
+        };
     }
 
     static decode(data: Data) {
-        return new NotPatchable(data.field("id").string)
+        return new NotPatchable(data.field('id').string);
     }
 }
 
-
 class Dog extends AutoEncoder {
     @field({ decoder: IntegerDecoder })
-    @field({ decoder: StringDecoder, version: 2, upgrade: (int: number) => "DOG" + int, downgrade: (str: string) => parseInt(str.substring(3)) })
-    id = "";
+    @field({ decoder: StringDecoder, version: 2, upgrade: (int: number) => 'DOG' + int, downgrade: (str: string) => parseInt(str.substring(3)) })
+    id = '';
 
     @field({ decoder: StringDecoder })
-    @field({ decoder: StringDecoder, version: 2, field: "breed", defaultValue: () => "" })
+    @field({ decoder: StringDecoder, version: 2, field: 'breed', defaultValue: () => '' })
     name: string | undefined;
 
     @field({ decoder: new ArrayDecoder(StringDecoder) })
@@ -63,26 +61,26 @@ class Dog extends AutoEncoder {
     test?: PaymentMethod;
 
     testMethod2(test: string) {
-        return test
+        return test;
     }
 
     toString() {
-        return this.name || ""
+        return this.name || '';
     }
 
     get something() {
-        return "test"
+        return 'test';
     }
 }
 const DogPatch = Dog.patchType();
 
 class Dog2 extends AutoEncoder {
     @field({ decoder: IntegerDecoder })
-    @field({ decoder: StringDecoder, version: 2, upgrade: (int: number) => "DOG" + int, downgrade: (str: string) => parseInt(str.substring(3)) })
-    id = "";
+    @field({ decoder: StringDecoder, version: 2, upgrade: (int: number) => 'DOG' + int, downgrade: (str: string) => parseInt(str.substring(3)) })
+    id = '';
 
     @field({ decoder: StringDecoder })
-    @field({ decoder: StringDecoder, version: 2, field: "breed", defaultValue: () => "" })
+    @field({ decoder: StringDecoder, version: 2, field: 'breed', defaultValue: () => '' })
     name: string | undefined;
 
     @field({ decoder: new ArrayDecoder(StringDecoder) })
@@ -101,58 +99,57 @@ class Dog2 extends AutoEncoder {
     test?: PaymentMethod;
 
     testMethod(test: string) {
-        return test
+        return test;
     }
 
     toString() {
-        return this.name || ""
+        return this.name || '';
     }
 
     get something() {
-        return "test"
+        return 'test';
     }
 }
 const Dog2Patch = Dog2.patchType();
 
-
 type Testing = PartialWithoutMethods<Dog>;
 
-describe("AutoEncoder", () => {
-    test("encoding works and version support", () => {
-        const aFriend = Dog.create({ id: "DOG2", name: "friend", friendIds: [], friends: [] });
-        const dog = Dog.create({ id: "DOG1", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [aFriend] });
+describe('AutoEncoder', () => {
+    test('encoding works and version support', () => {
+        const aFriend = Dog.create({ id: 'DOG2', name: 'friend', friendIds: [], friends: [] });
+        const dog = Dog.create({ id: 'DOG1', name: 'dog', friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'], friends: [aFriend] });
         expect(dog.encode({ version: 1 })).toEqual({
             id: 1,
-            name: "dog",
-            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ id: 2, name: "friend", friendIds: [], friends: [] }],
+            name: 'dog',
+            friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
+            friends: [{ id: 2, name: 'friend', friendIds: [], friends: [] }],
         });
         expect(dog.encode({ version: 2 })).toEqual({
-            id: "DOG1",
-            breed: "dog",
-            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ id: "DOG2", breed: "friend", friendIds: [], friends: [] }],
+            id: 'DOG1',
+            breed: 'dog',
+            friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
+            friends: [{ id: 'DOG2', breed: 'friend', friendIds: [], friends: [] }],
         });
     });
 
-    test("decoding and version support", () => {
+    test('decoding and version support', () => {
         const data1 = new ObjectData(
             {
                 id: 1,
-                name: "version test",
-                friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-                friends: [{ id: 2, name: "friend", friendIds: [], friends: [] }],
+                name: 'version test',
+                friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
+                friends: [{ id: 2, name: 'friend', friendIds: [], friends: [] }],
             },
-            { version: 1 }
+            { version: 1 },
         );
         const data2 = new ObjectData(
             {
-                id: "DOG1",
-                breed: "version test",
-                friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-                friends: [{ id: "DOG2", breed: "friend", friendIds: [], friends: [] }],
+                id: 'DOG1',
+                breed: 'version test',
+                friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
+                friends: [{ id: 'DOG2', breed: 'friend', friendIds: [], friends: [] }],
             },
-            { version: 2 }
+            { version: 2 },
         );
 
         const dog1 = Dog.decode(data1);
@@ -161,14 +158,14 @@ describe("AutoEncoder", () => {
         expect(dog1).toEqual(dog2);
         expect(dog1).toEqual({
             _isAutoEncoder: true,
-            id: "DOG1",
-            name: "version test",
-            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
-            friends: [{ 
+            id: 'DOG1',
+            name: 'version test',
+            friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
+            friends: [{
                 _isAutoEncoder: true,
-                id: "DOG2", 
-                name: "friend", 
-                friendIds: [], 
+                id: 'DOG2',
+                name: 'friend',
+                friendIds: [],
                 friends: [],
                 bestFriend: undefined,
                 test: undefined,
@@ -178,72 +175,72 @@ describe("AutoEncoder", () => {
         });
     });
 
-    test("if ids are not automatically converted correctly", () => {
-        expect(parseInt("DOG1")).toBeNaN();
+    test('if ids are not automatically converted correctly', () => {
+        expect(parseInt('DOG1')).toBeNaN();
     });
 
-    test("Automatic patch instances", () => {
-        const existingFriendBestFriend = Dog.create({ id: "DOG4", name: "best friend", friendIds: [], friends: [] });
+    test('Automatic patch instances', () => {
+        const existingFriendBestFriend = Dog.create({ id: 'DOG4', name: 'best friend', friendIds: [], friends: [] });
 
         const existingFriend = Dog.create({
-            id: "DOG3",
-            name: "existing friend",
-            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
+            id: 'DOG3',
+            name: 'existing friend',
+            friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
             friends: [],
             // this is needed to test if existing relations are left unchanged on patches
             bestFriend: existingFriendBestFriend,
         });
-        const friendDog = Dog.create({ id: "DOG2", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
-        const friendDogChanged = Dog.create({ id: "DOG2", name: "My best friend", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
+        const friendDog = Dog.create({ id: 'DOG2', name: 'dog', friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'], friends: [] });
+        const friendDogChanged = Dog.create({ id: 'DOG2', name: 'My best friend', friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'], friends: [] });
         const existingFriendChanged = Dog.create({
-            id: "DOG3",
-            name: "My not good friend",
-            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
+            id: 'DOG3',
+            name: 'My not good friend',
+            friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
             friends: [],
             bestFriend: existingFriendBestFriend,
         });
 
-        const dog = Dog.create({ id: "DOG1", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [existingFriend] });
+        const dog = Dog.create({ id: 'DOG1', name: 'dog', friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'], friends: [existingFriend] });
 
-        const shouldCompile = DogPatch.create({ id: "DOG1" });
-        let patchDog = DogPatch.create({ id: "DOG1", name: "Change name" });
+        const shouldCompile = DogPatch.create({ id: 'DOG1' });
+        let patchDog = DogPatch.create({ id: 'DOG1', name: 'Change name' });
 
         patchDog = shouldCompile.patch(patchDog);
-        shouldCompile.patch({})
+        shouldCompile.patch({});
 
-        patchDog.friendIds.addDelete("84sdg95");
-        patchDog.friendIds.addPut("test", "sdgsdg");
+        patchDog.friendIds.addDelete('84sdg95');
+        patchDog.friendIds.addPut('test', 'sdgsdg');
         patchDog.friends.addPut(friendDog, null);
 
-        const friendPatch = DogPatch.create({ id: "DOG2", name: "My best friend" });
+        const friendPatch = DogPatch.create({ id: 'DOG2', name: 'My best friend' });
         patchDog.friends.addPatch(friendPatch);
 
-        const friendPatchExist = DogPatch.create({ id: "DOG3", name: "My not good friend" });
+        const friendPatchExist = DogPatch.create({ id: 'DOG3', name: 'My not good friend' });
 
         patchDog.friends.addPatch(friendPatchExist);
 
         const patched = dog.patch(patchDog);
 
         expect(patched).toEqual(
-            Dog.create({ id: "DOG1", name: "Change name", friendIds: ["sdgsdg", "test", "sdg95sdg26s"], friends: [friendDogChanged, existingFriendChanged] })
+            Dog.create({ id: 'DOG1', name: 'Change name', friendIds: ['sdgsdg', 'test', 'sdg95sdg26s'], friends: [friendDogChanged, existingFriendChanged] }),
         );
 
         // Test if patchable items are encodeable
         expect(patchDog.encode({ version: 2 })).toEqual({
             _isPatch: true,
-            id: "DOG1",
-            breed: "Change name",
+            id: 'DOG1',
+            breed: 'Change name',
             friendIds: {
                 _isPatch: true,
                 changes: [
                     {
-                        delete: "84sdg95",
+                        delete: '84sdg95',
                     },
                     {
-                        put: "test",
-                        afterId: "sdgsdg",
+                        put: 'test',
+                        afterId: 'sdgsdg',
                     },
-                ]
+                ],
             },
             friends: {
                 _isPatch: true,
@@ -256,25 +253,25 @@ describe("AutoEncoder", () => {
                         patch: friendPatchExist.encode({ version: 2 }),
                     },
                 ],
-            }
+            },
         });
 
         // Test if patchable items are encodeable
         expect(patchDog.encode({ version: 1 })).toEqual({
             _isPatch: true,
             id: 1,
-            name: "Change name",
+            name: 'Change name',
             friendIds: {
                 _isPatch: true,
-                    changes: [
+                changes: [
                     {
-                        delete: "84sdg95",
+                        delete: '84sdg95',
                     },
                     {
-                        put: "test",
-                        afterId: "sdgsdg",
+                        put: 'test',
+                        afterId: 'sdgsdg',
                     },
-                ]
+                ],
             },
             friends: {
                 _isPatch: true,
@@ -287,7 +284,7 @@ describe("AutoEncoder", () => {
                         patch: friendPatchExist.encode({ version: 1 }),
                     },
                 ],
-            }
+            },
         });
 
         // Test if patchable items are decodeable
@@ -295,67 +292,67 @@ describe("AutoEncoder", () => {
         expect(DogPatch.decode(new ObjectData(patchDog.encode({ version: 2 }), { version: 2 }))).toEqual(patchDog);
     });
 
-    test("Patchable array", () => {
-        const arr: PatchableArrayAutoEncoder<Dog> = new PatchableArray()
-        const friendDog = Dog.create({ id: "DOG2", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
-        arr.addPut(friendDog, "3")
+    test('Patchable array', () => {
+        const arr: PatchableArrayAutoEncoder<Dog> = new PatchableArray();
+        const friendDog = Dog.create({ id: 'DOG2', name: 'dog', friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'], friends: [] });
+        arr.addPut(friendDog, '3');
 
-        const clean: Dog[] = []
-        expect(arr.applyTo(clean)).toEqual([friendDog])
+        const clean: Dog[] = [];
+        expect(arr.applyTo(clean)).toEqual([friendDog]);
     });
 
-    test("Patchable array 2", () => {
-        const arr: PatchableArrayAutoEncoder<Dog2> = new PatchableArray()
-        const friendDog = Dog2.create({ id: "DOG2", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
-        arr.addPut(friendDog, "DOG3")
+    test('Patchable array 2', () => {
+        const arr: PatchableArrayAutoEncoder<Dog2> = new PatchableArray();
+        const friendDog = Dog2.create({ id: 'DOG2', name: 'dog', friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'], friends: [] });
+        arr.addPut(friendDog, 'DOG3');
 
-        const clean: Dog2[] = []
-        expect(arr.applyTo(clean)).toEqual([friendDog])
+        const clean: Dog2[] = [];
+        expect(arr.applyTo(clean)).toEqual([friendDog]);
     });
 
-    test("Patch array fields by setting them", () => {
-        const friendDog = Dog.create({ id: "DOG2", name: "dog", friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"], friends: [] });
-        const patch = DogPatch.create({ friendIds: ["force-set"] as any })
-        expect(friendDog.patch(patch).friendIds).toEqual(["force-set"])
+    test('Patch array fields by setting them', () => {
+        const friendDog = Dog.create({ id: 'DOG2', name: 'dog', friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'], friends: [] });
+        const patch = DogPatch.create({ friendIds: ['force-set'] as any });
+        expect(friendDog.patch(patch).friendIds).toEqual(['force-set']);
 
-        const test = Dog2.create({ id: "DOG2", name: "dog", notPatchableFriends: [new NotPatchable("test"), new NotPatchable("test2")], friends: [] });
-        const patch2 = Dog2Patch.create({ notPatchableFriends: [new NotPatchable("hallo!")] })
-        expect(test.patch(patch2).notPatchableFriends).toEqual([new NotPatchable("hallo!")])
+        const test = Dog2.create({ id: 'DOG2', name: 'dog', notPatchableFriends: [new NotPatchable('test'), new NotPatchable('test2')], friends: [] });
+        const patch2 = Dog2Patch.create({ notPatchableFriends: [new NotPatchable('hallo!')] });
+        expect(test.patch(patch2).notPatchableFriends).toEqual([new NotPatchable('hallo!')]);
     });
 
-    test("Patch or put properties", () => {
-        const existingFriendBestFriend = Dog.create({ id: "DOG4", name: "best friend", friendIds: [], friends: [] });
+    test('Patch or put properties', () => {
+        const existingFriendBestFriend = Dog.create({ id: 'DOG4', name: 'best friend', friendIds: [], friends: [] });
 
         const existingFriend = Dog.create({
-            id: "DOG3",
-            name: "existing friend",
-            friendIds: ["sdgsdg", "84sdg95", "sdg95sdg26s"],
+            id: 'DOG3',
+            name: 'existing friend',
+            friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
             friends: [],
             // this is needed to test if existing relations are left unchanged on patches
             bestFriend: existingFriendBestFriend,
         });
 
         // Check if we can do a normal patch
-        const patchDog = Dog.patch({ bestFriend: Dog.patch({ name: "Best friend 2" }) })
+        const patchDog = Dog.patch({ bestFriend: Dog.patch({ name: 'Best friend 2' }) });
         const patchedDog = existingFriend.patch(patchDog);
-        const patchedDog3 = existingFriend.patch({ name: "test" });
+        const patchedDog3 = existingFriend.patch({ name: 'test' });
 
-        expect(patchedDog.bestFriend!.name).toEqual("Best friend 2")
-        expect(patchedDog.bestFriend!.id).toEqual("DOG4")
+        expect(patchedDog.bestFriend!.name).toEqual('Best friend 2');
+        expect(patchedDog.bestFriend!.id).toEqual('DOG4');
 
         // Check if we can do a put
-        const patchDog2 = Dog.patch({ bestFriend: Dog.create({ id: "DOG5", name: "Better best friend", friendIds: [], friends: [
-             Dog.create({ id: "DOG6", name: "Another friend", friendIds: [], friends: [] })
-        ] }) })
+        const patchDog2 = Dog.patch({ bestFriend: Dog.create({ id: 'DOG5', name: 'Better best friend', friendIds: [], friends: [
+            Dog.create({ id: 'DOG6', name: 'Another friend', friendIds: [], friends: [] }),
+        ] }) });
         const patchedDog2 = existingFriend.patch(patchDog2);
 
-        expect(patchedDog2.bestFriend!.name).toEqual("Better best friend")
-        expect(patchedDog2.bestFriend!.id).toEqual("DOG5")
+        expect(patchedDog2.bestFriend!.name).toEqual('Better best friend');
+        expect(patchedDog2.bestFriend!.id).toEqual('DOG5');
 
         // Try exactly the same by encdoing the patch and applying it again
-        const encoded = patchDog2.encode({ version: 2 })
-        const decoded = new ObjectData(encoded, { version: 2}).decode(DogPatch as Decoder<PatchType<Dog>>)
+        const encoded = patchDog2.encode({ version: 2 });
+        const decoded = new ObjectData(encoded, { version: 2 }).decode(DogPatch as Decoder<PatchType<Dog>>);
         const patchedDog2b = existingFriend.patch(decoded);
-        expect(patchedDog2b).toEqual(patchedDog2)
+        expect(patchedDog2b).toEqual(patchedDog2);
     });
 });

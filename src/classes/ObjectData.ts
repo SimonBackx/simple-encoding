@@ -1,15 +1,15 @@
-import { SimpleError } from "@simonbackx/simple-errors";
+import { SimpleError } from '@simonbackx/simple-errors';
 
-import { ArrayDecoder } from "../structs/ArrayDecoder.js";
-import BooleanDecoder from "../structs/BooleanDecoder.js";
-import { EnumDecoder } from "../structs/EnumDecoder.js";
-import IntegerDecoder from "../structs/IntegerDecoder.js";
-import { NullableDecoder } from "../structs/NullableDecoder.js";
-import NumberDecoder from "../structs/NumberDecoder.js";
-import StringDecoder from "../structs/StringDecoder.js";
-import { Data } from "./Data.js";
-import { Decoder } from "./Decoder.js";
-import { EncodeContext } from "./EncodeContext.js";
+import { ArrayDecoder } from '../structs/ArrayDecoder.js';
+import BooleanDecoder from '../structs/BooleanDecoder.js';
+import { EnumDecoder } from '../structs/EnumDecoder.js';
+import IntegerDecoder from '../structs/IntegerDecoder.js';
+import { NullableDecoder } from '../structs/NullableDecoder.js';
+import NumberDecoder from '../structs/NumberDecoder.js';
+import StringDecoder from '../structs/StringDecoder.js';
+import { Data } from './Data.js';
+import { Decoder } from './Decoder.js';
+import { EncodeContext } from './EncodeContext.js';
 
 /// Implementation of Data that reads an already existing tree of data.
 export class ObjectData implements Data {
@@ -17,17 +17,17 @@ export class ObjectData implements Data {
     currentField: string;
     context: EncodeContext;
 
-    constructor(data: any, context: EncodeContext, currentField = "") {
+    constructor(data: any, context: EncodeContext, currentField = '') {
         this.data = data;
         this.currentField = currentField;
         this.context = context;
     }
 
     addToCurrentField(field: string | number): string {
-        if (this.currentField == "") {
-            return field + "";
+        if (this.currentField == '') {
+            return field + '';
         }
-        return this.currentField + "." + field;
+        return this.currentField + '.' + field;
     }
 
     get value(): any {
@@ -53,8 +53,8 @@ export class ObjectData implements Data {
     equals<T>(value: T): T {
         if (this.data !== value) {
             throw new SimpleError({
-                code: "invalid_field",
-                message: "Expected " + value,
+                code: 'invalid_field',
+                message: 'Expected ' + value,
                 field: this.currentField,
             });
         }
@@ -69,14 +69,14 @@ export class ObjectData implements Data {
         if (Array.isArray(this.value)) {
             if (!Number.isSafeInteger(number)) {
                 throw new SimpleError({
-                    code: "invalid_index",
+                    code: 'invalid_index',
                     message: `Invalid index`,
                     field: this.currentField,
                 });
             }
             if (this.data[number] !== undefined) {
                 throw new SimpleError({
-                    code: "invalid_field",
+                    code: 'invalid_field',
                     message: `Expected value at ${this.addToCurrentField(number)}`,
                     field: this.addToCurrentField(number),
                 });
@@ -84,7 +84,7 @@ export class ObjectData implements Data {
             return new ObjectData(this.data[number], this.context, this.addToCurrentField(number));
         }
         throw new SimpleError({
-            code: "invalid_field",
+            code: 'invalid_field',
             message: `Expected an array at ${this.currentField}`,
             field: this.currentField,
         });
@@ -116,7 +116,7 @@ export class ObjectData implements Data {
             return new ObjectData(this.data[field], this.context, this.addToCurrentField(field));
         }
         throw new SimpleError({
-            code: "missing_field",
+            code: 'missing_field',
             message: `Field ${field} is expected at ${this.currentField}`,
             field: this.currentField,
         });
@@ -140,9 +140,9 @@ export class ObjectData implements Data {
 
     clone(set: { data: any; context: EncodeContext; field: string }): ObjectData {
         return new ObjectData(
-            set.data, 
-            set.context, 
-            set.field
+            set.data,
+            set.context,
+            set.field,
         );
     }
 }

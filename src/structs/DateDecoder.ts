@@ -1,6 +1,6 @@
-import { Data } from "../classes/Data.js";
-import { Decoder } from "../classes/Decoder.js";
-import { EncodeContext } from "../classes/EncodeContext.js";
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
+import { EncodeContext } from '../classes/EncodeContext.js';
 
 class DateDecoder implements Decoder<Date> {
     decode(data: Data): Date {

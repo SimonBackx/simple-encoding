@@ -1,10 +1,10 @@
 module.exports = {
-    preset: "ts-jest",
-    roots: ["<rootDir>"],
-    testEnvironment: "node",
+    preset: 'ts-jest',
+    roots: ['<rootDir>'],
+    testEnvironment: 'node',
     moduleDirectories: [
-        "node_modules",
+        'node_modules',
     ],
-    modulePathIgnorePatterns: ["dist"]
-    //verbose: true,
+    modulePathIgnorePatterns: ['dist'],
+    // verbose: true,
 };

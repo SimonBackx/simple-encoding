@@ -1,7 +1,7 @@
-import { SimpleError } from "@simonbackx/simple-errors";
+import { SimpleError } from '@simonbackx/simple-errors';
 
-import { Data } from "../classes/Data.js";
-import { Decoder } from "../classes/Decoder.js";
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
 
 class BooleanDecoder implements Decoder<boolean> {
     decode(data: Data): boolean {
@@ -9,11 +9,11 @@ class BooleanDecoder implements Decoder<boolean> {
             return data.value;
         }
 
-        if (data.value === "true") {
+        if (data.value === 'true') {
             return true;
         }
 
-        if (data.value === "false") {
+        if (data.value === 'false') {
             return false;
         }
 
@@ -26,7 +26,7 @@ class BooleanDecoder implements Decoder<boolean> {
         }
 
         throw new SimpleError({
-            code: "invalid_field",
+            code: 'invalid_field',
             message: `Expected a boolean at ${data.currentField}`,
             field: data.currentField,
         });

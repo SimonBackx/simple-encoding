@@ -187,6 +187,42 @@ export function isPatch(obj: unknown) {
     return false;
 }
 
+export function isEmptyPatch(patch: unknown) {
+    if (patch === undefined) {
+        return true;
+    }
+
+    if (patch === null) {
+        return false;
+    }
+
+    if (Array.isArray(patch)) {
+        // Can override array
+        return false;
+    }
+
+    if (isPatchableArray(patch)) {
+        return patch.changes.length === 0;
+    }
+
+    if (isPatchMap(patch)) {
+        return patch.size === 0;
+    }
+
+    if (patch instanceof Map) {
+        return false;
+    }
+
+    if (typeof patch === 'object') {
+        if (Object.keys(patch).length === 0) {
+            return true;
+        }
+        return false;
+    }
+
+    return false;
+}
+
 /**
  * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
  */

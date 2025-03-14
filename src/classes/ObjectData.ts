@@ -85,7 +85,7 @@ export class ObjectData implements Data {
         }
         throw new SimpleError({
             code: 'invalid_field',
-            message: `Expected an array at ${this.currentField}`,
+            message: `Expected an array${this.currentField ? ' at ' + this.currentField : ''}`,
             field: this.currentField,
         });
     }
@@ -117,7 +117,7 @@ export class ObjectData implements Data {
         }
         throw new SimpleError({
             code: 'missing_field',
-            message: `Field ${field} is expected at ${this.currentField}`,
+            message: `Field ${field} is expected${this.currentField ? ' at ' + this.currentField : ''}`,
             field: this.currentField,
         });
     }

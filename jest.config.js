@@ -6,5 +6,18 @@ module.exports = {
         'node_modules',
     ],
     modulePathIgnorePatterns: ['dist'],
-    // verbose: true,
+    transform: {
+        '\\.ts?$': [
+            'ts-jest',
+            {
+                useESM: true,
+            },
+        ],
+    },
+    moduleNameMapper: {
+        '(.+)\\.js': '$1',
+    },
+    extensionsToTreatAsEsm: [
+        '.ts',
+    ],
 };

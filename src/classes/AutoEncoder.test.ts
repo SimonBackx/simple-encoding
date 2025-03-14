@@ -11,7 +11,7 @@ import { Data } from './Data.js';
 import { Encodeable } from './Encodeable.js';
 import { EncodeContext } from './EncodeContext.js';
 import { ObjectData } from './ObjectData.js';
-import { PartialWithoutMethods, PatchableArrayAutoEncoder, PatchType } from './Patchable.js';
+import { AutoEncoderPatchType, PartialWithoutMethods, PatchableArrayAutoEncoder, PatchType } from './Patchable.js';
 
 enum PaymentMethod {
     PointOfSale = 'PointOfSale',
@@ -354,5 +354,622 @@ describe('AutoEncoder', () => {
         const decoded = new ObjectData(encoded, { version: 2 }).decode(DogPatch as Decoder<PatchType<Dog>>);
         const patchedDog2b = existingFriend.patch(decoded);
         expect(patchedDog2b).toEqual(patchedDog2);
+    });
+
+    describe('Default and nullable properties', () => {
+        beforeAll(() => {
+            AutoEncoder.skipDefaultValues = true;
+        });
+
+        test('A nullable property is not encoded', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, nullable: true })
+                prop: string | null;
+            }
+
+            const base = Foo.create({});
+            expect(base.prop).toBeNull();
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({});
+            expect(encoded).not.toHaveProperty('prop');
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toBeNull();
+        });
+
+        test('An empty string is not encoded', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                prop: string;
+            }
+
+            const base = Foo.create({});
+            expect(base.prop).toEqual('');
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({});
+            expect(encoded).not.toHaveProperty('prop');
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual('');
+        });
+
+        test('An empty string is encoded if it is nullable', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, nullable: true })
+                prop: string | null;
+            }
+
+            const base = Foo.create({});
+            expect(base.prop).toEqual(null);
+
+            // Set to an empty string
+            base.prop = '';
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                prop: '',
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual('');
+        });
+
+        test('An empty array is not encoded if it is not nullable', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder) })
+                prop: string[];
+            }
+
+            const base = Foo.create({});
+            expect(base.prop).toEqual([]);
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({});
+            expect(encoded).not.toHaveProperty('prop');
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual([]);
+        });
+
+        test('A non empty array is encoded', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder) })
+                prop: string[];
+            }
+
+            const base = Foo.create({
+                prop: ['test'],
+            });
+
+            expect(base.prop).toEqual(['test']);
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                prop: ['test'],
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(['test']);
+        });
+
+        test('An empty array is encoded if it is nullable', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder), nullable: true })
+                prop: string[] | null;
+            }
+
+            const base = Foo.create({});
+            expect(base.prop).toEqual(null);
+
+            // Set to an empty array
+            base.prop = [];
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                prop: [],
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual([]);
+        });
+
+        test('A nullable array that is null, is not encoded', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder), nullable: true })
+                prop: string[] | null;
+            }
+
+            const base = Foo.create({});
+            expect(base.prop).toEqual(null);
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({});
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(null);
+        });
+
+        test('An optional nullable string is undefined by default', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, nullable: true, optional: true })
+                prop?: string | null;
+            }
+
+            const base = Foo.create({});
+            expect(base.prop).toEqual(undefined);
+
+            // Check key exists
+            expect(base).toHaveProperty('prop');
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({});
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(undefined);
+
+            // Check key exists
+            expect(decoded).toHaveProperty('prop');
+        });
+
+        test('An optional nullable string encodes null values', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, nullable: true, optional: true })
+                prop?: string | null;
+            }
+
+            const base = Foo.create({
+                prop: null,
+            });
+            expect(base.prop).toEqual(null);
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                prop: null,
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(null);
+        });
+
+        test('An optional nullable string encodes empty string values', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, nullable: true, optional: true })
+                prop?: string | null;
+            }
+
+            const base = Foo.create({
+                prop: '',
+            });
+            expect(base.prop).toEqual('');
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                prop: '',
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual('');
+        });
+
+        test('An optional nullable array is undefined by default', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder), nullable: true, optional: true })
+                prop?: string[] | null;
+            }
+
+            const base = Foo.create({});
+            expect(base.prop).toEqual(undefined);
+            // Check key exists
+            expect(base).toHaveProperty('prop');
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({});
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(undefined);
+            // Check key exists
+            expect(decoded).toHaveProperty('prop');
+        });
+
+        test('An optional nullable array encodes null values', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder), nullable: true, optional: true })
+                prop?: string[] | null;
+            }
+
+            const base = Foo.create({
+                prop: null,
+            });
+            expect(base.prop).toEqual(null);
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                prop: null,
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(null);
+        });
+
+        test('An optional nullable array encodes empty array values', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder), nullable: true, optional: true })
+                prop?: string[] | null;
+            }
+
+            const base = Foo.create({
+                prop: [],
+            });
+            expect(base.prop).toEqual([]);
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                prop: [],
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual([]);
+        });
+
+        test('An empty patchable array is not encoded', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder) })
+                prop: string[];
+            }
+            const FooPatch = Foo.patchType();
+
+            const base = FooPatch.create({});
+            expect(base.prop).toEqual(new PatchableArray());
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                _isPatch: true,
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(FooPatch as Decoder<AutoEncoderPatchType<Foo>>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(new PatchableArray());
+        });
+
+        test('A nullable empty patchable array is not encoded', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder), nullable: true })
+                prop: string[] | null;
+            }
+            const FooPatch = Foo.patchType();
+
+            const base = FooPatch.create({});
+            expect(base.prop).toEqual(new PatchableArray());
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                _isPatch: true,
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(FooPatch as Decoder<AutoEncoderPatchType<Foo>>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(new PatchableArray());
+        });
+
+        test('A nullable patchable array can be set to null', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder), nullable: true })
+                prop: string[] | null;
+            }
+            const FooPatch = Foo.patchType();
+
+            const base = FooPatch.create({});
+            expect(base.prop).toEqual(new PatchableArray());
+            base.prop = null;
+            expect(base.prop).toEqual(null);
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                _isPatch: true,
+                prop: null,
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(FooPatch as Decoder<AutoEncoderPatchType<Foo>>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(null);
+        });
+
+        test('A patchable array can be set to an array', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder) })
+                prop: string[];
+            }
+            const FooPatch = Foo.patchType();
+
+            const base = FooPatch.create({});
+            expect(base.prop).toEqual(new PatchableArray());
+            (base.prop as any) = ['test'];
+            expect(base.prop).toEqual(['test']);
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                _isPatch: true,
+                prop: ['test'],
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(FooPatch as Decoder<AutoEncoderPatchType<Foo>>);
+            expect(decoded).toEqual(base);
+            expect(decoded.prop).toEqual(['test']);
+        });
+
+        test('A patchable array is encoded', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: new ArrayDecoder(StringDecoder) })
+                prop: string[];
+            }
+            const FooPatch = Foo.patchType();
+
+            const base = FooPatch.create({});
+            expect(base.prop).toEqual(new PatchableArray());
+            base.prop.addPut('test');
+
+            // Encode
+            const encoded = base.encode({ version: 1 });
+            expect(encoded).toEqual({
+                _isPatch: true,
+                prop: {
+                    _isPatch: true,
+                    changes: [
+                        {
+                            put: 'test',
+                        },
+                    ],
+                },
+            });
+
+            // Decode
+            const decoded = new ObjectData(encoded, { version: 1 }).decode(FooPatch as Decoder<AutoEncoderPatchType<Foo>>);
+            expect(decoded).toEqual(base);
+            const d = new PatchableArray();
+            d.addPut('test');
+            expect(decoded.prop).toEqual(d);
+        });
+
+        test('You cannot decode null for a non-nullable property', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                prop: string;
+            }
+
+            expect(() => {
+                new ObjectData({
+                    prop: null,
+                }, { version: 1 }).decode(Foo as Decoder<Foo>);
+            }).toThrow('Expected a string at prop');
+        });
+
+        test('You cannot decode a number for a string property', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                prop: string;
+            }
+
+            expect(() => {
+                new ObjectData({
+                    prop: 123,
+                }, { version: 1 }).decode(Foo as Decoder<Foo>);
+            }).toThrow('Expected a string at prop');
+        });
+
+        test('You cannot decode a boolean for a string property', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                prop: string;
+            }
+
+            expect(() => {
+                new ObjectData({
+                    prop: false,
+                }, { version: 1 }).decode(Foo as Decoder<Foo>);
+            }).toThrow('Expected a string at prop');
+        });
+
+        test('You cannot decode an array for a string property', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                prop: string;
+            }
+
+            expect(() => {
+                new ObjectData({
+                    prop: [],
+                }, { version: 1 }).decode(Foo as Decoder<Foo>);
+            }).toThrow('Expected a string at prop');
+        });
+
+        test('You cannot decode an object for a string property', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                prop: string;
+            }
+
+            expect(() => {
+                new ObjectData({
+                    prop: {},
+                }, { version: 1 }).decode(Foo as Decoder<Foo>);
+            }).toThrow('Expected a string at prop');
+        });
+
+        test('You can decode undefined for a string property and it will use the default instead', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                prop: string;
+            }
+
+            const decoded = new ObjectData({}, { version: 1 }).decode(Foo as Decoder<Foo>);
+
+            expect(decoded).toEqual(Foo.create({ prop: '' }));
+        });
+
+        test('You can decode undefined for a string property and it will use the defaultValue instead', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                prop: string = 'Hello world';
+            }
+
+            const decoded = new ObjectData({}, { version: 1 }).decode(Foo as Decoder<Foo>);
+
+            expect(decoded).toEqual(Foo.create({ prop: 'Hello world' }));
+        });
+
+        test('You can decode undefined for a number property and it will use the defaultValue instead', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: IntegerDecoder })
+                prop = 123;
+            }
+
+            const decoded = new ObjectData({}, { version: 1 }).decode(Foo as Decoder<Foo>);
+
+            expect(decoded).toEqual(Foo.create({ prop: 123 }));
+        });
+
+        test('An id property is always required, even with default value', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, defaultValue: () => 'generated' })
+                id: string;
+            }
+
+            expect(() => {
+                new ObjectData({}, { version: 1 }).decode(Foo as Decoder<Foo>);
+            }).toThrow('Field id is expected');
+        });
+
+        test('An optional id property is not required and defaults to it defaults value', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, defaultValue: () => 'generated', optional: true })
+                id?: string;
+            }
+
+            const decoded = new ObjectData({}, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded.id).toEqual('generated');
+        });
+
+        test('An optional id property is not required', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, optional: true })
+                id?: string;
+            }
+
+            const decoded = new ObjectData({}, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded.id).toEqual(undefined);
+        });
+
+        test('An optional nullable id property is not required', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, optional: true, nullable: true })
+                id?: string | null;
+            }
+
+            const decoded = new ObjectData({}, { version: 1 }).decode(Foo as Decoder<Foo>);
+            expect(decoded.id).toEqual(undefined);
+        });
+
+        test('You cannot decode undefined for a number property without default value', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: IntegerDecoder })
+                prop: number;
+            }
+
+            expect(() => {
+                new ObjectData({
+                    prop: undefined,
+                }, { version: 1 }).decode(Foo as Decoder<Foo>);
+            }).toThrow('Field prop is expected');
+        });
+
+        test('Class default values are cleared when creating a patch', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: IntegerDecoder })
+                prop = 123;
+            }
+
+            const foo = Foo.create({});
+            expect(foo.prop).toEqual(123);
+
+            const patch = Foo.patch({});
+            expect(patch.prop).toEqual(undefined);
+            expect(patch).toHaveProperty('prop');
+        });
+
+        test('Field default values are cleared when creating a patch', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: IntegerDecoder, defaultValue: () => 123 })
+                prop: number;
+            }
+
+            const foo = Foo.create({});
+            expect(foo.prop).toEqual(123);
+
+            const patch = Foo.patch({});
+            expect(patch.prop).toEqual(undefined);
+            expect(patch).toHaveProperty('prop');
+        });
+
+        test('You can decode undefined for a nullable property and it will use null instead', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, nullable: true })
+                prop: string | null;
+            }
+
+            const decoded = new ObjectData({
+                prop: undefined,
+            }, { version: 1 }).decode(Foo as Decoder<Foo>);
+
+            expect(decoded).toEqual(Foo.create({ prop: null }));
+        });
     });
 });

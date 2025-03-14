@@ -1,5 +1,4 @@
-import { AutoEncoder, Field, PatchableDecoder } from '../classes/AutoEncoder.js';
-import { Decoder } from '../classes/Decoder.js';
+import { Field, PatchableDecoder } from '../classes/AutoEncoder.js';
 
 export function field<T>(settings: {
     optional?: boolean;

@@ -4,6 +4,7 @@ import { Encodeable } from './Encodeable.js';
 import { EncodeContext } from './EncodeContext.js';
 import { NonScalarIdentifiable } from './Identifiable.js';
 import { Cloneable, cloneObject } from './Cloneable.js';
+import { SimpleError } from '@simonbackx/simple-errors';
 
 export interface StrictPatch { }
 export interface Patchable<P> {
@@ -234,66 +235,76 @@ export function patchObject(obj: unknown, patch: unknown): any {
     }
 
     if (isPatchable(obj)) {
-        if (patch == null) {
+        if (patch === null) {
             return null;
         }
-        else {
-            if (isAutoEncoder(patch) && patch.isPut()) {
-                // Instance type could be different
-                return patch;
-            }
-            else {
-                return obj.patch(patch);
-            }
+        if (isAutoEncoder(patch) && patch.isPut()) {
+            // Instance type could be different
+            return patch;
         }
+        return obj.patch(patch);
     }
-    else {
-        if (obj instanceof Map && isPatchMap(patch)) {
+
+    if (obj instanceof Map && isPatchMap(patch)) {
+        return patch.applyTo(obj);
+    }
+
+    if (Array.isArray(obj)) {
+        // Check if patch is a patchable array
+        if (isPatchableArray(patch)) {
             return patch.applyTo(obj);
         }
-        else if (Array.isArray(obj)) {
-            // Check if patch is a patchable array
-            if (isPatchableArray(patch)) {
-                return patch.applyTo(obj);
-            }
-            else {
-                // What happens when an array field is set?
-                // This can only happen when the autocoder is not identifieable, but
-                // technically also in other cases if typescript doesn't check types
-                // we just take over the new values and 'remove' all old elements
-                return patch;
-            }
-        }
-        else {
-            if ((obj === undefined || obj === null) && isPatchableArray(patch)) {
-                // Patch on optional array: ignore if empty patch, else fake empty array patch
-                if (patch.changes.length === 0) {
-                    return obj;
-                }
-                const patched = patch.applyTo([]);
-                if (patched.length === 0) {
-                    // Nothing changed, keep it undefined or null
-                    return obj;
-                }
-
-                return patched;
-            }
-            else if ((obj === undefined || obj === null) && isPatchMap(patch)) {
-                // Patch on optional array: ignore if empty patch, else fake empty array patch
-                if (patch.size === 0) {
-                    return obj;
-                }
-                const patched = patch.applyTo(new Map());
-                if (patched.size === 0) {
-                    // Nothing changed, keep it undefined or null
-                    return obj;
-                }
-
-                return patched;
-            }
-            else {
-                return patch;
-            }
-        }
+        // What happens when an array field is set?
+        // This can only happen when the autocoder is not identifieable, but
+        // technically also in other cases if typescript doesn't check types
+        // we just take over the new values and 'remove' all old elements
+        return patch;
     }
+
+    if ((obj === undefined || obj === null) && isPatchableArray(patch)) {
+        // Patch on optional array: ignore if empty patch, else fake empty array patch
+        if (patch.changes.length === 0) {
+            return obj;
+        }
+        const patched = patch.applyTo([]);
+        if (patched.length === 0) {
+            // Nothing changed, keep it undefined or null
+            return obj;
+        }
+
+        return patched;
+    }
+
+    if ((obj === undefined || obj === null) && isPatchMap(patch)) {
+        // Patch on optional array: ignore if empty patch, else fake empty array patch
+        if (patch.size === 0) {
+            return obj;
+        }
+        const patched = patch.applyTo(new Map());
+        if (patched.size === 0) {
+            // Nothing changed, keep it undefined or null
+            return obj;
+        }
+
+        return patched;
+    }
+
+    if ((obj === undefined || obj === null) && isAutoEncoder(patch) && patch.isPatch()) {
+        // Throw an error
+        // You cannot patch null or undefined with a patchable object
+        throw new SimpleError({
+            code: 'cannot_patch_null',
+            message: 'You are sending a patch object to patch an object or property that is null or undefined. You can only send a full object (a put) to replace it in this case.',
+        });
+    }
+
+    if (patch === null) {
+        return null;
+    }
+
+    // Not allowed for now
+    throw new SimpleError({
+        code: 'cannot_patch_non_patchable',
+        message: 'You are trying to patch a non-patchable object. Only patchable objects, patchable arrays and patch maps are supported for patching.',
+    });
 }

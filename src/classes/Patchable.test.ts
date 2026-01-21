@@ -179,6 +179,32 @@ describe('Patchable', () => {
         expect(result.friend?.id).toBeUndefined();
     });
 
+    test('[Regression] Patching an object with a nullable array should keep it unaffected', () => {
+        class Dog extends AutoEncoder {
+            @field({ decoder: StringDecoder })
+            id = '';
+
+            @field({ decoder: StringDecoder })
+            name: string = '';
+
+            @field({ decoder: new ArrayDecoder(StringDecoder), nullable: true })
+            friendIds: string[] | null = null;
+        }
+
+        const myDog = Dog.create({
+            name: 'Fido',
+        });
+
+        expect(myDog.friendIds).toEqual(null);
+
+        const p = Dog.patch({
+            name: 'Frido',
+        });
+        const updated = myDog.patch(p);
+
+        expect(updated.friendIds).toEqual(null);
+    });
+
     test('Patching a patch with patchable array should keep patchable array and not transform into array', () => {
         class Dog extends AutoEncoder {
             @field({ decoder: StringDecoder })

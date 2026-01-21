@@ -234,6 +234,35 @@ export function patchObject(obj: unknown, patch: unknown, defaultValue?: any | n
         return obj;
     }
 
+    if ((obj === undefined || obj === null) && isPatchableArray(patch)) {
+        // Patch on optional array: ignore if empty patch, else fake empty array patch
+        if (patch.changes.length === 0) {
+            return obj;
+        }
+        const patched = patch.applyTo([]);
+        if (patched.length === 0) {
+            // Nothing changed, keep it undefined or null
+            return obj;
+        }
+
+        return patched;
+    }
+
+    if ((obj === undefined || obj === null) && isPatchMap(patch)) {
+        // Patch on optional array: ignore if empty patch, else fake empty array patch
+        if (patch.size === 0) {
+            return obj;
+        }
+        const patched = patch.applyTo(new Map());
+        if (patched.size === 0) {
+            // Nothing changed, keep it undefined or null
+            return obj;
+        }
+
+        return patched;
+    }
+
+    // Only default if not a patchable array or patchable map
     if (obj === undefined || obj === null) {
         if (defaultValue !== undefined && defaultValue !== null) {
             obj = defaultValue;
@@ -267,34 +296,6 @@ export function patchObject(obj: unknown, patch: unknown, defaultValue?: any | n
         // technically also in other cases if typescript doesn't check types
         // we just take over the new values and 'remove' all old elements
         return patch;
-    }
-
-    if ((obj === undefined || obj === null) && isPatchableArray(patch)) {
-        // Patch on optional array: ignore if empty patch, else fake empty array patch
-        if (patch.changes.length === 0) {
-            return obj;
-        }
-        const patched = patch.applyTo([]);
-        if (patched.length === 0) {
-            // Nothing changed, keep it undefined or null
-            return obj;
-        }
-
-        return patched;
-    }
-
-    if ((obj === undefined || obj === null) && isPatchMap(patch)) {
-        // Patch on optional array: ignore if empty patch, else fake empty array patch
-        if (patch.size === 0) {
-            return obj;
-        }
-        const patched = patch.applyTo(new Map());
-        if (patched.size === 0) {
-            // Nothing changed, keep it undefined or null
-            return obj;
-        }
-
-        return patched;
     }
 
     // Note: only when null, if undefined we allow

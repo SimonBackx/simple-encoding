@@ -588,10 +588,13 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
-"@simonbackx/simple-errors@^1.4.0":
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/@simonbackx/simple-errors/-/simple-errors-1.4.0.tgz#a3c223835df34d641ebc628ea6e09f7929c742b4"
-  integrity sha512-mdZ7pVnsyl3jBPAYGXcjnsi4mCqPAhj6OjQqvtKaBp28AikuCETLXn4AAfaa0woSoyAslGStcIuoq8Se8U2YpQ==
+"@simonbackx/simple-encoding@file:.":
+  version "2.22.0"
+
+"@simonbackx/simple-errors@^1.5.0":
+  version "1.5.0"
+  resolved "https://registry.yarnpkg.com/@simonbackx/simple-errors/-/simple-errors-1.5.0.tgz#0490057a58da30fc43786f263041a6bd2308cb0b"
+  integrity sha512-UnMU3DQlO0sEGnCld9ASP9YTsTOJ5qvo6ZwyrlVEnsrGMsgaDk5TwONU7Q9kuXYykPMwen7LQPFv41xTF1+eQw==
 
 "@sinonjs/commons@^1.7.0":
   version "1.8.0"
@@ -4008,10 +4011,10 @@ typescript-eslint@^8.7.0:
     "@typescript-eslint/parser" "8.24.0"
     "@typescript-eslint/utils" "8.24.0"
 
-typescript@^5.4.5:
-  version "5.4.5"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.4.5.tgz#42ccef2c571fdbd0f6718b1d1f5e6e5ef006f611"
-  integrity sha512-vcI4UpRgg81oIRUFwR0WSIHKt11nJ7SAVlYNIu+QpqeyXP+gpQJy/Z4+F0aGxSE4MqwjyXvW/TzgkLAx2AGHwQ==
+typescript@^5.9.3:
+  version "5.9.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.9.3.tgz#5b4f59e15310ab17a216f5d6cf53ee476ede670f"
+  integrity sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==
 
 union-value@^1.0.0:
   version "1.0.1"

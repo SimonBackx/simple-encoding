@@ -18,7 +18,8 @@
         "build-cjs": "tsc -p . --declaration",
         "build-esm": "tsc -p esm --declaration && mv esm/dist/index.js esm/dist/index.mjs",
         "lint": "eslint",
-        "test": "jest"
+        "test": "jest",
+        "postinstall": "rm -rf node_modules/@simonbackx/simple-encoding"
     },
     "files": [
         "dist",
@@ -39,7 +40,7 @@
         "jest": "^26.6.3",
         "ts-jest": "^26.5.6",
         "tslib": "^2.8.1",
-        "typescript": "^5.4.5",
+        "typescript": "^5.9.3",
         "uuid": "^9.0.0"
     }
 }

@@ -40,7 +40,7 @@ export class PatchOrPutDecoder<Put extends Patchable<Patch>, Patch> implements D
         return this.putDecoder.decode(data);
     }
 
-    getDefaultValue(): Patch | Put {
+    getDefaultValue(): Patch | Put | undefined {
         return this.patchDecoder.getDefaultValue ? this.patchDecoder.getDefaultValue() : (undefined as any);
     }
 }
@@ -283,7 +283,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
      *
      * Override if you want to set custom default values or disable this behavior.
      */
-    static getDefaultValue() {
+    static getDefaultValue<T extends typeof AutoEncoder>(this: T): InstanceType<T> | undefined {
         try {
             const def = this.create({});
             if (hasId(def)) {

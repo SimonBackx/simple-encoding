@@ -8,7 +8,7 @@ import { NullableDecoder } from '../structs/NullableDecoder.js';
 import NumberDecoder from '../structs/NumberDecoder.js';
 import StringDecoder from '../structs/StringDecoder.js';
 import { Data } from './Data.js';
-import { Decoder } from './Decoder.js';
+import { DecodedType, Decoder } from './Decoder.js';
 import { EncodeContext } from './EncodeContext.js';
 
 /// Implementation of Data that reads an already existing tree of data.
@@ -126,7 +126,7 @@ export class ObjectData implements Data {
         return new ArrayDecoder(decoder).decode(this);
     }
 
-    decode<T>(decoder: Decoder<T>): T {
+    decode<D extends Decoder<any>>(decoder: D): DecodedType<D> {
         return decoder.decode(this);
     }
 

@@ -349,8 +349,10 @@ export class AutoEncoder implements Encodeable, Cloneable {
 
             instance[prop] = patchObject(
                 this[prop],
-                patch[prop],
-                instance[prop] === undefined || instance[prop] === null ? (field.decoder.getDefaultValue ? field.decoder.getDefaultValue() : instance[prop]) : instance[prop],
+                patch[prop], {
+                    defaultValue: instance[prop] === undefined || instance[prop] === null ? (field.decoder.getDefaultValue ? field.decoder.getDefaultValue() : instance[prop]) : instance[prop],
+                    allowAutoDefaultValue: false,
+                },
             );
         }
 

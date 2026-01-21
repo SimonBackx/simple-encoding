@@ -124,7 +124,7 @@ export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
                     continue;
                 }
 
-                clone.set(key, patchObject(original, value));
+                clone.set(key, patchObject(original, value, { allowAutoDefaultValue: true }));
             }
             return clone;
         }
@@ -142,7 +142,7 @@ export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
             }
 
             const original = obj.get(key);
-            const patched = patchObject(original, value);
+            const patched = patchObject(original, value, { allowAutoDefaultValue: true });
 
             if (original === undefined && patched === undefined) {
                 // Don't copy it: this is an empty patch to an item that does not exist
@@ -227,7 +227,7 @@ export function isEmptyPatch(patch: unknown) {
 /**
  * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
  */
-export function patchObject(obj: unknown, patch: unknown, defaultValue?: any | null): any {
+export function patchObject(obj: unknown, patch: unknown, options?: { defaultValue?: any | null; allowAutoDefaultValue?: boolean }): any {
     if (patch === undefined) {
         // When a property is set to undefined, we always ignore it, always. You can never set something to undefined.
         // Use null instead.
@@ -264,8 +264,8 @@ export function patchObject(obj: unknown, patch: unknown, defaultValue?: any | n
 
     // Only default if not a patchable array or patchable map
     if (obj === undefined || obj === null) {
-        if (defaultValue !== undefined && defaultValue !== null) {
-            obj = defaultValue;
+        if (options !== undefined && options.defaultValue !== undefined && options.defaultValue !== null) {
+            obj = options.defaultValue;
         }
     }
 
@@ -301,7 +301,7 @@ export function patchObject(obj: unknown, patch: unknown, defaultValue?: any | n
     // Note: only when null, if undefined we allow
     if ((obj === undefined || obj === null) && isAutoEncoder(patch) && patch.isPatch()) {
         // Check if we have a default where we can start.
-        if (patch.static.putType) {
+        if (options?.allowAutoDefaultValue && patch.static.putType) {
             const def = (patch.static.putType).getDefaultValue();
             if (def) {
                 return def.patch(patch);

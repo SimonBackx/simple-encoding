@@ -227,21 +227,29 @@ export function isEmptyPatch(patch: unknown) {
 /**
  * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
  */
-export function patchObject(obj: unknown, patch: unknown): any {
+export function patchObject(obj: unknown, patch: unknown, defaultValue?: any | null): any {
     if (patch === undefined) {
         // When a property is set to undefined, we always ignore it, always. You can never set something to undefined.
         // Use null instead.
         return obj;
     }
 
+    if (obj === undefined || obj === null) {
+        if (defaultValue !== undefined && defaultValue !== null) {
+            obj = defaultValue;
+        }
+    }
+
+    if (isAutoEncoder(patch) && patch.isPut()) {
+        // Instance type could be different
+        return patch;
+    }
+
     if (isPatchable(obj)) {
         if (patch === null) {
             return null;
         }
-        if (isAutoEncoder(patch) && patch.isPut()) {
-            // Instance type could be different
-            return patch;
-        }
+
         return obj.patch(patch);
     }
 
@@ -289,22 +297,23 @@ export function patchObject(obj: unknown, patch: unknown): any {
         return patched;
     }
 
+    // Note: only when null, if undefined we allow
     if ((obj === undefined || obj === null) && isAutoEncoder(patch) && patch.isPatch()) {
+        // Check if we have a default where we can start.
+        if (patch.static.putType) {
+            const def = (patch.static.putType).getDefaultValue();
+            if (def) {
+                return def.patch(patch);
+            }
+        }
+
         // Throw an error
         // You cannot patch null or undefined with a patchable object
         throw new SimpleError({
             code: 'cannot_patch_null',
-            message: 'You are sending a patch object to patch an object or property that is null or undefined. You can only send a full object (a put) to replace it in this case.',
+            message: 'Cannot patch an object or property that is null or undefined and has no default value. You can only send a full object (a put) to replace it.',
         });
     }
 
-    if (patch === null) {
-        return null;
-    }
-
-    // Not allowed for now
-    throw new SimpleError({
-        code: 'cannot_patch_non_patchable',
-        message: 'You are trying to patch a non-patchable object. Only patchable objects, patchable arrays and patch maps are supported for patching.',
-    });
+    return patch;
 }

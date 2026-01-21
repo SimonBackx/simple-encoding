@@ -5,7 +5,7 @@ import { Data } from '../classes/Data.js';
 import { Decoder } from '../classes/Decoder.js';
 import { Encodeable, encodeObject, PlainObject } from '../classes/Encodeable.js';
 import { EncodeContext } from '../classes/EncodeContext.js';
-import { getId, Identifiable } from '../classes/Identifiable.js';
+import { getId, hasId, Identifiable } from '../classes/Identifiable.js';
 import { isPatchable, Patchable } from '../classes/Patchable.js';
 
 type PutAfter<Id, Put> = { afterId?: Id | null; put: Put };
@@ -91,6 +91,13 @@ export class PatchableArray<
         return cloned;
     }
 
+    /**
+     * @param value Value to insert in the array
+     * @param after
+     *      - undefined (or not provided) = insert at the end
+     *      - null = insert at the start
+     *      - id = insert after the provided id. If the provided id is not found, it is appended at the end
+     */
     addPut(value: Put, after?: Id | null) {
         this.changes.push({ afterId: after, put: value });
     }
@@ -271,6 +278,17 @@ export class PatchableArray<
                 }
                 if (change.afterId === undefined) {
                     afterIndex = newArray.length - 1;
+                }
+                if (hasId(change.put)) {
+                    // Delete any items with the same id first
+                    const existingIndex = newArray.findIndex(e => getId(e) == getId(change.put));
+                    if (existingIndex !== -1) {
+                        newArray.splice(existingIndex, 1);
+                        // Adjust afterIndex if needed
+                        if (existingIndex < afterIndex) {
+                            afterIndex--;
+                        }
+                    }
                 }
                 newArray.splice(afterIndex + 1, 0, change.put);
             }

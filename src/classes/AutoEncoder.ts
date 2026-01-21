@@ -39,6 +39,10 @@ export class PatchOrPutDecoder<Put extends Patchable<Patch>, Patch> implements D
 
         return this.putDecoder.decode(data);
     }
+
+    getDefaultValue(): Patch | Put {
+        return this.patchDecoder.getDefaultValue ? this.patchDecoder.getDefaultValue() : (undefined as any);
+    }
 }
 
 export function deepSetArray(oldArr: any[], newArray: any[], options?: { keepMissing?: boolean }) {
@@ -246,6 +250,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
     private static cachedPatchType?: typeof AutoEncoder;
 
     static isPatch = false;
+    static putType?: typeof AutoEncoder;
     static skipDefaultValues = false;
 
     /// Create a patch for this instance (of reuse if already created)
@@ -268,8 +273,28 @@ export class AutoEncoder implements Encodeable, Cloneable {
         }
 
         CreatedPatch.isPatch = true;
+        CreatedPatch.putType = this;
 
         return CreatedPatch as any;
+    }
+
+    /**
+     * Try to build a default value for this object, if possible. If this is not possible it will return undefined.
+     *
+     * Override if you want to set custom default values or disable this behavior.
+     */
+    static getDefaultValue() {
+        try {
+            const def = this.create({});
+            if (hasId(def)) {
+                // identifiable objects can never have a default valeu
+                return undefined;
+            }
+            return def;
+        }
+        catch (e) {
+            return undefined;
+        }
     }
 
     constructor() {
@@ -322,7 +347,11 @@ export class AutoEncoder implements Encodeable, Cloneable {
         for (const field of this.static.latestFields) {
             const prop = field.property;
 
-            instance[prop] = patchObject(this[prop], patch[prop]);
+            instance[prop] = patchObject(
+                this[prop],
+                patch[prop],
+                instance[prop] === undefined || instance[prop] === null ? (field.decoder.getDefaultValue ? field.decoder.getDefaultValue() : instance[prop]) : instance[prop],
+            );
         }
 
         return instance;

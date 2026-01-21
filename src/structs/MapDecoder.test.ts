@@ -351,7 +351,7 @@ describe('MapDecoder', () => {
         expect(patchedDog).toEqual(patchedDog2);
     });
 
-    test.only('it creates keys nullable stacked maps', () => {
+    test('it creates keys nullable stacked maps', () => {
         const cat1 = Cat.create({
             color: 'gray',
             name: 'Cat1',

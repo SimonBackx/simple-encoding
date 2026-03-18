@@ -6,6 +6,7 @@ import { EncodeContext } from './EncodeContext.js';
 
 export interface Decoder<T> {
     decode(data: Data): T;
+    decodeField?(data: unknown, context: EncodeContext, currentField?: string): T;
 
     /**
      * Optionanl custom encoder

@@ -5,6 +5,9 @@ import { Data } from '../classes/Data.js';
 import { Decoder } from '../classes/Decoder.js';
 import { PatchableArray, PatchableArrayDecoder } from './PatchableArray.js';
 import StringOrNumberDecoder from './StringOrNumberDecoder.js';
+import { isPatchableArray } from '../classes/Patchable.js';
+import { EncodeContext } from '../classes/EncodeContext.js';
+import { addIndexField, ObjectData } from '../classes/ObjectData.js';
 
 export class ArrayDecoder<T> implements Decoder<T[]> {
     decoder: Decoder<T>;
@@ -13,16 +16,52 @@ export class ArrayDecoder<T> implements Decoder<T[]> {
         this.decoder = decoder;
     }
 
+    decodeField(value: unknown, context: EncodeContext, currentField?: string): T[] {
+        if (Array.isArray(value)) {
+            if (this.decoder.decodeField) {
+                const arr = new Array(value.length);
+                for (let i = 0; i < arr.length; i++) {
+                    arr[i] = this.decoder.decodeField(value[i], context, addIndexField(currentField, i));
+                }
+                return arr;
+            }
+            else {
+                const arr = new Array(value.length);
+                for (let i = 0; i < arr.length; i++) {
+                    arr[i] = new ObjectData(value[i], context, addIndexField(currentField, i)).decode(this.decoder);
+                }
+                return arr;
+            }
+        }
+
+        throw new SimpleError({
+            code: 'invalid_field',
+            message: `Expected an array at ${currentField}`,
+            field: currentField,
+        });
+    }
+
     decode(data: Data): T[] {
-        if (Array.isArray(data.value)) {
-            return data.value
-                .map((v, index) => {
-                    return data.clone({
-                        data: v,
+        const value = data.value;
+        if (Array.isArray(value)) {
+            if (this.decoder.decodeField) {
+                const arr = new Array(value.length);
+                for (let i = 0; i < arr.length; i++) {
+                    arr[i] = this.decoder.decodeField(value[i], data.context, data.addToCurrentField(i));
+                }
+                return arr;
+            }
+            else {
+                const arr = new Array(value.length);
+                for (let i = 0; i < arr.length; i++) {
+                    arr[i] = data.clone({
+                        data: value[i],
                         context: data.context,
-                        field: data.addToCurrentField(index),
+                        field: data.addToCurrentField(i),
                     }).decode(this.decoder);
-                });
+                }
+                return arr;
+            }
         }
 
         throw new SimpleError({
@@ -76,6 +115,8 @@ export class ArrayDecoder<T> implements Decoder<T[]> {
     }
 
     /**
+     * @deprecated
+     * use patchType().getDefaultValue instead
      * Patchable values of an array always create a default empty patchable array for convenience
      */
     patchDefaultValue() {
@@ -115,6 +156,10 @@ export class ArrayDecoder<T> implements Decoder<T[]> {
             }
         }
         return new PatchableArray<any, any, any>();
+    }
+
+    isPatchDefaultValue(value: unknown): boolean {
+        return isPatchableArray(value) && value.changes.length === 0;
     }
 
     isDefaultValue(value: unknown): boolean {

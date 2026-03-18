@@ -1,6 +1,9 @@
 import { SimpleError } from '@simonbackx/simple-errors';
 import { Data } from '../classes/Data';
 import { Decoder } from '../classes/Decoder';
+import { EncodeContext } from '../classes/EncodeContext';
+import { ObjectData } from '../classes/ObjectData';
+import StringDecoder from './StringDecoder';
 
 export class SymbolDecoder<T, E extends symbol> implements Decoder<T | E> {
     symbol: E;
@@ -35,6 +38,26 @@ export class SymbolDecoder<T, E extends symbol> implements Decoder<T | E> {
             code: 'invalid_field',
             message: `Unknown symbol value '${s}', expected '${this.key}'`,
             field: data.currentField,
+        });
+    }
+
+    decodeField(data: unknown, context: EncodeContext, currentField?: string): T | E {
+        if (!data || typeof data !== 'object') {
+            if (this.decoder.decodeField) {
+                return this.decoder.decodeField(data, context, currentField);
+            }
+            return this.decoder.decode(new ObjectData(data, context, currentField));
+        }
+
+        const s = StringDecoder.decodeField(data['$symbol'], context, currentField);
+        if (s === this.key) {
+            return this.symbol;
+        }
+
+        throw new SimpleError({
+            code: 'invalid_field',
+            message: `Unknown symbol value '${s}', expected '${this.key}'`,
+            field: currentField,
         });
     }
 }

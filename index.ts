@@ -5,6 +5,7 @@ export * from './src/classes/ObjectData.js';
 export * from './src/classes/Patchable.js';
 export * from './src/classes/Identifiable.js';
 export * from './src/classes/Cloneable.js';
+export * from './src/classes/Field.js';
 
 export { default as AnyDecoder } from './src/structs/AnyDecoder.js';
 export * from './src/structs/ArrayDecoder.js';
@@ -26,3 +27,5 @@ export * from './src/structs/VersionBox.js';
 export { default as StringOrNumberDecoder } from './src/structs/StringOrNumberDecoder.js';
 export { default as DateDecoder } from './src/structs/DateDecoder.js';
 export * from './src/structs/URLDecoder.js';
+export * from './src/helpers/deepSet.js';
+export * from './src/helpers/deepSetArray.js';

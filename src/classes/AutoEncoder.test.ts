@@ -44,7 +44,7 @@ class Dog extends AutoEncoder {
     @field({ decoder: StringDecoder, version: 2, upgrade: (int: number) => 'DOG' + int, downgrade: (str: string) => parseInt(str.substring(3)) })
     id = '';
 
-    @field({ decoder: StringDecoder })
+    @field({ decoder: StringDecoder, defaultValue: () => '' })
     @field({ decoder: StringDecoder, version: 2, field: 'breed', defaultValue: () => '' })
     name: string | undefined;
 
@@ -79,7 +79,7 @@ class Dog2 extends AutoEncoder {
     @field({ decoder: StringDecoder, version: 2, upgrade: (int: number) => 'DOG' + int, downgrade: (str: string) => parseInt(str.substring(3)) })
     id = '';
 
-    @field({ decoder: StringDecoder })
+    @field({ decoder: StringDecoder, defaultValue: () => '' })
     @field({ decoder: StringDecoder, version: 2, field: 'breed', defaultValue: () => '' })
     name: string | undefined;
 
@@ -122,13 +122,13 @@ describe('AutoEncoder', () => {
             id: 1,
             name: 'dog',
             friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
-            friends: [{ id: 2, name: 'friend', friendIds: [], friends: [] }],
+            friends: [{ id: 2, name: 'friend' /* friendIds: [], friends: [] */ }],
         });
         expect(dog.encode({ version: 2 })).toEqual({
             id: 'DOG1',
             breed: 'dog',
             friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
-            friends: [{ id: 'DOG2', breed: 'friend', friendIds: [], friends: [] }],
+            friends: [{ id: 'DOG2', breed: 'friend' /* friendIds: [], friends: [] */ }],
         });
     });
 
@@ -358,7 +358,7 @@ describe('AutoEncoder', () => {
 
     describe('Default and nullable properties', () => {
         beforeAll(() => {
-            AutoEncoder.skipDefaultValues = true;
+            AutoEncoder.skipDefaultValuesVersion = 0;
         });
 
         test('A nullable property is not encoded', () => {
@@ -877,7 +877,7 @@ describe('AutoEncoder', () => {
             expect(decoded).toEqual(Foo.create({ prop: 123 }));
         });
 
-        test('An id property is always required, even with default value', () => {
+        test('An id property is not always required, even with default value', () => {
             class Foo extends AutoEncoder {
                 @field({ decoder: StringDecoder, defaultValue: () => 'generated' })
                 id: string;
@@ -885,7 +885,18 @@ describe('AutoEncoder', () => {
 
             expect(() => {
                 new ObjectData({}, { version: 1 }).decode(Foo as Decoder<Foo>);
-            }).toThrow('Field id is expected');
+            }).not.toThrow('Field id is expected');
+        });
+
+        test('Id property is optional in pathces', () => {
+            class Foo extends AutoEncoder {
+                @field({ decoder: StringDecoder, defaultValue: () => 'generated' })
+                id: string;
+            }
+
+            expect(() => {
+                new ObjectData({}, { version: 1 }).decode(Foo.patchType() as Decoder<AutoEncoderPatchType<Foo>>);
+            }).not.toThrow('Field id is expected');
         });
 
         test('An optional id property is not required and defaults to it defaults value', () => {
@@ -928,7 +939,7 @@ describe('AutoEncoder', () => {
                 new ObjectData({
                     prop: undefined,
                 }, { version: 1 }).decode(Foo as Decoder<Foo>);
-            }).toThrow('Field prop is expected');
+            }).toThrow('Expected an integer at prop');
         });
 
         test('Class default values are cleared when creating a patch', () => {

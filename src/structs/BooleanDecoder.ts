@@ -2,6 +2,7 @@ import { SimpleError } from '@simonbackx/simple-errors';
 
 import { Data } from '../classes/Data.js';
 import { Decoder } from '../classes/Decoder.js';
+import { EncodeContext } from '../classes/EncodeContext.js';
 
 class BooleanDecoder implements Decoder<boolean> {
     decode(data: Data): boolean {
@@ -29,6 +30,34 @@ class BooleanDecoder implements Decoder<boolean> {
             code: 'invalid_field',
             message: `Expected a boolean at ${data.currentField}`,
             field: data.currentField,
+        });
+    }
+
+    decodeField(data: unknown, _: EncodeContext, currentField?: string): boolean {
+        if (data === true || data === false) {
+            return data;
+        }
+
+        if (data === 'true') {
+            return true;
+        }
+
+        if (data === 'false') {
+            return false;
+        }
+
+        if (data === 1) {
+            return true;
+        }
+
+        if (data === 0) {
+            return false;
+        }
+
+        throw new SimpleError({
+            code: 'invalid_field',
+            message: `Expected a boolean at ${currentField}`,
+            field: currentField,
         });
     }
 }

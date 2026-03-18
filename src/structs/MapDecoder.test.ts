@@ -303,9 +303,10 @@ describe('MapDecoder', () => {
         // Can do the same with decoded form
         const encoded = JSON.parse(JSON.stringify(combinedPatch.encode({ version: 0 })));
         const decoded = OtherDog.patchType().decode(new ObjectData(encoded, { version: 0 }));
+        expect(decoded).toEqual(combinedPatch);
 
         const patchedDog2 = dog.patch(decoded);
-        expect(patchedDog).toEqual(patchedDog2);
+        expect(patchedDog2).toEqual(patchedDog);
     });
 
     test('it creates keys on stacked maps', () => {

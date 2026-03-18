@@ -12,7 +12,7 @@ export enum EncodeMedium {
 
 export interface EncodeContext {
     version: number;
-    references?: Map<any, Map<string | number, any>>; // class type -> id -> decoded object
+    references?: Map<any, any>; // class type -> id -> decoded object
 
     /**
      * When encoding, this is the storage type we encode to.

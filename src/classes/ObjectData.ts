@@ -11,6 +11,27 @@ import { Data } from './Data.js';
 import { DecodedType, Decoder } from './Decoder.js';
 import { EncodeContext } from './EncodeContext.js';
 
+export function addIndexField(field: string | undefined, index: number) {
+    if (!field) {
+        return index + '';
+    }
+    return field + '.' + index;
+}
+
+export function addPropertyField(field: string | undefined, property: string) {
+    if (!field) {
+        return property;
+    }
+    return field + '.' + property;
+}
+
+export function addToField(field: string | undefined, b: string | number) {
+    if (typeof b === 'number') {
+        return addIndexField(field, b);
+    }
+    return addPropertyField(field, b);
+}
+
 /// Implementation of Data that reads an already existing tree of data.
 export class ObjectData implements Data {
     data: any;
@@ -24,8 +45,8 @@ export class ObjectData implements Data {
     }
 
     addToCurrentField(field: string | number): string {
-        if (this.currentField == '') {
-            return field + '';
+        if (this.currentField.length === 0) {
+            return field.toString();
         }
         return this.currentField + '.' + field;
     }

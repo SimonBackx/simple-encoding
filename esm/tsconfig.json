@@ -3,8 +3,5 @@
     "compilerOptions": {
         "module": "esnext",
         "outDir": "dist"
-    },
-    "exclude": [
-        "../src"
-    ]
+    }
 }

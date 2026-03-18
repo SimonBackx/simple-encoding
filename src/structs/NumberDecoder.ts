@@ -2,6 +2,7 @@ import { SimpleError } from '@simonbackx/simple-errors';
 
 import { Data } from '../classes/Data.js';
 import { Decoder } from '../classes/Decoder.js';
+import { EncodeContext } from '../classes/EncodeContext.js';
 
 class NumberDecoder implements Decoder<number> {
     decode(data: Data): number {
@@ -13,6 +14,18 @@ class NumberDecoder implements Decoder<number> {
             code: 'invalid_field',
             message: `Expected a number at ${data.currentField}`,
             field: data.currentField,
+        });
+    }
+
+    decodeField(data: unknown, _: EncodeContext, currentField?: string): number {
+        if (typeof data === 'number' && !Number.isNaN(data) && Number.isFinite(data)) {
+            return data;
+        }
+
+        throw new SimpleError({
+            code: 'invalid_field',
+            message: `Expected a number at ${currentField}`,
+            field: currentField,
         });
     }
 }

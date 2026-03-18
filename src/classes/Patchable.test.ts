@@ -87,6 +87,9 @@ describe('Patchable', () => {
         class Friend extends AutoEncoder {
             @field({ decoder: StringDecoder })
             name: string;
+
+            @field({ decoder: IntegerDecoder, defaultValue: () => 18 })
+            age: number;
         }
 
         class Dog extends AutoEncoder {
@@ -113,6 +116,7 @@ describe('Patchable', () => {
         });
         expect(result.friend).not.toBeNull();
         expect(result.friend?.name).toBe('Buddy');
+        expect(result.friend?.age).toBe(18);
     });
 
     test('Patching a patch should not use default values', () => {

@@ -10,7 +10,7 @@ class Dog extends AutoEncoder {
     @field({ decoder: StringDecoder, version: 2, upgrade: (int: number) => 'DOG' + int, downgrade: (str: string) => parseInt(str.substring(3)) })
     id = '';
 
-    @field({ decoder: StringDecoder })
+    @field({ decoder: StringDecoder, defaultValue: () => '' })
     @field({ decoder: StringDecoder, version: 2, field: 'breed', defaultValue: () => '' })
     name: string | undefined;
 

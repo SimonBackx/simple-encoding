@@ -1,14 +1,17 @@
 import { SimpleError } from '@simonbackx/simple-errors';
-import { PatchableArray, PatchableArrayDecoder } from '../structs/PatchableArray.js';
+import { deepSet } from '../helpers/deepSet.js';
+import { isAutoEncoder } from '../helpers/isAutoEncoder.js';
+import { PatchableArray } from '../structs/PatchableArray.js';
 import { Cloneable, cloneObject } from './Cloneable.js';
 import { Data } from './Data.js';
 import { Decoder } from './Decoder.js';
 import { Encodeable, encodeObject, PlainObject, sortObjectKeysForEncoding } from './Encodeable.js';
-import { EncodeContext } from './EncodeContext.js';
-import { getId, getOptionalId, hasId } from './Identifiable.js';
-import { AutoEncoderPatchType, isPatchable, isPatchableArray, isPatchMap, PartialWithoutMethods, Patchable, PatchMap, patchObject } from './Patchable.js';
+import { EncodeContext, EncodeMedium } from './EncodeContext.js';
+import { Field } from './Field.js';
+import { hasId } from './Identifiable.js';
+import { addPropertyField, ObjectData } from './ObjectData.js';
+import { AutoEncoderPatchType, PartialWithoutMethods, Patchable, patchObject } from './Patchable.js';
 
-// export type PatchableDecoder<T> = Decoder<T> & (T extends Patchable<infer P> ? { patchType: () => PatchableDecoder<P> }: {})
 export type PatchableDecoder<T> = Decoder<T> & (
         T extends AutoEncoder ? {} :
                 (
@@ -19,77 +22,6 @@ export type PatchableDecoder<T> = Decoder<T> & (
                             } : {}
                 )
 );
-/**
- * Uses the meta data of AutoEncoder to check if something is a patch or a put
- */
-export class PatchOrPutDecoder<Put extends Patchable<Patch>, Patch> implements Decoder<Patch | Put> {
-    putDecoder: Decoder<Put>;
-    patchDecoder: Decoder<Patch>;
-
-    constructor(put: Decoder<Put>, patch: Decoder<Patch>) {
-        this.putDecoder = put;
-        this.patchDecoder = patch;
-    }
-
-    decode(data: Data): Put | Patch {
-        const isPatch = data.optionalField('_isPatch');
-        if (isPatch?.boolean ?? false) {
-            return this.patchDecoder.decode(data);
-        }
-
-        return this.putDecoder.decode(data);
-    }
-
-    getDefaultValue(): Patch | Put | undefined {
-        return this.patchDecoder.getDefaultValue ? this.patchDecoder.getDefaultValue() : (undefined as any);
-    }
-}
-
-export function deepSetArray(oldArr: any[], newArray: any[], options?: { keepMissing?: boolean }) {
-    if (oldArr === newArray) {
-        // Same reference: nothing to do
-        return;
-    }
-
-    const oldArray = (oldArr as any[]).slice();
-
-    // Loop old array
-    // Keep array reference
-    // Delete deleted items
-    // Add new items
-    // Copy over changes from updated items
-    // Maintain new order
-
-    // Clear out old array
-    oldArr.splice(0, oldArr.length);
-
-    for (const newItem of newArray) {
-        if (isAutoEncoder(newItem)) {
-            const oldItem = oldArray.find(i => getOptionalId(i) === getOptionalId(newItem));
-            if (oldItem && isAutoEncoder(oldItem)) {
-                oldItem.deepSet(newItem);
-                oldArr.push(oldItem);
-            }
-            else {
-                oldArr.push(newItem);
-            }
-        }
-        else {
-            oldArr.push(newItem);
-        }
-    }
-
-    if (options?.keepMissing) {
-        // Readd old missing items
-        for (const oldItem of oldArray) {
-            const found = oldArr.find(i => getOptionalId(i) === getOptionalId(oldItem));
-
-            if (!found) {
-                oldArr.push(oldItem);
-            }
-        }
-    }
-}
 
 export function coalesceUndefined<T>(...values: (T)[]): T | undefined {
     // Return first non-undefined value
@@ -99,121 +31,6 @@ export function coalesceUndefined<T>(...values: (T)[]): T | undefined {
         }
     }
     return undefined;
-}
-
-export class Field<T> {
-    optional: boolean;
-    nullable: boolean;
-    decoder: PatchableDecoder<T>;
-
-    /**
-     * Executed after decoding / before encoding to convert to a correct internal value (= latest version)
-     */
-    upgrade?: (old: any) => any;
-    downgrade?: (newer: any) => any;
-
-    upgradePatch?: (old: any) => any;
-    downgradePatch?: (newer: any) => any;
-
-    /**
-     * Version in which this field was added
-     */
-    version: number;
-
-    /**
-     * Name of the property where to save / get this value
-     */
-    property: string;
-
-    /**
-     * Name in the encoded version
-     */
-    field: string;
-
-    /**
-     * Internal value for unsupported versions
-     */
-    defaultValue?: () => any;
-
-    /**
-     * Internal value for unsupported versions
-     */
-    patchDefaultValue?: () => any;
-
-    getOptionalClone() {
-        const field = new Field();
-        field.optional = true;
-        field.nullable = this.nullable;
-        field.decoder = this.decoder;
-        field.version = this.version;
-        field.property = this.property;
-        field.field = this.field;
-
-        if (this.upgrade) {
-            const upg = this.upgrade;
-            field.upgrade = (oldValue) => {
-                if (oldValue !== undefined) {
-                    // Value is set, we need an upgrade
-                    return upg(oldValue);
-                }
-                else {
-                    // No value is set, we don't need an upgrade
-                    return undefined;
-                }
-            };
-        }
-
-        if (this.downgrade) {
-            const dwn = this.downgrade;
-            field.downgrade = (newValue) => {
-                if (newValue !== undefined) {
-                    // Value is set, we need an upgrade
-                    return dwn(newValue);
-                }
-                else {
-                    // No value is set, we don't need an upgrade
-                    return undefined;
-                }
-            };
-        }
-
-        if (this.upgradePatch) {
-            field.upgrade = this.upgradePatch;
-        }
-
-        if (this.downgradePatch) {
-            field.downgrade = this.downgradePatch;
-        }
-
-        field.upgradePatch = this.upgradePatch;
-        field.downgradePatch = this.downgradePatch;
-        field.patchDefaultValue = this.patchDefaultValue;
-
-        field.defaultValue = undefined; // do not copy default values. Patches never have default values, unless for patchable arrays
-
-        const aDecoder = this.decoder as any;
-
-        // Do we have a custom patch decoder? (this can be configured in the decoder)
-        if (aDecoder.patchType) {
-            field.upgrade = this.upgradePatch;
-            field.downgrade = this.downgradePatch;
-            const patchDecoder = aDecoder.patchType();
-            field.decoder = new PatchOrPutDecoder(aDecoder, patchDecoder);
-        }
-
-        if (aDecoder.patchDefaultValue) {
-            // e.g. for patchable arrays we always set a default value
-            field.defaultValue = () => {
-                return aDecoder.patchDefaultValue();
-            };
-        }
-
-        if (this.patchDefaultValue) {
-            field.defaultValue = this.patchDefaultValue;
-        }
-
-        return field;
-    }
 }
 
 type AutoEncoderConstructorNames<T> = { [K in keyof T]: T[K] extends Function | PatchableArray<any, any, any> ? never : K }[Exclude<keyof T, 'latestVersion'>];
@@ -238,20 +55,16 @@ const p = DogPatch.create({id: "test"})
 
 */
 
-export function isAutoEncoder(obj: unknown): obj is AutoEncoder {
-    return obj instanceof AutoEncoder || (typeof obj === 'object' && obj !== null && (obj as any)._isAutoEncoder);
-}
-
 export class AutoEncoder implements Encodeable, Cloneable {
-    _isAutoEncoder = true;
+    readonly _isAutoEncoder = true;
 
     /// Fields should get sorted by version. Low to high
-    static fields: Field<any>[];
+    static fields: Field<any>[] = [];
     private static cachedPatchType?: typeof AutoEncoder;
 
     static isPatch = false;
     static putType?: typeof AutoEncoder;
-    static skipDefaultValues = false;
+    static skipDefaultValuesVersion = 0;
 
     /// Create a patch for this instance (of reuse if already created)
     static patchType<T extends typeof AutoEncoder>(this: T): typeof AutoEncoder & (new () => AutoEncoderPatchType<InstanceType<T>>) {
@@ -297,16 +110,53 @@ export class AutoEncoder implements Encodeable, Cloneable {
         }
     }
 
-    constructor() {
-        if (!this.static.fields) {
-            this.static.fields = [];
+    static isDefaultValue<T extends typeof AutoEncoder>(this: T, value: AutoEncoder): boolean {
+        try {
+            const def = this.create({});
+            if (hasId(def)) {
+                return false;
+            }
+            return def.equals(value);
         }
+        catch (e) {
+            return false;
+        }
+    }
 
+    equals(other: AutoEncoder): boolean {
+        if (other.static !== this.static) {
+            return false;
+        }
         for (const field of this.static.latestFields) {
-            if (field.defaultValue) {
-                this[field.property] = field.defaultValue();
+            const tValue = this[field.property];
+            const oValue = other[field.property];
+
+            if (isAutoEncoder(tValue)) {
+                if (!isAutoEncoder(oValue)) {
+                    return false;
+                }
+                if (!tValue.equals(oValue)) {
+                    return false;
+                }
+            }
+            else if (oValue !== tValue) {
+                if (Array.isArray(oValue) && Array.isArray(tValue)) {
+                    if (oValue.length === 0 && tValue.length === 0) {
+                        // Equal
+                        continue;
+                    }
+                }
+
+                if (oValue instanceof Map && tValue instanceof Map) {
+                    if (oValue.size === 0 && tValue.size === 0) {
+                        // Equal
+                        continue;
+                    }
+                }
+                return false;
             }
         }
+        return true;
     }
 
     isPatch<T extends AutoEncoder>(this: T | AutoEncoderPatchType<T>): this is AutoEncoderPatchType<T> {
@@ -350,7 +200,25 @@ export class AutoEncoder implements Encodeable, Cloneable {
             instance[prop] = patchObject(
                 this[prop],
                 patch[prop], {
-                    defaultValue: instance[prop] === undefined || instance[prop] === null ? (field.decoder.getDefaultValue ? field.decoder.getDefaultValue() : instance[prop]) : instance[prop],
+                    getDefaultValue: () => {
+                        if (field.defaultValue) {
+                            return field.defaultValue();
+                        }
+
+                        if (instance[prop] !== undefined && instance[prop] !== null) {
+                            return instance[prop];
+                        }
+
+                        // if (field.nullable && !field.optional && !this.isPatch) {
+                        //     return null;
+                        // }
+
+                        if (field.decoder && field.decoder.getDefaultValue) {
+                            return field.decoder.getDefaultValue();
+                        }
+
+                        return;
+                    },
                     allowAutoDefaultValue: false,
                 },
             );
@@ -359,31 +227,93 @@ export class AutoEncoder implements Encodeable, Cloneable {
         return instance;
     }
 
-    static sortFields() {
-        function compare(a: Field<any>, b: Field<any>) {
-            if (a.version < b.version) {
-                return -1;
-            }
-            if (a.version > b.version) {
-                return 1;
-            }
-
-            return 0;
+    private static compareField(a: Field<any>, b: Field<any>) {
+        if (a.version < b.version) {
+            return -1;
         }
-        this.fields.sort(compare);
+        if (a.version > b.version) {
+            return 1;
+        }
+
+        return 0;
     }
 
-    static _cachedLatestFields?: { fields: Field<any>[]; totalFieldsCount: number } | null;
-    static _cachedFieldsForVersion?: Map<number, Field<any>[]>;
+    static sortFields() {
+        this.fields.sort(AutoEncoder.compareField);
+    }
 
-    static get latestFields(): Field<any>[] {
-        // We need to clear if we detect taht the _cachedLatestFields is defined on a superclass, but not on this class itself
-        if (!Object.hasOwnProperty.call(this, '_cachedLatestFields') && this._cachedLatestFields) {
-            this._cachedLatestFields = null; // Explicitly set to null to avoid confusion
+    /**
+     * WeakMap is overkill on static classes.
+     * This is drammatically faster than using Object.prototype.hasOwnProperty
+     */
+    static __fieldsForVersion: Map<number, Field<any>[]>;
+    static __latestVersion: number;
+    static __latestFields: Field<any>[];
+    static __constructorDefaults: Map<string, unknown>;
+    protected static getConstructorDefaults() {
+        const c = this.__constructorDefaults;
+        if (c !== undefined) {
+            return c;
         }
 
-        if (this._cachedLatestFields && this._cachedLatestFields.totalFieldsCount === this.fields.length) {
-            return this._cachedLatestFields.fields;
+        // Defined by a parent class, we need to reset it
+        const cc = new this();
+        const attrs = new Map<string, unknown>();
+
+        for (const key in cc) {
+            attrs.set(key, cc[key]);
+        }
+
+        // Prevent changing default values
+        this.__constructorDefaults = attrs;
+
+        return attrs;
+    }
+
+    protected static getConstructorDefault(property: string, clone = true) {
+        const cc = this.getConstructorDefaults();
+        const b = cc.get(property);
+        if (!b) {
+            return b;
+        }
+        if (clone && typeof b === 'object') {
+            if (b instanceof Map) {
+                // Does not behave correctly
+                return new (b.constructor as any)(b);
+            }
+            return structuredClone(b);
+        }
+        return b;
+    }
+
+    static get latestVersion(): number {
+        const c = this.__latestVersion;
+        if (c !== undefined) {
+            return c;
+        }
+        return this.setCachedLatestVersion();
+    }
+
+    static setCachedLatestVersion(): number {
+        let maxVersion: number | null = null;
+
+        for (let i = this.fields.length - 1; i >= 0; i--) {
+            const field = this.fields[i];
+            if (maxVersion === null || field.version > maxVersion) {
+                maxVersion = field.version;
+            }
+        }
+        const cc = maxVersion ?? 0;
+
+        this.__latestVersion = cc;
+
+        return cc;
+    }
+
+    static get latestFields(): Field<any>[] {
+        const c = this.__latestFields;
+        if (c !== undefined) {
+            return c;
         }
 
         const latestFields: Record<string, Field<any>> = {};
@@ -394,25 +324,38 @@ export class AutoEncoder implements Encodeable, Cloneable {
             }
         }
         const fields = Object.values(latestFields);
+
         // Sort fields for stable encodings
         fields.sort((a, b) => sortObjectKeysForEncoding(a.property, b.property));
 
-        this._cachedLatestFields = { fields, totalFieldsCount: this.fields.length };
+        this.__latestFields = fields;
+
         return fields;
     }
 
     static fieldsForVersion(version: number): Field<any>[] {
-        // We need to clear if we detect taht the _cachedLatestFields is defined on a superclass, but not on this class itself
-        if (!Object.hasOwnProperty.call(this, '_cachedFieldsForVersion') && this._cachedFieldsForVersion) {
-            this._cachedFieldsForVersion = new Map();
+        const latestVersion = this.latestVersion;
+        if (version > latestVersion) {
+            version = latestVersion;
+        }
+        if (version < 0) {
+            version = 0;
         }
 
-        if (!this._cachedFieldsForVersion) {
-            this._cachedFieldsForVersion = new Map();
+        if (version === latestVersion) {
+            return this.latestFields;
         }
 
-        if (this._cachedFieldsForVersion.has(version)) {
-            return this._cachedFieldsForVersion.get(version)!;
+        let cc = this.__fieldsForVersion;
+        if (cc !== undefined) {
+            const g = cc.get(version);
+            if (g !== undefined) {
+                return g;
+            }
+        }
+        else {
+            cc = new Map();
+            this.__fieldsForVersion = cc;
         }
 
         const latestFields: Record<string, Field<any>> = {};
@@ -428,7 +371,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
         // Sort fields for stable encodings
         fields.sort((a, b) => sortObjectKeysForEncoding(a.property, b.property));
 
-        this._cachedFieldsForVersion.set(version, fields);
+        cc.set(version, fields);
         return fields;
     }
 
@@ -447,8 +390,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
     static create<T extends typeof AutoEncoder>(this: T, object: PartialWithoutMethods<InstanceType<T>>): InstanceType<T> {
         const model = new this() as InstanceType<T>;
         for (const key in object) {
-            // eslint-disable-next-line no-prototype-builtins
-            if (object.hasOwnProperty(key) && object[key] !== undefined && typeof object[key] !== 'function') {
+            if (object[key] !== undefined && typeof object[key] !== 'function') {
                 // Also check this is an allowed field, else skip in favor of allowing downcasts without errors
                 if (this.doesPropertyExist(key)) {
                     model[key] = object[key] as any;
@@ -457,7 +399,11 @@ export class AutoEncoder implements Encodeable, Cloneable {
         }
 
         for (const field of this.latestFields) {
-            if (!field.optional) {
+            // Use default value in every situation if set (more priority than the constructor default values)
+            if (object[field.property] === undefined && field.defaultValue) { // object is required instead of model because defaultvalue has priority over constructor defaults
+                model[field.property] = field.defaultValue();
+            }
+            else if (!field.optional) {
                 if (model[field.property] === undefined) {
                     if (!this.isPatch) {
                         if (field.nullable) {
@@ -467,16 +413,18 @@ export class AutoEncoder implements Encodeable, Cloneable {
                             model[field.property] = field.decoder.getDefaultValue();
                         }
                     }
-
-                    if (model[field.property] === undefined) {
-                        throw new Error('Expected required property ' + field.property + ' when creating ' + this.name);
-                    }
                 }
             }
             else {
                 if (model[field.property] === undefined) {
                     // Explicitly set to undefined
                     model[field.property] = undefined;
+                }
+            }
+
+            if (!field.optional) {
+                if (model[field.property] === undefined) {
+                    throw new Error('Expected required property ' + field.property + ' when creating ' + this.name);
                 }
             }
 
@@ -494,7 +442,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
      */
     set<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T> | T) {
         for (const key in object) {
-            if (object.hasOwnProperty(key) && typeof object[key] !== 'function') {
+            if (typeof object[key] !== 'function') {
                 if (this.static.doesPropertyExist(key)) {
                     this[key] = object[key] as any;
                 }
@@ -507,112 +455,125 @@ export class AutoEncoder implements Encodeable, Cloneable {
      * Maintaining references to objects
      */
     deepSet<T extends AutoEncoder>(this: T, object: PartialWithoutMethods<T> | T) {
-        if (object === this) {
-            // Nothing to do (waste of resources)
-            return;
-        }
-
-        for (const key in object) {
-            if (object.hasOwnProperty(key) && typeof object[key] !== 'function') {
-                if (this.static.doesPropertyExist(key)) {
-                    if (object[key] === undefined) {
-                        // ignore
-                        continue;
-                    }
-
-                    if (isAutoEncoder(this[key]) && object[key] !== null && typeof object[key] === 'object') {
-                        this[key].deepSet(object[key]);
-                    }
-                    else if (Array.isArray(this[key]) && Array.isArray(object[key])) {
-                        deepSetArray(this[key], object[key]);
-                    }
-                    else {
-                        this[key] = object[key] as any;
-                    }
-                }
-            }
-        }
+        return deepSet(this, object);
     }
 
     get static(): typeof AutoEncoder {
         return this.constructor as typeof AutoEncoder;
     }
 
-    encode(context: EncodeContext): PlainObject {
-        if (hasId(this) && !this.static.isPatch && (false as any)) {
-            if (context.references === undefined) {
-                context.references = new Map();
-            }
-
-            let classReferences = context.references.get(this.static);
-            if (classReferences) {
-                // Dramatically reduce size of encoding when lots of relations are returned with the same id
-                const id = getId(this);
-                const existing = classReferences.get(id);
-
-                // We already returned this same object
-                if (existing) {
-                    // For optimizations we could skip this step, but for now we keep it
-                    if (existing === this) {
-                        return {
-                            _ref: id,
-                        };
-                    }
-                    else {
-                        const a = existing.encode({ version: context.version });
-                        const b = this.encode({ version: context.version });
-
-                        if (JSON.stringify(a) === JSON.stringify(b)) {
-                            return {
-                                _ref: id,
-                            };
-                        }
-                        console.warn('Same id, but different objects in the encode result. This should not happen and reduces the ability to use references in encoded data.', id);
-                    }
-                }
-            }
-
-            // Add self
-            if (!classReferences) {
-                classReferences = new Map();
-                context.references.set(this.static, classReferences);
-            }
-            const idField = this.static.latestFields.find(f => f.property === 'id');
-            if (idField) {
-                classReferences.set(getId(this), this);
-            }
+    /**
+     * When returning true, the value won't be encoded in the encoded version of the object
+     */
+    static isPropertyDefaultValue(field: Field<unknown>, value: unknown, longTermStorage: boolean) {
+        if (field.property === 'id') {
+            // optimization only
+            return false;
         }
 
-        const object = {};
-        const source = this.static.downgrade(context.version, this);
+        if (longTermStorage && field.queryable) {
+            // Always encode default values that need to be queried in the database
+            return false;
+        }
 
-        for (const field of this.static.fieldsForVersion(context.version)) {
-            if (source[field.property] === undefined) {
-                if (!field.optional) {
-                    throw new Error('Value for property ' + field.property + ' is not set, but is required!');
+        // field.defaultValue > constructor defaults > ifNullable(null) > ifNotOptional(field.decoder.isDefaultValue) > undefined
+
+        // 1st priority: field.defaultValue
+        if (field.defaultValue) {
+            if (field.isDefaultValue) {
+                return field.isDefaultValue(value);
+            }
+
+            // Heuristic:
+            // defining a field.defaultValue means this is an expensive operation, so there won't be a default value
+            return false;
+        }
+
+        // 2nd priority: constructor defaults
+        // todo: only if version okay!
+        const classDefinitionDefaultValue = this.getConstructorDefault(field.property, false);
+        if (classDefinitionDefaultValue !== undefined) {
+            if (typeof classDefinitionDefaultValue === 'object' && classDefinitionDefaultValue !== null) {
+                if (typeof value !== 'object' || value === null) {
+                    return false;
                 }
+
+                // Special handling
+                if ((classDefinitionDefaultValue as any).length !== undefined) {
+                    // Array handling
+                    return (classDefinitionDefaultValue as any).length === 0 && (value as any).length === 0;
+                }
+
+                if ((classDefinitionDefaultValue as any).size !== undefined) {
+                    // Map handling
+                    return (classDefinitionDefaultValue as any).size === 0 && (value as any).size === 0;
+                }
+
+                if (isAutoEncoder(value) && isAutoEncoder(classDefinitionDefaultValue)) {
+                    return value.equals(classDefinitionDefaultValue);
+                }
+
+                return false;
+            }
+
+            // We have a default value defined in the class definition.
+            return value === classDefinitionDefaultValue;
+        }
+
+        if (!field.optional) {
+            // 3rd priority: nullable
+            if (field.nullable) {
+                return value === null;
+            }
+
+            // 4th priority: field.decoder.defaultValue
+            if (field.decoder && field.decoder.getDefaultValue) {
+                if (field.decoder.isDefaultValue) {
+                    return field.decoder.isDefaultValue(value);
+                }
+                return false;
+            }
+        }
+        else {
+            // Default value is undefined
+            return value === undefined;
+        }
+
+        return false;
+    }
+
+    encode(context: EncodeContext): PlainObject {
+        const object = (this.static.isPatch ? { _isPatch: true } : {});
+        const latestVersion = this.static.latestVersion;
+        const version = context.version;
+        let source: object;
+        let fields: Field<any>[];
+        if (version >= latestVersion) {
+            source = this;
+            fields = this.static.latestFields;
+        }
+        else {
+            source = this.static.downgrade(version, this);
+            fields = this.static.fieldsForVersion(version);
+        }
+
+        const skip = version >= AutoEncoder.skipDefaultValuesVersion || this.static.isPatch;
+        const longTermStorage = context.medium === EncodeMedium.Database;
+
+        for (const field of fields) {
+            if (source[field.property] === undefined) {
+                // if (!field.optional) {
+                //    throw new Error('Value for property ' + field.property + ' is not set, but is required!');
+                // }
                 continue;
             }
 
-            if (this.static.isPatch) {
-                // Don't send certain values to minimize data
-                if (isPatchableArray(source[field.property]) && source[field.property].changes.length === 0) {
-                    continue;
-                }
-
-                if (isPatchMap(source[field.property]) && source[field.property].size === 0) {
-                    continue;
-                }
-            }
-
-            if (AutoEncoder.skipDefaultValues && !this.static.isPatch) {
-                if (field.nullable && !field.optional && source[field.property] === null) {
-                    // Don't send null values - will be handled as null automatically on the receiving side
-                    continue;
-                }
-
-                if (!field.nullable && field.decoder.isDefaultValue && field.decoder.isDefaultValue(source[field.property])) {
-                    // Skip
+            if (skip) {
+                if (this.static.isPropertyDefaultValue(
+                    field,
+                    source[field.property],
+                    longTermStorage,
+                )) {
                     continue;
                 }
             }
@@ -625,149 +586,110 @@ export class AutoEncoder implements Encodeable, Cloneable {
             }
         }
 
-        // Add meta data
-        if (this.static.isPatch) {
-            object['_isPatch'] = this.static.isPatch;
-        }
-
         return object;
     }
 
-    static decode<T extends typeof AutoEncoder>(this: T, data: Data): InstanceType<T> {
-        const isRef = data.optionalField('_ref');
-        if (isRef) {
-            const idField = this.latestFields.find(f => f.property === 'id');
+    static decodeField<T extends typeof AutoEncoder>(this: T, v: unknown, context: EncodeContext, currentField?: string): InstanceType<T> {
+        const model = new this() as InstanceType<T>; // Object.create(this.prototype as object) as InstanceType<T>;
+        const latestVersion = this.latestVersion;
+        const version = context.version;
+        const fields = version >= latestVersion
+            ? this.latestFields
+            : this.fieldsForVersion(version);
 
-            if (!idField) {
-                throw new SimpleError({
-                    code: 'invalid_data',
-                    message: 'No id field found in class ' + this.name,
-                    field: data.addToCurrentField('_ref'),
-                });
-            }
-
-            const stringOrNumber = isRef.decode(idField.decoder) as string | number;
-            const classReferences = data.context.references?.get(this);
-
-            if (!classReferences) {
-                throw new SimpleError({
-                    code: 'invalid_reference',
-                    message: 'Invalid usage of references: the _ref field can only be used when the same object is encoded earlier, but no reference found for ' + stringOrNumber,
-                    field: data.addToCurrentField('_ref'),
-                });
-            }
-
-            const reference = classReferences.get(stringOrNumber);
-            if (!reference) {
-                throw new SimpleError({
-                    code: 'invalid_reference',
-                    message: 'Reference not found with ID ' + stringOrNumber,
-                    field: data.addToCurrentField('_ref'),
-                });
-            }
-
-            return reference as InstanceType<T>;
+        if (!v || typeof v !== 'object') {
+            throw new SimpleError({
+                code: 'invalid_field',
+                message: `Expected an object at ${currentField}`,
+                field: currentField,
+            });
         }
 
-        const model = new this() as InstanceType<T>;
-
-        const appliedProperties = {};
-
         // Loop from newest version to older version
-        for (let i = this.fields.length - 1; i >= 0; i--) {
-            const field = this.fields[i];
+        for (const field of fields) {
+            let didDecode = false;
 
-            if (field.version <= data.context.version && !appliedProperties[field.property]) {
-                const fieldData = data.undefinedField(field.field);
+            const vv = v[field.field];
 
-                if (!fieldData && !field.optional && field.nullable) {
-                    // Special case because we are not using the Nullable Decoder directly
-                    model[field.property] = null;
-                }
-                else if (!fieldData && !field.optional && field.property !== 'id' && (model[field.property] !== undefined || field.decoder.getDefaultValue)) {
-                    // Property has not been set. Set it to the default value of the decoder
-                    if (field.decoder.getDefaultValue) {
-                        model[field.property] = coalesceUndefined(model[field.property], field.decoder.getDefaultValue());
-                    }
-                    else {
-                        // Already set
-                    }
-                }
-                else if (field.optional) {
-                    if (field.nullable) {
-                        // Set to null if set to null, set to undefined if not received
-                        model[field.property] = coalesceUndefined(fieldData?.nullable(field.decoder), model[field.property]);
-                    }
-                    else {
-                        // When null, still set the default values
-                        model[field.property] = data.optionalField(field.field)?.decode(field.decoder) ?? model[field.property] ?? undefined;
-                    }
+            if (vv === undefined) {
+                // this should carefully match isPropertyDefaultValue
+                // (field.defaultValue > constructor defaults > ifNullable(null) > ifNotOptional(field.decoder.isDefaultValue) > undefined)
+                // isPropertyDefaultValue should never return true when this method does not set the same default value!
+                // it is fine if isPropertyDefaultValue returns false and this method does set a default value
 
-                    /* if (!fieldData) {
-                        // Set to undefined or keep current default value
-                        model[field.property] = coalesceUndefined(model[field.property], undefined);
-                    }
-                    else {
-                        if (!this.isPatch) {
-                            // Optional fields always have a dedicated default value set
-                            if (field.nullable) {
-                                // Set to null if set to null, set to undefined if not received
-                                model[field.property] = coalesceUndefined(fieldData?.nullable(field.decoder), model[field.property]);
-                            }
-                            else {
-                                // When null, still set the default values
-                                model[field.property] = data.optionalField(field.field)?.decode(field.decoder) ?? model[field.property] ?? undefined;
-                            }
-                        }
-                        else {
-                            // Never use default values
-                            // Do use the default value from the object itself (will be an empty patchabel array or map)
-                            if (field.nullable) {
-                                model[field.property] = coalesceUndefined(fieldData?.nullable(field.decoder), model[field.property]);
-                            }
-                            else {
-                                // When null, still set the default values
-                                model[field.property] = data.optionalField(field.field)?.decode(field.decoder) ?? model[field.property] ?? undefined;
-                            }
-                        }
-                    } */
+                if (field.defaultValue) {
+                    didDecode = true;
+                    model[field.property] = field.defaultValue();
                 }
                 else {
-                    if (field.nullable) {
-                        model[field.property] = data.field(field.field).nullable(field.decoder);
+                    // constructor default
+                    if (model[field.property] !== undefined) {
+                        // keep as is
+                        didDecode = true;
+                    }
+                    else if (!field.optional) {
+                        if (field.nullable) {
+                            didDecode = true;
+                            model[field.property] = null;
+                        }
+                        else if (field.decoder && field.decoder.getDefaultValue) {
+                            didDecode = true;
+                            model[field.property] = field.decoder.getDefaultValue();
+                        }
                     }
                     else {
-                        model[field.property] = data.field(field.field).decode(field.decoder);
+                        didDecode = true;
+                        model[field.property] = undefined;
                     }
                 }
+            }
 
-                appliedProperties[field.property] = true;
+            if (!didDecode) {
+                // Decode as normal
+                if (field.nullable && vv === null) {
+                    model[field.property] = null;
+                }
+                else {
+                    if (field.decoder.decodeField) {
+                        model[field.property] = field.decoder.decodeField(vv, context, addPropertyField(currentField, field.field));
+                    }
+                    else {
+                        model[field.property] = new ObjectData(vv, context, addPropertyField(currentField, field.field)).decode(field.decoder);
+                    }
+                }
             }
         }
 
         // We now have model with values equal to version data.context.version
 
         // Run upgrade / downgrade migrations to convert changes in fields
-        this.upgrade(data.context.version, model);
-
-        if (!this.isPatch) {
-            if (data.context.references === undefined) {
-                data.context.references = new Map();
+        if (version < latestVersion) {
+            // When you set constructor defaults for fields that only exist in a new version
+            // those fields will already be set, which we don't want during the upgrade.
+            for (const field of this.latestFields) {
+                const prop = field.property;
+                if (model[prop] === undefined) {
+                    continue;
+                }
+                let found = false;
+                for (const field of fields) {
+                    if (field.property === prop) {
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    model[prop as string] = undefined;
+                }
             }
-
-            let classReferences = data.context.references.get(this);
-
-            if (!classReferences) {
-                classReferences = new Map();
-                data.context.references.set(this, classReferences);
-            }
-
-            if (classReferences && hasId(model)) {
-                classReferences.set(getId(model), model);
-            }
+            this.upgrade(version, model);
         }
 
         return model;
+    }
+
+    static decode<T extends typeof AutoEncoder>(this: T, data: Data): InstanceType<T> {
+        return this.decodeField(data.value, data.context, data.currentField);
     }
 
     /**
@@ -776,10 +698,36 @@ export class AutoEncoder implements Encodeable, Cloneable {
      * @param object
      */
     static upgrade<T extends typeof AutoEncoder>(from: number, object: InstanceType<T>) {
+        // Run from old to new
         for (const field of this.fields) {
             if (field.version > from) {
                 if (field.upgrade) {
                     object[field.property] = field.upgrade.call(object, object[field.property]);
+                }
+                else {
+                    // Set to default
+                    if (object[field.property] === undefined) {
+                        if (field.defaultValue) {
+                            object[field.property] = field.defaultValue();
+                        }
+                        else {
+                            // Set default version
+                            const classDefinitionDefaultValue = this.getConstructorDefault(field.property);
+                            if (classDefinitionDefaultValue !== undefined) {
+                                object[field.property] = classDefinitionDefaultValue;
+                            }
+                            else if (field.nullable && !field.optional && !this.isPatch) {
+                                object[field.property] = null;
+                            }
+                            else if (!field.optional && field.decoder && field.decoder.getDefaultValue) {
+                                object[field.property] = field.decoder.getDefaultValue();
+                            }
+                            else {
+                                // Keep undefined
+                                object[field.property] = undefined;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -789,8 +737,13 @@ export class AutoEncoder implements Encodeable, Cloneable {
      * Downgrade property values to a new object
      */
     static downgrade(to: number, object: any): object {
+        if (to >= this.latestVersion) {
+            // No downgrades
+            return object;
+        }
+
         let didCopy = false;
-        const older = {};
+        let older: undefined | any;
 
         for (let i = this.fields.length - 1; i >= 0; i--) {
             const field = this.fields[i];
@@ -798,7 +751,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
                 if (field.downgrade) {
                     if (!didCopy) {
                         didCopy = true;
-                        Object.assign(older, object);
+                        older = Object.assign({}, object);
                     }
                     older[field.property] = field.downgrade.call(object, older[field.property]);
                 }

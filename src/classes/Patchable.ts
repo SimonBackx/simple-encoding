@@ -1,12 +1,12 @@
 import { PatchableArray } from '../structs/PatchableArray.js';
-import { AutoEncoder, isAutoEncoder } from './AutoEncoder.js';
+import { AutoEncoder } from './AutoEncoder.js';
 import { Encodeable } from './Encodeable.js';
 import { EncodeContext } from './EncodeContext.js';
 import { NonScalarIdentifiable } from './Identifiable.js';
 import { Cloneable, cloneObject } from './Cloneable.js';
 import { SimpleError } from '@simonbackx/simple-errors';
+import { isAutoEncoder } from '../helpers/isAutoEncoder.js';
 
-export interface StrictPatch { }
 export interface Patchable<P> {
     patch(patch: P): this;
 }
@@ -164,11 +164,11 @@ export class PatchMap<K, V> extends Map<K, V> implements Cloneable {
 }
 
 export function isPatchMap(obj: unknown): obj is PatchMap<any, any> {
-    return (obj instanceof PatchMap);
+    return typeof obj === 'object' && obj !== null && (obj as any)._isPatchMap;
 }
 
 export function isPatchableArray(obj: unknown): obj is PatchableArray<any, any, any> {
-    return (obj instanceof PatchableArray);
+    return typeof obj === 'object' && obj !== null && (obj as any)._isPatchableArray;
 }
 
 export function isPatch(obj: unknown) {
@@ -227,45 +227,50 @@ export function isEmptyPatch(patch: unknown) {
 /**
  * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
  */
-export function patchObject(obj: unknown, patch: unknown, options?: { defaultValue?: any | null; allowAutoDefaultValue?: boolean }): any {
+export function patchObject(obj: unknown, patch: unknown, options?: { getDefaultValue?: () => any | null; allowAutoDefaultValue?: boolean }): any {
     if (patch === undefined) {
         // When a property is set to undefined, we always ignore it, always. You can never set something to undefined.
         // Use null instead.
         return obj;
     }
+    let empty = (obj === undefined || obj === null);
 
-    if ((obj === undefined || obj === null) && isPatchableArray(patch)) {
-        // Patch on optional array: ignore if empty patch, else fake empty array patch
-        if (patch.changes.length === 0) {
-            return obj;
-        }
-        const patched = patch.applyTo([]);
-        if (patched.length === 0) {
+    if (empty) {
+        if (isPatchableArray(patch)) {
+            // Patch on optional array: ignore if empty patch, else fake empty array patch
+            if (patch.changes.length === 0) {
+                return obj;
+            }
+            const patched = patch.applyTo([]);
+            if (patched.length === 0) {
             // Nothing changed, keep it undefined or null
-            return obj;
+                return obj;
+            }
+
+            return patched;
         }
 
-        return patched;
-    }
-
-    if ((obj === undefined || obj === null) && isPatchMap(patch)) {
-        // Patch on optional array: ignore if empty patch, else fake empty array patch
-        if (patch.size === 0) {
-            return obj;
-        }
-        const patched = patch.applyTo(new Map());
-        if (patched.size === 0) {
+        if (isPatchMap(patch)) {
+            // Patch on optional array: ignore if empty patch, else fake empty array patch
+            if (patch.size === 0) {
+                return obj;
+            }
+            const patched = patch.applyTo(new Map());
+            if (patched.size === 0) {
             // Nothing changed, keep it undefined or null
-            return obj;
+                return obj;
+            }
+
+            return patched;
         }
 
-        return patched;
-    }
-
-    // Only default if not a patchable array or patchable map
-    if (obj === undefined || obj === null) {
-        if (options !== undefined && options.defaultValue !== undefined && options.defaultValue !== null) {
-            obj = options.defaultValue;
+        // Only default if not a patchable array or patchable map
+        if (options?.getDefaultValue !== undefined) {
+            const d = options.getDefaultValue();
+            if (d !== undefined && d !== null) {
+                obj = d;
+                empty = false;
+            }
         }
     }
 
@@ -299,7 +304,7 @@ export function patchObject(obj: unknown, patch: unknown, options?: { defaultVal
     }
 
     // Note: only when null, if undefined we allow
-    if ((obj === undefined || obj === null) && isAutoEncoder(patch) && patch.isPatch()) {
+    if (empty && isAutoEncoder(patch) && patch.isPatch()) {
         // Check if we have a default where we can start.
         if (options?.allowAutoDefaultValue && patch.static.putType) {
             const def = (patch.static.putType).getDefaultValue();

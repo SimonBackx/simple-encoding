@@ -1,9 +1,9 @@
 import { SimpleError } from '@simonbackx/simple-errors';
-import { Data } from '../classes/Data';
-import { Decoder } from '../classes/Decoder';
-import { EncodeContext } from '../classes/EncodeContext';
-import { ObjectData } from '../classes/ObjectData';
-import StringDecoder from './StringDecoder';
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
+import { EncodeContext } from '../classes/EncodeContext.js';
+import { ObjectData } from '../classes/ObjectData.js';
+import StringDecoder from './StringDecoder.js';
 
 export class SymbolDecoder<T, E extends symbol> implements Decoder<T | E> {
     symbol: E;

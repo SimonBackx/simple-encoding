@@ -23,7 +23,7 @@ class Patch implements Patchable<Patch> {
         }) as this;
     }
 
-    encode(context) {
+    encode() {
         return {
             id: this.id,
             name: this.name,
@@ -59,7 +59,7 @@ class Put implements Patchable<Put> {
         }) as this;
     }
 
-    encode(context) {
+    encode() {
         return {
             id: this.id,
             name: this.name,

@@ -1,11 +1,11 @@
 import { v4 as uuidv4 } from 'uuid';
-import { field } from '../decorators/Field';
-import { ArrayDecoder } from '../structs/ArrayDecoder';
-import BooleanDecoder from '../structs/BooleanDecoder';
-import IntegerDecoder from '../structs/IntegerDecoder';
-import { MapDecoder } from '../structs/MapDecoder';
-import StringDecoder from '../structs/StringDecoder';
-import { AutoEncoder } from './AutoEncoder';
+import { field } from '../decorators/Field.js';
+import { ArrayDecoder } from '../structs/ArrayDecoder.js';
+import BooleanDecoder from '../structs/BooleanDecoder.js';
+import IntegerDecoder from '../structs/IntegerDecoder.js';
+import { MapDecoder } from '../structs/MapDecoder.js';
+import StringDecoder from '../structs/StringDecoder.js';
+import { AutoEncoder } from './AutoEncoder.js';
 AutoEncoder.skipDefaultValuesVersion = 0;
 
 class Dog extends AutoEncoder {

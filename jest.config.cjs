@@ -1,16 +1,17 @@
 module.exports = {
-    preset: 'ts-jest',
-    roots: ['<rootDir>'],
+    setupFilesAfterEnv: [],
     testEnvironment: 'node',
-    moduleDirectories: [
-        'node_modules',
+    preset: 'ts-jest',
+    testTimeout: 10 * 1000,
+    roots: [
+        './src/',
     ],
-    modulePathIgnorePatterns: ['dist'],
     transform: {
         '\\.ts?$': [
             'ts-jest',
             {
                 useESM: true,
+                tsconfig: 'tsconfig.test.json',
             },
         ],
     },

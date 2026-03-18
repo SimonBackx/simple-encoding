@@ -1,5 +1,5 @@
-import { getOptionalId } from '../classes/Identifiable';
-import { deepSet } from './deepSet';
+import { getOptionalId } from '../classes/Identifiable.js';
+import { deepSet } from './deepSet.js';
 
 export function deepSetArray(oldArray: any[], newArray: any[], options?: { keepMissing?: boolean }) {
     if (oldArray === newArray) {

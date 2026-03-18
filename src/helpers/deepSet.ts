@@ -1,6 +1,6 @@
-import { getOptionalId } from '../classes/Identifiable';
-import { deepSetArray } from './deepSetArray';
-import { deepSetMap } from './deepSetMap';
+import { getOptionalId } from '../classes/Identifiable.js';
+import { deepSetArray } from './deepSetArray.js';
+import { deepSetMap } from './deepSetMap.js';
 
 export function deepSet(base: unknown, object: unknown): unknown {
     if (object === base) {

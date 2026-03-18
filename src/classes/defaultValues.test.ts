@@ -1,11 +1,11 @@
-import { field } from '../decorators/Field';
-import { ArrayDecoder } from '../structs/ArrayDecoder';
-import IntegerDecoder from '../structs/IntegerDecoder';
-import { MapDecoder } from '../structs/MapDecoder';
-import StringDecoder from '../structs/StringDecoder';
-import { AutoEncoder } from './AutoEncoder';
-import { EncodeMedium } from './EncodeContext';
-import { ObjectData } from './ObjectData';
+import { field } from '../decorators/Field.js';
+import { ArrayDecoder } from '../structs/ArrayDecoder.js';
+import IntegerDecoder from '../structs/IntegerDecoder.js';
+import { MapDecoder } from '../structs/MapDecoder.js';
+import StringDecoder from '../structs/StringDecoder.js';
+import { AutoEncoder } from './AutoEncoder.js';
+import { EncodeMedium } from './EncodeContext.js';
+import { ObjectData } from './ObjectData.js';
 
 describe('Default values', () => {
     test('When decoding AutoEncoder the default version corresponding to the decoded version is used', () => {

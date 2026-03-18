@@ -1,5 +1,5 @@
-import { PatchOrPutDecoder } from '../structs/PatchOrPutDecoder';
-import { PatchableDecoder } from './AutoEncoder';
+import { PatchOrPutDecoder } from '../structs/PatchOrPutDecoder.js';
+import { PatchableDecoder } from './AutoEncoder.js';
 
 export class Field<T> {
     optional: boolean;

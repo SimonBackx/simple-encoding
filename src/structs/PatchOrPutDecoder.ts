@@ -1,6 +1,6 @@
-import { Data } from '../classes/Data';
-import { Decoder } from '../classes/Decoder';
-import { Patchable } from '../classes/Patchable';
+import { Data } from '../classes/Data.js';
+import { Decoder } from '../classes/Decoder.js';
+import { Patchable } from '../classes/Patchable.js';
 
 /**
  * Uses the meta data of AutoEncoder to check if something is a patch or a put

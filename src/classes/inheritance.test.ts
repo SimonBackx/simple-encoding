@@ -1,6 +1,6 @@
-import { field } from '../decorators/Field';
-import StringDecoder from '../structs/StringDecoder';
-import { AutoEncoder } from './AutoEncoder';
+import { field } from '../decorators/Field.js';
+import StringDecoder from '../structs/StringDecoder.js';
+import { AutoEncoder } from './AutoEncoder.js';
 
 describe('Inheriting', () => {
     it('Inherits fields', () => {

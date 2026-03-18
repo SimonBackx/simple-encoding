@@ -1,4 +1,4 @@
-import { deepSet } from './deepSet';
+import { deepSet } from './deepSet.js';
 
 export function deepSetMap(oldMap: Map<unknown, unknown>, newMap: Map<unknown, unknown>) {
     const copiedMap = new Map(oldMap);

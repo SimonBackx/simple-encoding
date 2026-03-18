@@ -112,17 +112,17 @@ export class PatchableArray<
                 // ok
             }
             else if (isPut(change)) {
-                if (getId(change.put) == item) {
+                if (getId(change.put) === item) {
                     return true;
                 }
             }
             else if (isDelete(change)) {
-                if (change.delete == item) {
+                if (change.delete === item) {
                     return true;
                 }
             }
             else if (isPatch(change)) {
-                if (getId(change.patch) == item) {
+                if (getId(change.patch) === item) {
                     return true;
                 }
             }
@@ -144,7 +144,7 @@ export class PatchableArray<
                 newCurrentChanges.push(change);
             }
             else if (isPut(change)) {
-                if (getId(change.put) == item) {
+                if (getId(change.put) === item) {
                     n.changes.push(change);
                 }
                 else {
@@ -152,7 +152,7 @@ export class PatchableArray<
                 }
             }
             else if (isDelete(change)) {
-                if (change.delete == item) {
+                if (change.delete === item) {
                     n.changes.push(change);
                 }
                 else {
@@ -160,7 +160,7 @@ export class PatchableArray<
                 }
             }
             else if (isPatch(change)) {
-                if (getId(change.patch) == item) {
+                if (getId(change.patch) === item) {
                     n.changes.push(change);
                 }
                 else {
@@ -243,9 +243,9 @@ export class PatchableArray<
             // Apply this change
             if (isMove(change)) {
                 // First do a delete of this value
-                const index = newArray.findIndex(e => getId(e) == change.move);
+                const index = newArray.findIndex(e => getId(e) === change.move);
 
-                if (index != -1) {
+                if (index !== -1) {
                     const value = newArray[index];
                     newArray.splice(index, 1);
                     // Insert it again
@@ -254,8 +254,8 @@ export class PatchableArray<
                     // not found = inserting at the end
                     let afterIndex = -1;
                     if (change.afterId !== null) {
-                        afterIndex = newArray.findIndex(e => getId(e) == change.afterId);
-                        if (afterIndex == -1) {
+                        afterIndex = newArray.findIndex(e => getId(e) === change.afterId);
+                        if (afterIndex === -1) {
                             afterIndex = newArray.length - 1;
                         }
                     }
@@ -271,8 +271,8 @@ export class PatchableArray<
                 // not found = inserting at the end
                 let afterIndex = -1;
                 if (change.afterId !== null) {
-                    afterIndex = newArray.findIndex(e => getId(e) == change.afterId);
-                    if (afterIndex == -1) {
+                    afterIndex = newArray.findIndex(e => getId(e) === change.afterId);
+                    if (afterIndex === -1) {
                         afterIndex = newArray.length - 1;
                     }
                 }
@@ -281,7 +281,7 @@ export class PatchableArray<
                 }
                 if (hasId(change.put)) {
                     // Delete any items with the same id first
-                    const existingIndex = newArray.findIndex(e => getId(e) == getId(change.put));
+                    const existingIndex = newArray.findIndex(e => getId(e) === getId(change.put));
                     if (existingIndex !== -1) {
                         newArray.splice(existingIndex, 1);
                         // Adjust afterIndex if needed
@@ -294,8 +294,8 @@ export class PatchableArray<
             }
             else if (isDelete(change)) {
                 // First do a delete of this value
-                const index = newArray.findIndex(e => getId(e) == change.delete);
-                if (index != -1) {
+                const index = newArray.findIndex(e => getId(e) === change.delete);
+                if (index !== -1) {
                     newArray.splice(index, 1);
                 }
                 else {
@@ -304,9 +304,9 @@ export class PatchableArray<
             }
             else if (isPatch(change)) {
                 // First do a delete of this value
-                const index = newArray.findIndex(e => getId(e) == getId(change.patch));
+                const index = newArray.findIndex(e => getId(e) === getId(change.patch));
 
-                if (index != -1) {
+                if (index !== -1) {
                     // Patch!
                     const value = newArray[index];
                     if (isPatchable(value)) {

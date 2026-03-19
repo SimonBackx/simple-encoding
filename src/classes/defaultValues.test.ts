@@ -1,6 +1,5 @@
 import { field } from '../decorators/Field.js';
 import { ArrayDecoder } from '../structs/ArrayDecoder.js';
-import IntegerDecoder from '../structs/IntegerDecoder.js';
 import { MapDecoder } from '../structs/MapDecoder.js';
 import StringDecoder from '../structs/StringDecoder.js';
 import { AutoEncoder } from './AutoEncoder.js';
@@ -8,6 +7,24 @@ import { EncodeMedium } from './EncodeContext.js';
 import { ObjectData } from './ObjectData.js';
 
 describe('Default values', () => {
+    test('Arrays are initialized as empty', () => {
+        class Dog extends AutoEncoder {
+            @field({ decoder: new ArrayDecoder(StringDecoder) })
+            items: string[];
+        }
+
+        expect(Dog.create({}).items).toEqual([]);
+    });
+
+    test('Arrays of AutoEncoder are initialized as empty', () => {
+        class Dog extends AutoEncoder {
+            @field({ decoder: new ArrayDecoder(Dog) })
+            items: Dog[];
+        }
+
+        expect(Dog.create({}).items).toEqual([]);
+    });
+
     test('When decoding AutoEncoder the default version corresponding to the decoded version is used', () => {
         class Dog extends AutoEncoder {
             @field({ decoder: StringDecoder, defaultValue: () => 'v1', version: 1 })

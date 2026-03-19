@@ -16,7 +16,8 @@
     "scripts": {
         "build": "tsc --build tsconfig.cjs.json tsconfig.esm.json && echo '{\"type\":\"commonjs\"}' > dist/cjs/package.json",
         "lint": "eslint",
-        "test": "NODE_OPTIONS=\"--max-old-space-size=8192 --max-semi-space-size=1024\" jest"
+        "test": "NODE_OPTIONS=\"--max-old-space-size=8192 --max-semi-space-size=1024\" jest",
+        "prepublishOnly": "pnpm build"
     },
     "files": [
         "dist",

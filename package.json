@@ -1,6 +1,6 @@
 {
     "name": "@simonbackx/simple-encoding",
-    "version": "2.26.0",
+    "version": "2.26.1",
     "type": "module",
     "types": "./dist/esm/index.d.ts",
     "module": "./dist/esm/index.js",

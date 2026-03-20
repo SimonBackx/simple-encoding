@@ -249,41 +249,100 @@ export class AutoEncoder implements Encodeable, Cloneable {
     static __fieldsForVersion: Map<number, Field<any>[]>;
     static __latestVersion: number;
     static __latestFields: Field<any>[];
-    static __constructorDefaults: Map<string, unknown>;
-    protected static getConstructorDefaults() {
-        const c = this.__constructorDefaults;
+    static __isConstructorDefaults: Map<string, (val: unknown) => boolean>;
+
+    protected static getIsConstructorDefaults() {
+        const c = this.__isConstructorDefaults;
         if (c !== undefined) {
             return c;
         }
 
         // Defined by a parent class, we need to reset it
         const cc = new this();
-        const attrs = new Map<string, unknown>();
+        const attrs = new Map<string, (val: unknown) => boolean>();
 
         for (const key in cc) {
-            attrs.set(key, cc[key]);
+            // This method is cached for performance
+            const classDefinitionDefaultValue = cc[key];
+
+            if (classDefinitionDefaultValue !== undefined) {
+                // By default we mark all values as not the default
+                attrs.set(key, () => {
+                    return false;
+                });
+            }
+            else {
+                // No default value, son't set a key
+                continue;
+            }
+
+            if (typeof classDefinitionDefaultValue === 'object' && classDefinitionDefaultValue !== null) {
+                // Special handling
+                if ((classDefinitionDefaultValue as any).length !== undefined) {
+                    if ((classDefinitionDefaultValue as any).length !== 0) {
+                        // Not supported
+                        // a non empty array is never a default
+                        continue;
+                    }
+
+                    attrs.set(key, (value: unknown) => {
+                        if (typeof value !== 'object' || value === null) {
+                            return false;
+                        }
+                        return (value as any).length === 0;
+                    });
+                    continue;
+                }
+
+                if ((classDefinitionDefaultValue as any).size !== undefined) {
+                    if ((classDefinitionDefaultValue as any).size !== 0) {
+                        // Not supported
+                        // a non empty map is never a default
+                        continue;
+                    }
+
+                    attrs.set(key, (value: unknown) => {
+                        if (typeof value !== 'object' || value === null) {
+                            return false;
+                        }
+                        return (value as any).size === 0;
+                    });
+                    continue;
+                }
+
+                if (isAutoEncoder(classDefinitionDefaultValue)) {
+                    attrs.set(key, (value: unknown) => {
+                        if (!isAutoEncoder(value)) {
+                            return false;
+                        }
+
+                        return classDefinitionDefaultValue.equals(value);
+                    });
+                    continue;
+                }
+
+                // Other class types are not supported as default values
+                continue;
+            }
+
+            attrs.set(key, (value: unknown) => {
+                return value === classDefinitionDefaultValue;
+            });
         }
 
         // Prevent changing default values
-        this.__constructorDefaults = attrs;
+        this.__isConstructorDefaults = attrs;
 
         return attrs;
     }
 
-    protected static getConstructorDefault(property: string, clone = true) {
-        const cc = this.getConstructorDefaults();
+    protected static isConstructorDefault(property: string, val: unknown): boolean | null {
+        const cc = this.getIsConstructorDefaults();
         const b = cc.get(property);
         if (!b) {
-            return b;
+            return null;
         }
-        if (clone && typeof b === 'object') {
-            if (b instanceof Map) {
-                // Does not behave correctly
-                return new (b.constructor as any)(b);
-            }
-            return structuredClone(b);
-        }
-        return b;
+        return b(val);
     }
 
     static get latestVersion(): number {
@@ -491,33 +550,9 @@ export class AutoEncoder implements Encodeable, Cloneable {
 
         // 2nd priority: constructor defaults
         // todo: only if version okay!
-        const classDefinitionDefaultValue = this.getConstructorDefault(field.property, false);
-        if (classDefinitionDefaultValue !== undefined) {
-            if (typeof classDefinitionDefaultValue === 'object' && classDefinitionDefaultValue !== null) {
-                if (typeof value !== 'object' || value === null) {
-                    return false;
-                }
-
-                // Special handling
-                if ((classDefinitionDefaultValue as any).length !== undefined) {
-                    // Array handling
-                    return (classDefinitionDefaultValue as any).length === 0 && (value as any).length === 0;
-                }
-
-                if ((classDefinitionDefaultValue as any).size !== undefined) {
-                    // Map handling
-                    return (classDefinitionDefaultValue as any).size === 0 && (value as any).size === 0;
-                }
-
-                if (isAutoEncoder(value) && isAutoEncoder(classDefinitionDefaultValue)) {
-                    return value.equals(classDefinitionDefaultValue);
-                }
-
-                return false;
-            }
-
-            // We have a default value defined in the class definition.
-            return value === classDefinitionDefaultValue;
+        const classDefinitionDefaultValue = this.isConstructorDefault(field.property, value);
+        if (classDefinitionDefaultValue !== null) {
+            return classDefinitionDefaultValue;
         }
 
         if (!field.optional) {
@@ -557,7 +592,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
             fields = this.static.fieldsForVersion(version);
         }
 
-        const skip = version >= AutoEncoder.skipDefaultValuesVersion || this.static.isPatch;
+        const skip = (version >= AutoEncoder.skipDefaultValuesVersion || this.static.isPatch) && version >= latestVersion;
         const longTermStorage = context.medium === EncodeMedium.Database;
 
         for (const field of fields) {
@@ -666,6 +701,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
         if (version < latestVersion) {
             // When you set constructor defaults for fields that only exist in a new version
             // those fields will already be set, which we don't want during the upgrade.
+            const defaultValues: Map<string, unknown> = new Map();
             for (const field of this.latestFields) {
                 const prop = field.property;
                 if (model[prop] === undefined) {
@@ -679,10 +715,11 @@ export class AutoEncoder implements Encodeable, Cloneable {
                     }
                 }
                 if (!found) {
+                    defaultValues.set(prop, model[prop]);
                     model[prop as string] = undefined;
                 }
             }
-            this.upgrade(version, model);
+            this.upgrade(version, model, defaultValues);
         }
 
         return model;
@@ -697,7 +734,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
      * @param from
      * @param object
      */
-    static upgrade<T extends typeof AutoEncoder>(from: number, object: InstanceType<T>) {
+    static upgrade<T extends typeof AutoEncoder>(from: number, object: InstanceType<T>, defaultValues: Map<string, unknown>) {
         // Run from old to new
         for (const field of this.fields) {
             if (field.version > from) {
@@ -712,7 +749,7 @@ export class AutoEncoder implements Encodeable, Cloneable {
                         }
                         else {
                             // Set default version
-                            const classDefinitionDefaultValue = this.getConstructorDefault(field.property);
+                            const classDefinitionDefaultValue = defaultValues.get(field.property);
                             if (classDefinitionDefaultValue !== undefined) {
                                 object[field.property] = classDefinitionDefaultValue;
                             }

@@ -718,4 +718,306 @@ describe('Default values', () => {
             expect(decoded.friend.name).toEqual('Luc');
         });
     });
+
+    describe('Upgrading', () => {
+        describe('Constructor defaults', () => {
+            test('AutoEncoder constructor defaults are cloned correctly', () => {
+                class Friend extends AutoEncoder {
+                    @field({ decoder: StringDecoder })
+                    name: string;
+                }
+
+                // Constructor defaults are used as default value when upgrading
+                class Dog extends AutoEncoder {
+                    @field({ decoder: Friend, version: 5 })
+                    friend = Friend.create({});
+                }
+
+                const decoded = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+                expect(decoded.friend).toBeDefined();
+                expect(decoded.friend).toBeInstanceOf(Friend);
+
+                const decoded2 = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+
+                // Check references are not the same
+                expect(decoded2.friend).not.toBe(decoded.friend);
+            });
+
+            test('AutoEncoder constructor default is ignored if there is an upgrade method', () => {
+                class Friend extends AutoEncoder {
+                    @field({ decoder: StringDecoder })
+                    name: string;
+                }
+
+                // Constructor defaults are used as default value when upgrading
+                class Dog extends AutoEncoder {
+                    @field({ decoder: Friend, version: 5, upgrade: () => Friend.create({ name: 'Old' }) })
+                    friend = Friend.create({});
+                }
+
+                const decoded = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+                expect(decoded.friend).toBeDefined();
+                expect(decoded.friend).toBeInstanceOf(Friend);
+                expect(decoded.friend.name).toEqual('Old');
+
+                const decoded2 = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+
+                // Check references are not the same
+                expect(decoded2.friend).not.toBe(decoded.friend);
+            });
+
+            test('Map constructor defaults are cloned correctly', () => {
+                class Friend extends AutoEncoder {
+                    @field({ decoder: StringDecoder })
+                    name: string;
+                }
+
+                // Constructor defaults are used as default value when upgrading
+                class Dog extends AutoEncoder {
+                    @field({ decoder: new MapDecoder(StringDecoder, Friend), version: 5 })
+                    friend = new Map([['test', Friend.create({})]]);
+                }
+
+                const decoded = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+                expect(decoded.friend).toBeDefined();
+                expect(decoded.friend).toBeInstanceOf(Map);
+                expect(decoded.friend.get('test')).toBeInstanceOf(Friend);
+
+                const decoded2 = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+
+                // Check references are not the same
+                expect(decoded2.friend).not.toBe(decoded.friend);
+                expect(decoded2.friend.get('test')).not.toBe(decoded.friend.get('test'));
+            });
+
+            test('Array constructor defaults are cloned correctly', () => {
+                class Friend extends AutoEncoder {
+                    @field({ decoder: StringDecoder })
+                    name: string;
+                }
+
+                // Constructor defaults are used as default value when upgrading
+                class Dog extends AutoEncoder {
+                    @field({ decoder: new ArrayDecoder(Friend), version: 5 })
+                    friend = [Friend.create({})];
+                }
+
+                const decoded = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+                expect(decoded.friend).toBeDefined();
+                expect(decoded.friend).toBeInstanceOf(Array);
+                expect(decoded.friend[0]).toBeInstanceOf(Friend);
+
+                const decoded2 = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+
+                // Check references are not the same
+                expect(decoded2.friend).not.toBe(decoded.friend);
+                expect(decoded2.friend[0]).not.toBe(decoded.friend[0]);
+            });
+        });
+
+        describe('Decoder.defaultValue', () => {
+            test('AutoEncoder constructor defaults are cloned correctly', () => {
+                class Friend extends AutoEncoder {
+                    @field({ decoder: StringDecoder })
+                    name: string;
+                }
+
+                // Constructor defaults are used as default value when upgrading
+                class Dog extends AutoEncoder {
+                    @field({ decoder: Friend, version: 5 })
+                    friend: Friend;
+                }
+
+                const decoded = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+                expect(decoded.friend).toBeDefined();
+                expect(decoded.friend).toBeInstanceOf(Friend);
+
+                const decoded2 = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+
+                // Check references are not the same
+                expect(decoded2.friend).not.toBe(decoded.friend);
+            });
+
+            test('Decoder default is ignored if there is an upgrade method', () => {
+                class Friend extends AutoEncoder {
+                    @field({ decoder: StringDecoder })
+                    name: string;
+                }
+
+                // Constructor defaults are used as default value when upgrading
+                class Dog extends AutoEncoder {
+                    @field({ decoder: Friend, version: 5, upgrade: () => Friend.create({ name: 'Old' }) })
+                    friend: Friend;
+                }
+
+                const decoded = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+                expect(decoded.friend).toBeDefined();
+                expect(decoded.friend).toBeInstanceOf(Friend);
+                expect(decoded.friend.name).toEqual('Old');
+
+                const decoded2 = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+
+                // Check references are not the same
+                expect(decoded2.friend).not.toBe(decoded.friend);
+            });
+
+            test('Map constructor defaults are cloned correctly', () => {
+                class Friend extends AutoEncoder {
+                    @field({ decoder: StringDecoder })
+                    name: string;
+                }
+
+                // Constructor defaults are used as default value when upgrading
+                class Dog extends AutoEncoder {
+                    @field({ decoder: new MapDecoder(StringDecoder, Friend), version: 5 })
+                    friend: Map<string, Friend>;
+                }
+
+                const decoded = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+                expect(decoded.friend).toBeDefined();
+                expect(decoded.friend).toBeInstanceOf(Map);
+                expect(decoded.friend.size).toEqual(0);
+
+                const decoded2 = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+
+                // Check references are not the same
+                expect(decoded2.friend).not.toBe(decoded.friend);
+            });
+
+            test('Array constructor defaults are cloned correctly', () => {
+                class Friend extends AutoEncoder {
+                    @field({ decoder: StringDecoder })
+                    name: string;
+                }
+
+                // Constructor defaults are used as default value when upgrading
+                class Dog extends AutoEncoder {
+                    @field({ decoder: new ArrayDecoder(Friend), version: 5 })
+                    friend: Friend[];
+                }
+
+                const decoded = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+                expect(decoded.friend).toBeDefined();
+                expect(decoded.friend).toBeInstanceOf(Array);
+
+                const decoded2 = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+
+                // Check references are not the same
+                expect(decoded2.friend).not.toBe(decoded.friend);
+            });
+        });
+
+        test('Nullable have priority over Decoder.defaultValue', () => {
+            class Friend extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                name: string;
+            }
+
+            // Constructor defaults are used as default value when upgrading
+            class Dog extends AutoEncoder {
+                @field({ decoder: Friend, nullable: true, version: 5 })
+                friend: Friend | null;
+            }
+
+            const decoded = Dog.decode(
+                new ObjectData({}, { version: 0 }),
+            );
+            expect(decoded.friend).toBeNull();
+        });
+
+        test('Properties remain undefined if optional', () => {
+            class Friend extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                name: string;
+            }
+
+            // Constructor defaults are used as default value when upgrading
+            class Dog extends AutoEncoder {
+                @field({ decoder: Friend, optional: true, nullable: true, version: 5 })
+                friend: Friend | null | undefined;
+            }
+
+            const decoded = Dog.decode(
+                new ObjectData({}, { version: 0 }),
+            );
+            expect(decoded.friend).toBeUndefined();
+        });
+
+        test('Properties do not remain undefined if optional with constructor default', () => {
+            class Friend extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                name: string;
+            }
+
+            // Constructor defaults are used as default value when upgrading
+            class Dog extends AutoEncoder {
+                @field({ decoder: Friend, optional: true, nullable: true, version: 5 })
+                friend: Friend | null | undefined = Friend.create({});
+            }
+
+            const decoded = Dog.decode(
+                new ObjectData({}, { version: 0 }),
+            );
+            expect(decoded.friend).toBeDefined();
+            expect(decoded.friend).toBeInstanceOf(Friend);
+        });
+
+        test('Constructor defaults have priority over nullable', () => {
+            class Friend extends AutoEncoder {
+                @field({ decoder: StringDecoder })
+                name: string;
+            }
+
+            // Constructor defaults are used as default value when upgrading
+            class Dog extends AutoEncoder {
+                @field({ decoder: Friend, nullable: true, version: 5 })
+                friend: Friend | null = Friend.create({});
+            }
+
+            const decoded = Dog.decode(
+                new ObjectData({}, { version: 0 }),
+            );
+            expect(decoded.friend).toBeDefined();
+            expect(decoded.friend).toBeInstanceOf(Friend);
+
+            const decoded2 = Dog.decode(
+                new ObjectData({}, { version: 0 }),
+            );
+
+            // Check references are not the same
+            expect(decoded2.friend).not.toBe(decoded.friend);
+        });
+    });
 });

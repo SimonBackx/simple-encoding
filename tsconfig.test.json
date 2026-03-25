@@ -11,7 +11,7 @@
         ],
         "types": [
             "node",
-            "jest"
+            "vitest/globals"
         ]
     },
     "references": [

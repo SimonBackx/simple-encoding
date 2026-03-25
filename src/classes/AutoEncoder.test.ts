@@ -122,13 +122,13 @@ describe('AutoEncoder', () => {
             id: 1,
             name: 'dog',
             friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
-            friends: [{ id: 2, name: 'friend' /* friendIds: [], friends: [] */ }],
+            friends: [{ id: 2, name: 'friend', friendIds: [], friends: [] }],
         });
         expect(dog.encode({ version: 2 })).toEqual({
             id: 'DOG1',
             breed: 'dog',
             friendIds: ['sdgsdg', '84sdg95', 'sdg95sdg26s'],
-            friends: [{ id: 'DOG2', breed: 'friend' /* friendIds: [], friends: [] */ }],
+            friends: [{ id: 'DOG2', breed: 'friend' }],
         });
     });
 

@@ -1,4 +1,4 @@
-import { getOptionalId } from '../classes/Identifiable.js';
+import { getOptionalId, hasId } from '../classes/Identifiable.js';
 import { deepSetArray } from './deepSetArray.js';
 import { deepSetMap } from './deepSetMap.js';
 
@@ -40,30 +40,31 @@ export function deepSet(base: unknown, object: unknown): unknown {
             return object;
         }
 
-        // Merge object
-        // if ((object instanceof AutoEncoder)) {// Other
-        if (getOptionalId(base) === getOptionalId(object)) {
-            // Only copy if same id
+        // Check if base has an id
+        if (hasId(base)) {
+            if (getOptionalId(base) !== getOptionalId(object)) {
+                // Skip copy if not the same id
+                return base;
+            }
+        }
 
-            for (const key in object) {
-                if (Object.hasOwn(object, key) && typeof object[key] !== 'function') {
-                    const value = object[key];
-                    const baseValue = base[key];
+        for (const key in object) {
+            if (Object.hasOwn(object, key) && typeof object[key] !== 'function') {
+                const value = object[key];
+                const baseValue = base[key];
 
-                    // Precent recursive updates
-                    object[key] = baseValue;
-                    const setValue = deepSet(baseValue, value);
-                    if (setValue !== baseValue) {
-                        // Reference was not updated, set instead
-                        base[key] = setValue;
-                        object[key] = setValue;
-                    }
+                // Precent recursive updates
+                object[key] = baseValue;
+                const setValue = deepSet(baseValue, value);
+                if (setValue !== baseValue) {
+                    // Reference was not updated, set instead
+                    base[key] = setValue;
+                    object[key] = setValue;
                 }
             }
         }
 
         return base;
-        // }
     }
 
     // Override

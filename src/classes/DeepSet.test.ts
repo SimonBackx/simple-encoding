@@ -272,4 +272,67 @@ describe('DeepSet', () => {
             c: true,
         });
     });
+
+    describe('Arrays', () => {
+        it('New items are added and existing altered', () => {
+            const existingItem = { id: 'A', name: 'A' };
+            const container = {
+                name: 'Container',
+                friends: {
+                    organizations: [existingItem],
+                },
+            };
+            const originalArray = container.friends.organizations;
+
+            const newItem = { id: 'B', name: 'B' };
+            const containerAfter = {
+                name: 'Container',
+                friends: {
+                    organizations: [{ id: 'A', name: 'A Changed' }, newItem],
+                },
+            };
+
+            const result = deepSet(container, containerAfter);
+            expect(result).toBe(container);
+
+            expect(container.friends.organizations.length).toEqual(2);
+            expect(container.friends.organizations[0]).toBe(existingItem);
+            expect(container.friends.organizations[1]).toBe(newItem);
+
+            expect(existingItem.name).toEqual('A Changed');
+
+            // Array refrence should be reused
+            expect(container.friends.organizations).toBe(originalArray);
+        });
+
+        it('Missing items are removed by default while existing are still altered', () => {
+            const existingItem = { id: 'A', name: 'A' };
+            const newItem = { id: 'B', name: 'B' };
+            const container = {
+                name: 'Container',
+                friends: {
+                    organizations: [existingItem, newItem],
+                },
+            };
+            const originalArray = container.friends.organizations;
+
+            const containerAfter = {
+                name: 'Container',
+                friends: {
+                    organizations: [{ id: 'A', name: 'A Changed' }],
+                },
+            };
+
+            const result = deepSet(container, containerAfter);
+            expect(result).toBe(container);
+
+            expect(container.friends.organizations.length).toEqual(1);
+            expect(container.friends.organizations[0]).toBe(existingItem);
+
+            expect(existingItem.name).toEqual('A Changed');
+
+            // Array refrence should be reused
+            expect(container.friends.organizations).toBe(originalArray);
+        });
+    });
 });

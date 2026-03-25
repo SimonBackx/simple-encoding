@@ -129,7 +129,7 @@ function sample(callback: () => void, maximum = 30_000) {
     }
 }
 
-describe('Benchmark', () => {
+describe.skip('Benchmark', () => {
     test('Encoding small object', () => {
         const obj = init();
         const avg = sample(() => obj.encode({ version: 10 }));

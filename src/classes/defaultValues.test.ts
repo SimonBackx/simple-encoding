@@ -1,5 +1,6 @@
 import { field } from '../decorators/Field.js';
 import { ArrayDecoder } from '../structs/ArrayDecoder.js';
+import DateDecoder from '../structs/DateDecoder.js';
 import { MapDecoder } from '../structs/MapDecoder.js';
 import StringDecoder from '../structs/StringDecoder.js';
 import { AutoEncoder } from './AutoEncoder.js';
@@ -937,6 +938,45 @@ describe('Default values', () => {
                 // Check references are not the same
                 expect(decoded2.friend).not.toBe(decoded.friend);
             });
+        });
+
+        test('Date defaults', () => {
+            // Constructor defaults are used as default value when upgrading
+            class Dog extends AutoEncoder {
+                @field({ decoder: DateDecoder, version: 5, defaultValue: () => new Date() })
+                friend: Date;
+            }
+
+            expect(Dog.create({}).encode({ version: 0 })).toStrictEqual({});
+            // expect(Dog.create({}).encode({ version: 5 })).toStrictEqual({});
+
+            {
+                const decoded = Dog.decode(
+                    new ObjectData({}, { version: 0 }),
+                );
+                expect(decoded.friend).toBeInstanceOf(Date);
+            }
+
+            {
+                const decoded = Dog.decode(
+                    new ObjectData({
+                        friend: 400,
+                    }, { version: 5 }),
+                );
+                expect(decoded.friend).toBeInstanceOf(Date);
+                expect(decoded.friend.getTime()).toEqual(400);
+            }
+
+            {
+                // Ignore friend property in older version
+                const decoded = Dog.decode(
+                    new ObjectData({
+                        friend: 400,
+                    }, { version: 0 }),
+                );
+                expect(decoded.friend).toBeInstanceOf(Date);
+                expect(decoded.friend.getTime()).not.toEqual(400);
+            }
         });
 
         test('Nullable have priority over Decoder.defaultValue', () => {

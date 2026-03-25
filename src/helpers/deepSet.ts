@@ -43,8 +43,8 @@ export function deepSet(base: unknown, object: unknown): unknown {
         // Check if base has an id
         if (hasId(base)) {
             if (getOptionalId(base) !== getOptionalId(object)) {
-                // Skip copy if not the same id
-                return base;
+                // Skip copy if not the same: replace with object
+                return object;
             }
         }
 

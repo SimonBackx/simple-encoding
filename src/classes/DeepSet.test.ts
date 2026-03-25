@@ -236,12 +236,13 @@ describe('DeepSet', () => {
         const b = { id: 'b', b: true };
         const c = { id: 'c', c: true };
 
-        deepSet({
+        const object = {
             id: 'setter',
             a,
             b,
             c,
-        }, {
+        };
+        const newObject = {
             id: 'setter',
             a: {
                 id: 'a', addA: true,
@@ -254,7 +255,8 @@ describe('DeepSet', () => {
                 id: 'something else',
                 addC: false,
             },
-        });
+        };
+        deepSet(object, newObject);
 
         expect(a).toStrictEqual({
             id: 'a',
@@ -270,6 +272,17 @@ describe('DeepSet', () => {
         expect(c).toStrictEqual({
             id: 'c',
             c: true,
+        });
+
+        expect(object.b).toBe(newObject.b);
+        expect(object.b).toStrictEqual({
+            id: 'something else',
+            addB: false,
+        });
+        expect(object.c).toBe(newObject.c);
+        expect(object.c).toStrictEqual({
+            id: 'something else',
+            addC: false,
         });
     });
 

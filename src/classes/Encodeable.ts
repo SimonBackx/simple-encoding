@@ -48,16 +48,35 @@ export function encodeObject(obj: unknown, context: EncodeContext): PlainObject 
             const encodedObj: any = {};
 
             if (context.medium === EncodeMedium.Database || isDevelopment) {
-            // Only sort keys in database to avoid chaning data
-                const sortedKeys = [...obj.keys()].sort((a, b) => sortObjectKeysForEncoding(a, b));
+                // Only sort keys in database to avoid chaining data
+                const keys = [...obj.keys()];
 
-                for (const key of sortedKeys) {
-                    const k = encodeObject(key, context);
-                    if (typeof k !== 'string' && typeof k !== 'number') {
-                        throw new Error(`Map keys must be strings or numbers. Got ${k}`);
+                if(keys.length !== 0) {
+                    let firstKey = keys[0];
+                    let firstType = typeof firstKey;
+
+                    // check type of keys
+                    if(firstType !== 'string' && firstType !== 'number') {
+                        throw new Error(`Map keys must be strings or numbers. Got ${encodeObject(firstKey, context)}`);
                     }
-                    const value = obj.get(key);
-                    encodedObj[k] = encodeObject(value, context);
+                    
+                    for(const key of keys) {
+                        if(typeof key !== firstType) {
+                            throw new Error(`Map keys must be of the same type. Got ${firstType} and ${typeof key}`);
+                        }
+                    }
+
+                    // sort keys
+                    if(firstType === 'number') {
+                        keys.sort((a, b) => a - b);
+                    } else {
+                        keys.sort((a, b) => a.localeCompare(b));
+                    }
+
+                    for (const key of keys) {
+                        const value = obj.get(key);
+                        encodedObj[key] = encodeObject(value, context);
+                    }
                 }
             }
             else {

@@ -51,25 +51,26 @@ export function encodeObject(obj: unknown, context: EncodeContext): PlainObject 
                 // Only sort keys in database to avoid chaining data
                 const keys = [...obj.keys()];
 
-                if(keys.length !== 0) {
-                    let firstKey = keys[0];
-                    let firstType = typeof firstKey;
+                if (keys.length !== 0) {
+                    const firstKey = keys[0];
+                    const firstType = typeof firstKey;
 
                     // check type of keys
-                    if(firstType !== 'string' && firstType !== 'number') {
-                        throw new Error(`Map keys must be strings or numbers. Got ${encodeObject(firstKey, context)}`);
+                    if (firstType !== 'string' && firstType !== 'number') {
+                        throw new Error(`Map keys must be strings or numbers. Got ${firstType}`);
                     }
-                    
-                    for(const key of keys) {
-                        if(typeof key !== firstType) {
+
+                    for (const key of keys) {
+                        if (typeof key !== firstType) {
                             throw new Error(`Map keys must be of the same type. Got ${firstType} and ${typeof key}`);
                         }
                     }
 
                     // sort keys
-                    if(firstType === 'number') {
+                    if (firstType === 'number') {
                         keys.sort((a, b) => a - b);
-                    } else {
+                    }
+                    else {
                         keys.sort((a, b) => a.localeCompare(b));
                     }
 

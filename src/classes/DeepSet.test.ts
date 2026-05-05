@@ -231,6 +231,28 @@ describe('DeepSet', () => {
         deepSet(a, b);
     });
 
+    it('[Regression] copies over the id when called directly', () => {
+        const a = { id: 'a', a: true };
+        const b = { id: 'b', a: false, addA: true };
+
+        deepSet(a, b);
+
+        expect(a).toStrictEqual({
+            id: 'b',
+            a: false,
+            addA: true,
+        });
+
+        // b is unaffected
+        expect(b).toStrictEqual({
+            id: 'b',
+            a: false,
+            addA: true,
+        });
+
+        expect(a).not.toBe(b);
+    });
+
     it('moves right references', () => {
         const a = { id: 'a', a: true };
         const b = { id: 'b', b: true };

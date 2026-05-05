@@ -8,7 +8,7 @@ export function deepSetMap(oldMap: Map<unknown, unknown>, newMap: Map<unknown, u
         const baseValue = copiedMap.get(key);
         // Prevent recursive updates
         newMap.set(key, baseValue);
-        const setValue = deepSet(baseValue, value);
+        const setValue = deepSet(baseValue, value, { replaceOnIdChange: true });
         oldMap.set(key, setValue);
 
         if (setValue !== baseValue) {

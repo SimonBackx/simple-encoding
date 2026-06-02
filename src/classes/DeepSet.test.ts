@@ -308,6 +308,235 @@ describe('DeepSet', () => {
         });
     });
 
+    it('copies inherited properties', () => {
+        let count = 0;
+        class Animal {
+            id: string;
+            type: string;
+            count: number;
+
+            constructor(id: string, type: string) {
+                this.id = id;
+                this.type = type;
+                this.count = (count++);
+            }
+        }
+
+        class Dog extends Animal {
+            name: string;
+
+            constructor(id: string, type: string, name: string) {
+                super(id, type);
+                this.name = name;
+            }
+        }
+
+        const a = new Dog('a', 'german shepherd', 'Pablo');
+        const b = new Dog('b', 'golden retriever', 'Luc');
+        expect(a.count).toEqual(0);
+        expect(b.count).toEqual(1);
+
+        deepSet(a, b);
+
+        const d = new Dog('b', 'golden retriever', 'Luc');
+        d.count = 1;
+        expect(a).toStrictEqual(d);
+    });
+
+    it('ignores methods', () => {
+        let count = 0;
+        const a = { id: 'a', a: true, counter() {
+            return count++;
+        } };
+        const og = a.counter;
+        const b = { id: 'a', b: true, counter() {
+            count++; // simulate access to the method
+            return -100;
+        } };
+
+        deepSet(a, b);
+
+        expect(a).toStrictEqual({
+            id: 'a',
+            a: true,
+            b: true,
+            counter: og,
+        });
+
+        expect(a.counter()).toEqual(0);
+        expect(a.counter()).toEqual(1);
+
+        // Not changed
+        expect(b.counter()).toEqual(-100);
+    });
+
+    it('ignores getters', () => {
+        let count = 0;
+        const a = { id: 'a', a: true, get counter() {
+            return count++;
+        } };
+        const b = { id: 'a', b: true, get counter() {
+            count++;
+            return -100;
+        } };
+
+        deepSet(a, b);
+
+        expect(a).toStrictEqual({
+            id: 'a',
+            a: true,
+            b: true,
+            counter: 0, // First access by vitest itself
+        });
+
+        expect(a.counter).toEqual(1);
+        expect(a.counter).toEqual(2);
+    });
+
+    it('setting on a child class', () => {
+        class Base extends AutoEncoder {
+            @field({ decoder: StringDecoder })
+            id: string;
+
+            @field({ decoder: StringDecoder })
+            name: string;
+        }
+
+        class Friend extends Base {
+        }
+
+        class Extended extends Base {
+            @field({ decoder: new ArrayDecoder(Friend) })
+            friends: Friend[];
+
+            get myFriends() {
+                return this.friends;
+            }
+        }
+
+        const base = Base.create({
+            id: 'tmp',
+            name: 'Temporary',
+        });
+
+        const receivedFromBackend = Extended.create({
+            id: 'a',
+            name: 'A',
+            friends: [
+                Friend.create({
+                    id: 'friend',
+                    name: 'My Friend',
+                }),
+            ],
+        });
+
+        base.deepSet(receivedFromBackend);
+
+        expect(base).toEqual(Extended.create({
+            id: 'a',
+            name: 'A',
+            friends: [
+                Friend.create({
+                    id: 'friend',
+                    name: 'My Friend',
+                }),
+            ],
+        }));
+        expect(base).toBeInstanceOf(Base);
+        expect(base).not.toBeInstanceOf(Extended);
+        expect('myFriends' in base).toBe(false);
+
+        expect((base as any).friends).toBe(receivedFromBackend.friends);
+
+        // Received another new version from the backend
+        const receivedFromBackendNew = Extended.create({
+            id: 'a',
+            name: 'Changed',
+            friends: [
+                Friend.create({
+                    id: 'friend',
+                    name: 'My Friend',
+                }),
+                Friend.create({
+                    id: 'friend2',
+                    name: 'My Friend 2',
+                }),
+            ],
+        });
+
+        receivedFromBackend.deepSet(receivedFromBackendNew);
+
+        expect(base).toEqual(Extended.create({
+            id: 'a',
+            name: 'A',
+            friends: [
+                // Only this reference has changed
+                Friend.create({
+                    id: 'friend',
+                    name: 'My Friend',
+                }),
+                Friend.create({
+                    id: 'friend2',
+                    name: 'My Friend 2',
+                }),
+            ],
+        }));
+
+        expect(receivedFromBackend).toEqual(Extended.create({
+            id: 'a',
+            name: 'Changed',
+            friends: [
+                // Only this reference has changed
+                Friend.create({
+                    id: 'friend',
+                    name: 'My Friend',
+                }),
+                Friend.create({
+                    id: 'friend2',
+                    name: 'My Friend 2',
+                }),
+            ],
+        }));
+
+        // Check all references are in harmony
+        expect((base as any).friends).toBe(receivedFromBackend.friends);
+        expect(receivedFromBackend.friends).toBe(receivedFromBackendNew.friends);
+
+        base.deepSet(receivedFromBackendNew);
+
+        expect(base).toEqual(Extended.create({
+            id: 'a',
+            name: 'Changed',
+            friends: [
+                // Only this reference has changed
+                Friend.create({
+                    id: 'friend',
+                    name: 'My Friend',
+                }),
+                Friend.create({
+                    id: 'friend2',
+                    name: 'My Friend 2',
+                }),
+            ],
+        }));
+
+        expect(receivedFromBackend).toEqual(Extended.create({
+            id: 'a',
+            name: 'Changed',
+            friends: [
+                // Only this reference has changed
+                Friend.create({
+                    id: 'friend',
+                    name: 'My Friend',
+                }),
+                Friend.create({
+                    id: 'friend2',
+                    name: 'My Friend 2',
+                }),
+            ],
+        }));
+    });
+
     describe('Arrays', () => {
         it('New items are added and existing altered', () => {
             const existingItem = { id: 'A', name: 'A' };

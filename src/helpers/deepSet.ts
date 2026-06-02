@@ -54,7 +54,17 @@ export function deepSet(base: unknown, object: unknown, options?: { replaceOnIdC
         }
 
         for (const key in object) {
-            if (Object.hasOwn(object, key) && typeof object[key] !== 'function') {
+            if (Object.hasOwn(object, key)) {
+                const descriptor = Object.getOwnPropertyDescriptor(object, key);
+                if (!(
+                    descriptor !== undefined
+                    && typeof descriptor.get === 'undefined' // exclude getters
+                    && typeof descriptor.set === 'undefined' // exclude setters
+                    && typeof object[key] !== 'function' // exclude methods
+                )) {
+                    continue;
+                }
+
                 const value = object[key];
                 const baseValue = base[key];
 

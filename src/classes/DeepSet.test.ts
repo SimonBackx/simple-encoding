@@ -1,8 +1,15 @@
 import { field } from '../decorators/Field.js';
 import { deepSet } from '../helpers/deepSet.js';
+import { deepSetArray } from '../helpers/deepSetArray.js';
+import { deepSetMap } from '../helpers/deepSetMap.js';
 import { ArrayDecoder } from '../structs/ArrayDecoder.js';
+import DateDecoder from '../structs/DateDecoder.js';
+import { EnumDecoder } from '../structs/EnumDecoder.js';
+import { MapDecoder } from '../structs/MapDecoder.js';
 import StringDecoder from '../structs/StringDecoder.js';
 import { AutoEncoder } from './AutoEncoder.js';
+import { ObjectData } from './ObjectData.js';
+import { isProxy, reactive } from 'vue';
 
 class Dog extends AutoEncoder {
     @field({ decoder: StringDecoder })
@@ -393,13 +400,40 @@ describe('DeepSet', () => {
         expect(a.counter).toEqual(2);
     });
 
+    it('ignores getter setters', () => {
+        let count = 0;
+        const a = { id: 'a', a: true, get counter() {
+            return count++;
+        }, set counter(v: number) {
+            // noop
+        } };
+        const b = { id: 'a', b: true, get counter() {
+            count++;
+            return -100;
+        }, set counter(v: number) {
+            // noop
+        } };
+
+        deepSet(a, b);
+
+        expect(a).toStrictEqual({
+            id: 'a',
+            a: true,
+            b: true,
+            counter: 0, // First access by vitest itself
+        });
+
+        expect(a.counter).toEqual(1);
+        expect(a.counter).toEqual(2);
+    });
+
     it('setting on a child class', () => {
         class Base extends AutoEncoder {
             @field({ decoder: StringDecoder })
-            id: string;
+            id!: string;
 
             @field({ decoder: StringDecoder })
-            name: string;
+            name!: string;
         }
 
         class Friend extends Base {
@@ -407,7 +441,7 @@ describe('DeepSet', () => {
 
         class Extended extends Base {
             @field({ decoder: new ArrayDecoder(Friend) })
-            friends: Friend[];
+            friends!: Friend[];
 
             get myFriends() {
                 return this.friends;
@@ -597,6 +631,75 @@ describe('DeepSet', () => {
 
             // Array refrence should be reused
             expect(container.friends.organizations).toBe(originalArray);
+        });
+    });
+
+    describe('Vue Proxies', () => {
+        enum STPackageType {
+            // Members without activities (not available in frontend anymore)
+            LegacyMembers = 'LegacyMembers',
+
+            // Full members package
+            Members = 'Members',
+
+            // Webshop package (max 10 webshops)
+            Webshops = 'Webshops',
+
+            // One webshop package (max 1 webshop)
+            SingleWebshop = 'SingleWebshop',
+
+            TrialMembers = 'TrialMembers',
+            TrialWebshops = 'TrialWebshops',
+        }
+
+        class STPackageStatus extends AutoEncoder {
+            @field({ decoder: DateDecoder })
+            startDate!: Date;
+
+            @field({ decoder: DateDecoder, nullable: true })
+            validUntil: Date | null = null;
+        }
+
+        test('Proxy maps different underlying value', () => {
+            const mapA = reactive(new Map<STPackageType, STPackageStatus>([
+                [STPackageType.TrialMembers, STPackageStatus.create({
+                    startDate: new Date(1_000),
+                })],
+            ]));
+            const mapB = new Map<STPackageType, STPackageStatus>([
+                [STPackageType.TrialMembers, STPackageStatus.create({
+                    startDate: new Date(1_000),
+                })],
+            ]);
+
+            const result = deepSetMap(mapA, mapB);
+            expect(result.size).toEqual(1);
+        });
+
+        test('[Regression] Proxy maps', () => {
+            const m = new Map<STPackageType, STPackageStatus>([
+                [STPackageType.TrialMembers, STPackageStatus.create({
+                    startDate: new Date(1_000),
+                })],
+            ]);
+            const mapA = reactive(m);
+            const mapB = m;
+
+            const result = deepSetMap(mapA, mapB);
+            expect(result.size).toEqual(1);
+        });
+
+        test('[Regression] Proxy arrays', () => {
+            const m = [
+                STPackageStatus.create({
+                    startDate: new Date(1_000),
+                }),
+            ];
+            const arrayA = reactive(m);
+            const arrayB = m;
+
+            const result = deepSetArray(arrayA, arrayB);
+            expect(result.length).toEqual(1);
         });
     });
 });

@@ -38,7 +38,8 @@
         "tslib": "^2.8.1",
         "typescript": "^5.9.3",
         "uuid": "^9.0.0",
-        "vitest": "^4.1.1"
+        "vitest": "^4.1.1",
+        "vue": "^3.5.35"
     },
     "resolutions": {
         "uuid": "^9.0.0"

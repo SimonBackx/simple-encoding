@@ -8,7 +8,7 @@ export type NonScalarIdentifiableType<T> = T extends { id: infer P }
     : never;
 
 export function hasId(val: any): val is Identifiable<string | number> {
-    return typeof val === 'object' && val !== undefined && val.id !== undefined;
+    return typeof val === 'object' && val !== null && val.id !== undefined;
 }
 
 export function getId<P extends string | number>(val: Identifiable<P> | P): P {

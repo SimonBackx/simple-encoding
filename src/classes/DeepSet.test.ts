@@ -287,9 +287,9 @@ describe('DeepSet', () => {
         };
         deepSet(object, newObject);
 
+        // The base-only key `a` is dropped: plain-object dictionaries are synced to object's key set.
         expect(a).toStrictEqual({
             id: 'a',
-            a: true,
             addA: true,
         });
 
@@ -363,9 +363,9 @@ describe('DeepSet', () => {
 
         deepSet(a, b);
 
+        // The base-only key `a` is dropped; `counter` stays the original method (methods are ignored).
         expect(a).toStrictEqual({
             id: 'a',
-            a: true,
             b: true,
             counter: og,
         });
@@ -389,9 +389,9 @@ describe('DeepSet', () => {
 
         deepSet(a, b);
 
+        // The base-only key `a` is dropped; `counter` stays the original getter (getters are ignored).
         expect(a).toStrictEqual({
             id: 'a',
-            a: true,
             b: true,
             counter: 0, // First access by vitest itself
         });
@@ -416,9 +416,9 @@ describe('DeepSet', () => {
 
         deepSet(a, b);
 
+        // The base-only key `a` is dropped; `counter` stays the original getter (getters are ignored).
         expect(a).toStrictEqual({
             id: 'a',
-            a: true,
             b: true,
             counter: 0, // First access by vitest itself
         });
@@ -569,6 +569,50 @@ describe('DeepSet', () => {
                 }),
             ],
         }));
+    });
+
+    describe('Plain-object dictionaries (e.g. filters)', () => {
+        it('[Regression] drops stale keys when a filter is simplified to a bare condition', () => {
+            // A filter simplified from a two-condition $and to a bare single condition: the $and
+            // wrapper is dropped, so the new value shares no keys with the cached one.
+            const container: any = {
+                filter: { $and: [{ age: { $gt: 18 } }, { gender: { $eq: 'male' } }] },
+            };
+            const originalFilter = container.filter;
+
+            deepSet(container, { filter: { age: { $gt: 18 } } });
+
+            // The stale $and wrapper must not survive the merge.
+            expect(container.filter).toStrictEqual({ age: { $gt: 18 } });
+            // The base reference is reused (updated in place).
+            expect(container.filter).toBe(originalFilter);
+        });
+
+        it('[Regression] drops stale keys even when the dictionaries still share a key', () => {
+            const container: any = {
+                filter: { $or: [{ age: { $gt: 18 } }], age: { $gt: 18 } },
+            };
+            const originalFilter = container.filter;
+
+            deepSet(container, { filter: { $or: [{ age: { $gt: 21 } }] } });
+
+            // `age` only existed on base and must be removed, even though `$or` is shared.
+            expect(container.filter).toStrictEqual({ $or: [{ age: { $gt: 21 } }] });
+            expect(container.filter).toBe(originalFilter);
+        });
+
+        it('keeps updating shared keys in place', () => {
+            const container: any = {
+                filter: { $and: [{ age: { $gt: 18 } }, { gender: { $eq: 'male' } }] },
+            };
+            const originalAnd = container.filter.$and;
+
+            deepSet(container, { filter: { $and: [{ age: { $gt: 21 } }] } });
+
+            expect(container.filter).toStrictEqual({ $and: [{ age: { $gt: 21 } }] });
+            // Same top-level key ($and) -> array reference is reused and updated in place.
+            expect(container.filter.$and).toBe(originalAnd);
+        });
     });
 
     describe('Arrays', () => {

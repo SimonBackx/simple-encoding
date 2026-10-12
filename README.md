@@ -20,11 +20,132 @@ npm install @simonbackx/simple-encoding
 
 ## Documentation
 
-- [Writing AutoEncoder classes](docs/autoencoder.md)
-- [Manually implementing encode and decode](docs/manual-encoding.md)
-- [Patching data](docs/patching.md)
-- [Patching arrays](docs/patching-arrays.md)
-- [Versioning data](docs/versioning.md)
+## Encoding & decoding (structures)
+
+### What are Structures?
+
+Structures are data objects that can be encoded (converted to plain objects) and decoded (converted back to class instances). They are essential for:
+- Storing JSON data in databases
+- Sending data across networks (API)
+- Storing data in the browser for caching and offline access
+- Versioning: allowing data structure changes without breaking old clients
+- Ensuring type safety when receiving data from the API or storage.
+
+In Stamhoofd all structures are currently stored in the `shared/structures` folder. They are used by the backend and frontend. This facilitates seamless communication over the network and ensures secure data storage in both the database and browser.
+
+The encoding and decoding behavior is mostly implemented in the `@simonbackx/simple-encoding` package.
+
+---
+
+### Usage
+
+#### Creating structures
+
+The easiest way to create encodable and decodable structures is by extending the AutoEncoder class. Here's a basic example:
+
+```typescript
+import { AutoEncoder, StringDecoder, NumberDecoder, field } from "@simonbackx/simple-encoding";
+
+class MyClass extends AutoEncoder {
+    @field({ decoder: NumberDecoder })
+    id: number;
+
+    @field({ decoder: StringDecoder })
+    name: string;
+
+    @field({ decoder: MyClass, nullable: true })
+    other: MyClass | null = null;
+}
+```
+
+[Writing AutoEncoder classes](docs/autoencoder.md)
+
+*An alternative is manually implementing the encode and decode methods (more difficult + doesn’t provide patching behaviour out of the box):* [Manually implementing encode and decode](docs/manual-encoding.md)
+
+#### Encoding and decoding data
+
+You can encode structures so you can store them as JSON in a file, in the database or send it over via the API.
+
+**Encoding**
+
+```typescript
+const pablo = Dog.create({ id: 123, name: "Pablo", createdAt: new Date() });
+
+// Simulate a network or file storage by converting to JSON
+// You can also convert it to a different storage type
+const json = JSON.stringify(pablo.encode({ version: 1 }));
+```
+
+You can store `json` this in a file, in the database or send it to the API. `json` looks like this:
+
+```json
+{
+		"id": 123,
+		"name": "Pablo",
+		"createdAt": 1749544680676,
+}
+```
+
+**Decoding**
+
+Decode throws if fields are missing or if types are wrong. This way you are always 100% certain that your decoded data matches your types. The errors thrown contain detailed information for debugging.
+
+```typescript
+const plainObject = JSON.parse(json);
+const data = new ObjectData(plainObject, { version: 1 });
+const pablo = Dog.decode(data);
+```
+
+```typescript
+const plainObject = {
+		id: "test",
+		name: "Pablo",
+		createdAt: 1749544680676
+};
+const data = new ObjectData(plainObject, { version: 1 });
+
+const pablo = Dog.decode(data);
+// ❌ Throws "Expected an integer at id"
+```
+
+#### Patching Data
+
+Patching allows you to modify specific properties of an object without changing the original object. All AutoEncoder classes are patchable by default.
+
+Here's how patching works:
+
+```typescript
+// 1. Creating an initial object
+const myObject = MyObject.create({ id: 1, name: "Hello world", age: 20 });
+
+// 2. Creating a simple patch
+const patch = MyObject.patch({ name: "Changed name" });
+// Encoded as ± { name: "Changed name" }
+
+// 3. Applying the patch
+const patchedObject = myObject.patch(patch);
+// Result: { id: 1, name: "Changed name", age: 20 }
+```
+
+[Patching data](docs/patching.md)
+
+#### Versioning
+
+When encoding or decoding data, you must specify a version number. This versioning system allows making changes to the data structure while maintaining compatibility with stored data and older clients.
+
+[Versioning data](docs/versioning.md)
+
+#### Using encodable objects
+
+Often we support encoding/decoding out of the box. Rarely you’ll need to manually encode or decode an object.
+
+[Sending (authenticated) requests in the frontend](https://github.com/SimonBackx/simple-networking/blob/master/docs/requests.md)
+
+[Storing data locally in the browser/app](https://github.com/stamhoofd/stamhoofd/blob/main/contributing/frontend/local-storage.md)
+
+[Storing data in the database](https://github.com/SimonBackx/simple-database/blob/master/docs/models.md)
+
+[Writing endpoints](https://github.com/SimonBackx/simple-endpoints/blob/master/docs/endpoints.md)
 
 ## Features
 
@@ -39,170 +160,3 @@ npm install @simonbackx/simple-encoding
 -   [x] Add context to Data: Allows for versioning (e.g. you can store a verion in the context and let the encoding/decoding differ between each version). In fact you could add this yourself by implementing Data.
 -   [ ] Add some more basic types
 -   [ ] Full map-patching usage guide
-
-## Usage example
-
-### Decorators
-
-The shortest version you can have, with experimental TypeScript decorators.
-
-```ts
-import { Encodeable, StringDecoder, NumberDecoder, field } from "@simonbackx/simple-encoding";
-
-class MyClass extends AutoEncoder {
-    @field({ decoder: NumberDecoder })
-    id: number;
-
-    @field({ decoder: StringDecoder })
-    name: string;
-
-    @field({ decoder: MyClass, optional: true })
-    other?: MyClass;
-
-    writeName() {
-        console.log(this.name);
-    }
-}
-
-const test = MyClass.create({ id: 123, name: "Hello world" });
-const test2 = MyClass.create({ id: 123, name: "Hello world", other: test });
-
-// Simulate a network or file storage by converting to JSON
-// You can also convert it to a different storage type
-const json = JSON.stringify(test2.encode({ version: 1 }));
-
-// ... Store or send the JSON somewhere
-
-// Decode from JSON
-const plainObject = JSON.parse(json);
-const data = new ObjectData(plainObject, { version: 1 });
-const instance = MyClass.decode(data);
-// Decode throws if fields are missing or types are not okay.
-// You can use the errors to provide good errors in you API's that help developers to
-// point out the missing fields or types.
-
-// Now all methods are available again
-instance.writeName();
-```
-
-Now, say we want to change the type of id to a string and we want to have an extra field called createdAt. We can use versioning for this:
-
-```ts
-class MyClass extends AutoEncoder {
-    @field({ decoder: NumberDecoder })
-    @field({ decoder: StringDecoder, version: 2, upgrade: (old: number) => old.toString(), downgrade: (n: string) => parseInt(n) })
-    id: number;
-
-    @field({ decoder: StringDecoder }) // not specifying the version equals version 0
-    name: string;
-
-    @field({ decoder: MyClass, optional: true })
-    other?: MyClass;
-
-    @field({ decoder: DateDecoder, version: 2, upgrade: () => new Date() })
-    createdAt: Date;
-
-    writeName() {
-        console.log(this.name);
-    }
-}
-```
-
-You must update your 'create' methods everywhere, but the encoding and decoding in the older versions keep working:
-
-```ts
-// This code ran before version 2 (with the current changes this would throw an error since createdAt is missing)
-const myClass = MyClass.create({ id: 123, name: "Hello world" });
-const json = JSON.stringify(myClass.encode({ version: 1 }));
-
-// The JSON is stored here for some time on a storage medium (e.g. in a file), during which we release version 2 and need to decode the data again.
-
-// This code ran after making the version changes
-const plainObject = JSON.parse(json);
-const data = new ObjectData(plainObject, { version: 1 }); // note: createdAt is determined via the upgrade method = the current date
-const instance = MyClass.decode(data);
-
-// We can use our latest methods and functions that require createdAt
-```
-
-The versions in encode an decode should always match. You'll need to store the version depending on the usage. E.g. in an API you'll need to send the version in the URL or in a separate header. In your database you can add an extra field 'version' to save the latest version you used for encoding, same for localstorage, disk storage...
-
-The versioning system allows your API to update the backend before updating the frontend, because the newer version will always be able to communicate with older versions.
-
-```ts
-const myClass = MyClass.create({ id: "123", name: "This example keeps all data", createdAt: new Date() });
-const json = JSON.stringify(myClass.encode({ version: 2 }));
-const plainObject = JSON.parse(json);
-const data = new ObjectData(plainObject, { version: 2 });
-const instance = MyClass.decode(data);
-```
-
-### Vanilla (without decorators)
-
-This version makes it possible to do more customization, at the cost of more boilerplate code. This is very usefull when building custom encoders and decoders that have complex behaviour.
-
-```ts
-import { Encodeable, Data, ObjectData } from "@simonbackx/simple-encoding";
-
-class MyClass implements Encodeable {
-    id: number;
-    name: string;
-    other?: MyClass;
-
-    constructor(data: { id: number; name: string; other?: MyClass }) {
-        this.id = data.id;
-        this.name = data.name;
-        this.other = data?.other;
-    }
-
-    writeName() {
-        console.log(this.name);
-    }
-
-    /**
-     * Note that the static MyClass implements Decoder.
-     * -> static inheritance is not supported in TypeScript
-     */
-    static decode(data: Data): MyClass {
-        // You can read data.context.version to change decoding behaviour depending on the version
-        return new MyClass({
-            // 'walk' the data you receive
-            // data.field('fieldname') returns a new Data and throws if the field does not exist
-            // The returned Data object can get decoded with a Decoder using .decode(Decoder)
-            // or with a convenience getter: number, string
-            id: data.field("id").number,
-            name: data.field("name").string,
-            other: data.optionalField("other")?.decode(MyClass),
-        });
-    }
-
-    encode(context) {
-        // You can read context.version to change encoding behaviour depending on the version.
-        return {
-            id: this.id,
-            name: this.name,
-            other: this.other?.encode(context),
-        };
-    }
-}
-
-const test = new MyClass({ id: 123, name: "Hello world" });
-const test2 = new MyClass({ id: 123, name: "Hello world", other: test });
-
-// Simulate a network or file storage by converting to JSON
-// You can also convert it to a different storage type
-const json = JSON.stringify(test2.encode({ version: 1 }));
-
-// ... Store or send the JSON somewhere
-
-// Decode from JSON
-const plainObject = JSON.parse(json);
-const data = new ObjectData(plainObject, { version: 1 });
-const instance = MyClass.decode(data);
-// Decode throws if fields are missing or types are not okay.
-// You can use the errors to provide good errors in you API's that help developers to
-// point out the missing fields or types.
-
-// Now all methods are available again
-instance.writeName();
-```

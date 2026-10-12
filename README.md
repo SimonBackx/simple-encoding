@@ -24,6 +24,7 @@ npm install @simonbackx/simple-encoding
 - [Manually implementing encode and decode](docs/manual-encoding.md)
 - [Patching data](docs/patching.md)
 - [Patching arrays](docs/patching-arrays.md)
+- [Versioning data](docs/versioning.md)
 
 ## Features
 

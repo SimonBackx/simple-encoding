@@ -1,4 +1,5 @@
 export type NonScalarIdentifiable<P extends string | number> = { id: P };
+/** Object identity used to target array operations without depending on indexes. */
 export type Identifiable<P extends string | number> = NonScalarIdentifiable<P>;
 
 export type NonScalarIdentifiableType<T> = T extends { id: infer P }

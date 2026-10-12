@@ -80,7 +80,8 @@ export type AutoEncoderPatchType<T extends AutoEncoder> =
     );
 
 /**
- * Helper type to fix TypeScript circular dependency by making a synonym for a patchable array for an autoencoder
+ * Shorthand for an array patch of identifiable AutoEncoders.
+ * For non-identifiable AutoEncoders this resolves to a replacement array instead.
  */
 export type PatchableArrayAutoEncoder<P extends AutoEncoder> = P extends AutoEncoder & NonScalarIdentifiable<infer Id> ?
         (

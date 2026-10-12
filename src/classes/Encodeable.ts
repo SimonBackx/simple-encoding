@@ -2,7 +2,9 @@ import { EncodeContext, EncodeMedium } from './EncodeContext.js';
 
 export type PlainObject = string | number | { [key: string]: PlainObject } | boolean | PlainObject[] | undefined | null;
 
+/** Converts an instance to plain data suitable for JSON serialization. */
 export interface Encodeable {
+    /** Pass the same context to nested encoders; version/medium can affect the format. */
     encode(context: EncodeContext): PlainObject;
 }
 

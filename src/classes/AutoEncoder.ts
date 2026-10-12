@@ -99,6 +99,8 @@ export class AutoEncoder implements Encodeable, Cloneable {
     /**
      * Try to build a default value for this object, if possible. If this is not possible it will return undefined.
      *
+     * Identifiable instances (with an id) have no automatic default, to avoid
+     * creating an unintended object when patching an absent value.
      * Override if you want to set custom default values or disable this behavior.
      */
     static getDefaultValue<T extends typeof AutoEncoder>(this: T): InstanceType<T> | undefined {
@@ -172,6 +174,10 @@ export class AutoEncoder implements Encodeable, Cloneable {
         return !this.static.isPatch;
     }
 
+    /**
+     * Creates an encodable patch containing only the supplied changes.
+     * Array and map fields receive empty patch containers for adding operations.
+     */
     static patch<T extends typeof AutoEncoder>(this: T, object: PartialWithoutMethods<AutoEncoderPatchType<InstanceType<T>>>): AutoEncoderPatchType<InstanceType<T>> {
         return this.patchType().create(object);
     }
@@ -197,6 +203,13 @@ export class AutoEncoder implements Encodeable, Cloneable {
         return instance;
     }
 
+    /**
+     * Applies changes to a new instance without mutating this instance.
+     * Undefined means no change; null clears a value. Calling this on a patch
+     * composes changes, rather than applying them to a full object.
+     * Nested patches of absent values use field/constructor/decoder defaults.
+     * @throws A cannot_patch_null error for an absent nested object without a default.
+     */
     patch<T extends AutoEncoder>(this: T, patch: PartialWithoutMethods<AutoEncoderPatchType<T>> | AutoEncoderPatchType<T> | T | PartialWithoutMethods<T>): this {
         const instance = new this.static() as this;
         for (const field of this.static.latestFields) {

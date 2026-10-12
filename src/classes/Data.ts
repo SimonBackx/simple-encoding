@@ -1,7 +1,7 @@
 import { Decoder } from './Decoder.js';
 import { EncodeContext } from './EncodeContext.js';
 
-/// Decode data that is structured in maps and arrays
+/** Encoded data with decoding context and a field path for validation errors. */
 export interface Data {
     readonly string: string;
     readonly number: number;
@@ -15,8 +15,11 @@ export interface Data {
     readonly currentField: string;
     addToCurrentField(field: string | number): string;
 
+    /** Reads a defined field, including null; throws when missing. */
     field(field: string): Data;
+    /** Returns undefined for a missing or null field. */
     optionalField(field: string): Data | undefined;
+    /** Returns undefined for a missing field, but preserves null as Data. */
     undefinedField(field: string): Data | undefined;
     index(number: number): Data;
     decode<T>(decoder: Decoder<T>): T;

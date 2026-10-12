@@ -32,7 +32,7 @@ export function addToField(field: string | undefined, b: string | number) {
     return addPropertyField(field, b);
 }
 
-/// Implementation of Data that reads an already existing tree of data.
+/** Wraps parsed JSON or other plain data, retaining context and nested error paths. */
 export class ObjectData implements Data {
     data: any;
     currentField: string;
@@ -130,7 +130,8 @@ export class ObjectData implements Data {
     }
 
     /**
-     * Expects an existing field that is defined and not null
+     * Reads a defined field, including null. The decoder decides whether null is valid.
+     * @throws A missing_field error when the field is undefined or absent.
      */
     field(field: string): Data {
         if (this.data && this.data[field] !== undefined) {

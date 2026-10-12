@@ -21,6 +21,7 @@ npm install @simonbackx/simple-encoding
 ## Documentation
 
 - [Writing AutoEncoder classes](docs/autoencoder.md)
+- [Manually implementing encode and decode](docs/manual-encoding.md)
 
 ## Features
 

@@ -23,6 +23,7 @@ npm install @simonbackx/simple-encoding
 - [Writing AutoEncoder classes](docs/autoencoder.md)
 - [Manually implementing encode and decode](docs/manual-encoding.md)
 - [Patching data](docs/patching.md)
+- [Patching arrays](docs/patching-arrays.md)
 
 ## Features
 

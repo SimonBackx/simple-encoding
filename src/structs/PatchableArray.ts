@@ -32,7 +32,9 @@ function isPatch(val: Change<any, any, any>): val is PatchItem<any> {
 }
 
 /**
- * Helps with synchronizing changes to an array. As long as every element in the array has a unique identifier.
+ * Records ordered insert, move, delete, and patch operations for an array.
+ * String/number elements identify themselves; objects are identified by their id.
+ * Use unique identifiers so each operation targets an unambiguous item.
  */
 export class PatchableArray<
     Id extends string | number,
@@ -61,6 +63,7 @@ export class PatchableArray<
         }
     }
 
+    /** Composes changes into a clone; a plain array replaces the accumulated patch. */
     patch(patch: PatchableArray<Id, Put, Patch> | Put[]): this {
         if (Array.isArray(patch)) {
             // Transform itself into a normal array. Override all existing patches
@@ -92,6 +95,8 @@ export class PatchableArray<
     }
 
     /**
+     * Records an insertion. An object with an existing id replaces that object
+     * when applied (since v2.23.0); scalar values can be inserted more than once.
      * @param value Value to insert in the array
      * @param after
      *      - undefined (or not provided) = insert at the end
@@ -102,6 +107,7 @@ export class PatchableArray<
         this.changes.push({ afterId: after, put: value });
     }
 
+    /** Moves an item after an id, or to the start for null; an absent target id means the end. */
     addMove(item: Id, after: Id | null) {
         this.changes.push({ afterId: after, move: item });
     }
@@ -176,6 +182,11 @@ export class PatchableArray<
         return n;
     }
 
+    /**
+     * Records changes to an item identified by the patch's id.
+     * Composes with an existing put/patch for that id. Applying to an absent item
+     * does nothing and never creates a default object.
+     */
     addPatch(value: Patch) {
         const id = getId(value);
         const otherPut = this.changes.findIndex(e => isPut(e) && getId(e.put) == id);
@@ -217,6 +228,7 @@ export class PatchableArray<
         this.changes.push({ patch: value });
     }
 
+    /** Records removal by id; cancels a pending put for that id instead of adding a delete. */
     addDelete(id: Id) {
         // Remove all puts, patches and moves
         const otherPut = this.changes.findIndex(e => isPut(e) && getId(e.put) == id);
@@ -235,7 +247,10 @@ export class PatchableArray<
         this.changes.push({ delete: id });
     }
 
-    /// Apply patch changes to a given array
+    /**
+     * Applies operations to a copy of the array, leaving the input unchanged.
+     * Missing patch IDs are ignored; missing move/delete IDs emit a warning.
+     */
     applyTo(array: Put[]): Put[] {
         const newArray = array.slice(0);
 

@@ -7,10 +7,12 @@ import { Cloneable, cloneObject } from './Cloneable.js';
 import { SimpleError } from '@simonbackx/simple-errors';
 import { isAutoEncoder } from '../helpers/isAutoEncoder.js';
 
+/** An object that can apply a patch of type P. AutoEncoder supplies this behavior automatically. */
 export interface Patchable<P> {
     patch(patch: P): this;
 }
 
+/** Infers manual patch types; use AutoEncoderPatchType for AutoEncoder subclasses. */
 export type PatchType<T> = T extends Patchable<infer P> ? P : (T | undefined);
 
 export function isPatchable<T>(object: T): object is T & Patchable<any> {
@@ -67,11 +69,8 @@ type MakeOptionalRealOptional<Base> = {
 };
 
 /**
- * Automatically determine the patchtype of an autoencoder object
- */
-
-/**
- * Automatically determine the patchtype of an autoencoder object
+ * Patch type for an AutoEncoder subclass, including nested array/map patches.
+ * PatchType cannot reliably infer subclass fields from AutoEncoder's generic patch method.
  */
 export type AutoEncoderPatchType<T extends AutoEncoder> =
     AutoEncoder & (
@@ -225,7 +224,9 @@ export function isEmptyPatch(patch: unknown) {
 }
 
 /**
- * Use this method to encode an object (might be an encodeable implementation) into a decodable structure
+ * Applies a patch or replacement. Undefined keeps the original value; null clears it.
+ * An absent nested AutoEncoder requires a default before an object patch can be applied.
+ * Map patches can use automatic decoder defaults; missing array item IDs are not created.
  */
 export function patchObject(obj: unknown, patch: unknown, options?: { getDefaultValue?: () => any | null; allowAutoDefaultValue?: boolean }): any {
     if (patch === undefined) {

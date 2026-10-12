@@ -22,6 +22,7 @@ npm install @simonbackx/simple-encoding
 
 - [Writing AutoEncoder classes](docs/autoencoder.md)
 - [Manually implementing encode and decode](docs/manual-encoding.md)
+- [Patching data](docs/patching.md)
 
 ## Features
 
@@ -35,7 +36,7 @@ npm install @simonbackx/simple-encoding
 
 -   [x] Add context to Data: Allows for versioning (e.g. you can store a verion in the context and let the encoding/decoding differ between each version). In fact you could add this yourself by implementing Data.
 -   [ ] Add some more basic types
--   [ ] Documentation on patchable types (allows you to build powerful patch behaviour for API's)
+-   [ ] Full map-patching usage guide
 
 ## Usage example
 

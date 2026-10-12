@@ -4,8 +4,8 @@ import { EncodableObject, Encodeable, encodeObject } from '../classes/Encodeable
 import { EncodeContext } from '../classes/EncodeContext.js';
 
 /**
- * When you need to store data for a long period, a VersionBox can be very usefull. It saves the version of the data in it's encoding.
- * During decoding, it reads the version and continues decoding the data using the provided version instead of the version in the context.
+ * Stores an encoding version alongside data as { version, data }, so persisted
+ * data can be decoded using its original format rather than the current version.
  */
 export class VersionBox<T extends EncodableObject> implements Encodeable {
     data: T;
@@ -22,6 +22,7 @@ export class VersionBox<T extends EncodableObject> implements Encodeable {
     }
 }
 
+/** Decodes a versioned envelope and returns a VersionBox; access the value through .data. */
 export class VersionBoxDecoder<T extends EncodableObject> implements Decoder<VersionBox<T>> {
     decoder: Decoder<T>;
 
@@ -29,6 +30,11 @@ export class VersionBoxDecoder<T extends EncodableObject> implements Decoder<Ver
         this.decoder = decoder;
     }
 
+    /**
+     * Replaces the supplied context.version with the envelope's version before
+     * decoding its payload. ObjectData children share that context, so use a
+     * fresh context when this must not affect other decoding operations.
+     */
     decode(data: Data): VersionBox<T> {
         // Set the version of the decoding context of "data"
         const context = data.field('data');

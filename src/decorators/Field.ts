@@ -16,10 +16,18 @@ export function field<T>(settings: {
     isDefaultValue?: (value: unknown) => boolean;
     patchDefaultValue?: () => any;
 
+    /**
+     * Converts the preceding decoded definition to this version's value.
+     * Called in ascending version order when decoding older data, including
+     * undefined for a newly introduced field. A regular function receives the instance as this.
+     */
     upgrade?: (old: any) => any;
+    /** Converts this definition to the preceding one when encoding an older version. */
     downgrade?: (newer: any) => any;
 
+    /** Patch-specific upgrade; preserve undefined to avoid introducing unintended changes. */
     upgradePatch?: (old: any) => any;
+    /** Patch-specific downgrade for fields whose patch representation differs from the value. */
     downgradePatch?: (newer: any) => any;
 
     /**

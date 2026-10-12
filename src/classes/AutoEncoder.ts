@@ -600,6 +600,11 @@ export class AutoEncoder implements Encodeable, Cloneable {
         return false;
     }
 
+    /**
+     * Encodes fields for context.version, downgrading values when targeting an
+     * older format. Newer-only fields are omitted; default values may also be
+     * omitted and reconstructed during decoding.
+     */
     encode(context: EncodeContext): PlainObject {
         const object = (this.static.isPatch ? { _isPatch: true } : {});
         const latestVersion = this.static.latestVersion;

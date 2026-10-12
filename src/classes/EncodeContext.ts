@@ -11,6 +11,7 @@ export enum EncodeMedium {
 }
 
 export interface EncodeContext {
+    /** Wire/storage version, not the npm package version. Decode using the version used to encode. */
     version: number;
     references?: Map<any, any>; // class type -> id -> decoded object
 

@@ -55,6 +55,11 @@ const p = DogPatch.create({id: "test"})
 
 */
 
+/**
+ * Encodes, decodes, and patches properties declared with `@field` decorators.
+ * Undecorated properties and methods are not part of the encoded data.
+ * Subclasses must be constructible without arguments.
+ */
 export class AutoEncoder implements Encodeable, Cloneable {
     readonly _isAutoEncoder = true;
 
@@ -444,7 +449,12 @@ export class AutoEncoder implements Encodeable, Cloneable {
     }
 
     /**
-     * Create a new one by providing the properties of the object
+     * Creates an instance using decorated properties and their latest definitions.
+     * Missing values use the field's defaultValue factory, constructor initializer,
+     * then null for nullable fields or the decoder's default for required fields.
+     * Unknown properties, methods, and undefined input values are ignored.
+     * This does not decode or validate input types; use decode for untrusted data.
+     * @throws If a required property has no default or a non-nullable property is null.
      */
     static create<T extends typeof AutoEncoder>(this: T, object: PartialWithoutMethods<InstanceType<T>>): InstanceType<T> {
         const model = new this() as InstanceType<T>;
@@ -725,6 +735,12 @@ export class AutoEncoder implements Encodeable, Cloneable {
         return model;
     }
 
+    /**
+     * Decodes decorated fields and restores methods on a new subclass instance.
+     * Missing fields use their defaults when available; invalid values throw
+     * decoding errors carrying the field path. data.context.version must match
+     * the version used to encode the data.
+     */
     static decode<T extends typeof AutoEncoder>(this: T, data: Data): InstanceType<T> {
         return this.decodeField(data.value, data.context, data.currentField);
     }

@@ -2,11 +2,16 @@ import { SimpleError } from '@simonbackx/simple-errors';
 import { PatchableDecoder } from '../classes/AutoEncoder.js';
 import { Field } from '../classes/Field.js';
 
+/** Declares an AutoEncoder property and its encoded representation. */
 export function field<T>(settings: {
+    /** Allows a missing value without a default to remain undefined. Defaults to false. */
     optional?: boolean;
+    /** Accepts null and defaults missing required values to null. Defaults to false. */
     nullable?: boolean;
     queryable?: boolean;
+    /** Decodes the property's value; use nullable instead of wrapping this in NullableDecoder. */
     decoder: PatchableDecoder<T>;
+    /** Factory for missing values, taking precedence over constructor initializers. */
     defaultValue?: () => any;
     isDefaultValue?: (value: unknown) => boolean;
     patchDefaultValue?: () => any;
@@ -18,12 +23,13 @@ export function field<T>(settings: {
     downgradePatch?: (newer: any) => any;
 
     /**
-     * Version in which this field was added
+     * Version in which this field definition was added. Defaults to 0.
      */
     version?: number;
 
     /**
-     * Name in the encoded version
+     * Encoded key name. Defaults to the property name; changing the property name
+     * while retaining this key does not change the stored format.
      */
     field?: string;
 }) {

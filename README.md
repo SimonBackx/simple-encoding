@@ -18,6 +18,10 @@ yarn add @simonbackx/simple-encoding
 npm install @simonbackx/simple-encoding
 ```
 
+## Documentation
+
+- [Writing AutoEncoder classes](docs/autoencoder.md)
+
 ## Features
 
 -   Great errors out of the box
